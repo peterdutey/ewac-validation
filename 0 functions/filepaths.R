@@ -16,7 +16,7 @@ listvar <- c('xwave', 'A_weight0', 'weighttns', 'weighttns13', 'sttime', 'tatime
              'acgroups', 'ta47_01_num', 'ta47_01_banded', 'ta47_02_num', 'ta47_02_banded', 
              'ta47_03_1', 'ta47_03_10', 'ta47_03_11', 'ta47_03_2', 'ta47_03_3', 'ta47_03_4', 
              'ta47_03_5', 'ta47_03_6', 'ta47_03_7', 'ta47_03_8', 'ta47_03_9', 'ta47_03_dk', 
-             'ta47_03_ref',
+             'ta47_03_ref', 'ta47_04', 'alctype1', 'alcmotiv',
              'gf0102', 'gf0304', 'gf0507', 'gf0810', 'gf1115', 'gf1620', 'gf2130', 'gf3140', 
              'gf4150', 'gf5160', 'gfgroups', 'gfmax', 'gfmeanweekly', 'gfsumdays', 'gftotal')
 
