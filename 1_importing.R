@@ -9,26 +9,23 @@ ats$audit1_label <- as.character(as_factor(ats$audit1))
 ats$audit2_label <- as.character(as_factor(ats$audit2))
 ats$audit3_label <- as.character(as_factor(ats$audit3))
 ats <- data.table(ats)
-
+ats$sex <- as_factor(ats$sexz)
+ats$sex <- relevel(ats$sex, "Women")
 save(ats, file = file.path(atsfiles, "qfmodule.RData"))
 
 
 #### Health Survey for England
 
-hse <- read.dta("~/0 Datasets/HSE 2011/stata9_se/hse2011ai.dta", convert.factors = F)
+hse <- foreign::read.dta("~/0 Datasets/HSE 2011/stata9_se/hse2011ai.dta", convert.factors = F)
 names(hse) <- tolower(names(hse))
-# hse <- hse[,c("hserial", "pserial", "hhsize", "psu", "wt_int", "age",  "wt_drink",
-#               "totalwu", "alcbase", "totalwug", "diaryrec", "ddunitwk", "ddunitwd",
-#               "weektot", "ddalclim", "sex", "tenureb", "gor1", "dnoft", "dnnow")]
-
 hse <- hse[hse$age > 17 & hse$sex ==2 ,]
-
 hse$ageg <- cut(hse$age, breaks = c(17, 25, 35, 45, 55, 65, 75, 85, 105), include.lowest = F, right = F)
 levels(hse$ageg) <- c("18-24 years","25-34 years","35-44 years","45-54 years",
                       "55-64 years","65-74 years","75-84 years","85 years and over")
 hse$totalwu[hse$totalwu < 0] <- NA
 hse$dnoft[hse$dnoft < 0] <- NA
-hse$dnoft <- factor(hse$dnoft, labels = names(attributes(hse)$label.table$DNOFT[attributes(hse)$label.table$DNOFT > 0]))
+hse$dnoft <- factor(hse$dnoft, 
+                    labels = names(attributes(hse)$label.table$DNOFT[attributes(hse)$label.table$DNOFT > 0]))
 
 hse$dnany[hse$dnany==2] <- "Never-never"
 hse$dnany[hse$dnany==1] <- "Drinker (occasional)"
@@ -40,11 +37,15 @@ hse$ddunitwk[hse$ddunitwk <0 ] <- NA
 hse$ddunitwd[hse$ddunitwd <0 ] <- NA
 
 hse$dnoft <- factor(hse$dnoft, labels = names(attributes(hse)$label.table$DNOFT[attributes(hse)$label.table$DNOFT > 0]))
-
-
 hse$dnnow[hse$dnnow < 0] <- NA
 
-save(hse, file = "01_data/HSE.RData")
+hse <- hse[,c("hserial", "pserial", "hhsize", "psu", "wt_int", "age",  "wt_drink",
+              "totalwu", "alcbase", "totalwug", "diaryrec", "ddunitwk", "ddunitwd",
+              "weektot", "ddalclim", "sex", "tenureb", "gor1", "dnoft", "dnnow")]
+
+
+
+save(hse, file =  file.path(atsfiles, "HSE.RData"))
 
 
 
@@ -99,6 +100,12 @@ TA47_04.
 
 m2 <- lm(qfv-gfmeanweekly ~ as_factor(agez) + as_factor(sexz), data = ats[gfmeanweekly <20,])
 summary(m2)
+
+library(mgcv)
+m2 <- gam(qfv-gfmeanweekly ~ -1 + s(actage) + sex, data = ats)
+summary(m2)
+
+
 
 m2 <- lm(qfv-gfmeanweekly ~ 1, data = ats)
 summary(m2)

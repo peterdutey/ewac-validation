@@ -81,3 +81,18 @@ convpDrink <- function(prev_nondrinkers = NULL){
     )
   )
 }
+
+tbrounding <- function(x, places = 1){
+  return(format(round(x, places), nsmall = places))
+}
+
+
+keyABH <- list(space="right", cex = 1.5,
+               lines=list(col=c("red", "red", "black", "orange"),
+                          lty=c(1, 3, 1, 1), lwd=c( 1, 1, 2, 2)),
+               text=list(c("HSE 2011", "HSE diary 2011",
+                           "ATS GF", "EWAC")))
+
+ecdfxlab=list(label="Average units/week", cex=1.5)
+ecdfylab=list(label="Empirical cumulative density", cex=1.5)
+
