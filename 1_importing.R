@@ -5,6 +5,17 @@ library(data.table)
 library(haven)
 ats <- haven::read_dta(file.path(atsfiles, "qfmodule.dta"))
 ats <- ats[,listvar]
+
+alctypes <- data.frame(list(alctype1 = c('Wine', 'Beer or lager', 
+                                         'Spirits on their own (for example whisky, vodka)',
+                                         'Cider', 'Alcopops (for example WKD, Smirnoff Ice)',
+                                         'Mixed drinks (for example gin and tonic, whisky and coke)', 
+                                         'Other'),
+                            favdrink = c('Wine', 'Beer', 'Spirits alone',
+                                         'Cider', 'Other', 'Mixed spirits', 'Other')))
+
+ats$alctype1 <- as_factor(ats$alctype1)
+ats <- merge(ats, alctypes, by = "alctype1", all.x = T, all.y = F)
 ats$audit1_label <- as.character(as_factor(ats$audit1))
 ats$audit2_label <- as.character(as_factor(ats$audit2))
 ats$audit3_label <- as.character(as_factor(ats$audit3))
@@ -98,11 +109,11 @@ moments::skewness(residuals(m2))
 moments::kurtosis(residuals(m2))
 TA47_04. 
 
-m2 <- lm(qfv-gfmeanweekly ~ as_factor(agez) + as_factor(sexz), data = ats[gfmeanweekly <20,])
+m2 <- lm(qfv-gfmeanweekly ~ as_factor(agez) + as_factor(sexz) + as_factor(favdrink), data = ats[gfmeanweekly <20,])
 summary(m2)
 
 library(mgcv)
-m2 <- gam(qfv-gfmeanweekly ~ -1 + s(actage) + sex, data = ats)
+m2 <- gam(qfv-gfmeanweekly ~  s(actage) + sex + favdrink, data = ats)
 summary(m2)
 
 

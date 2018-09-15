@@ -29,6 +29,7 @@ ats <- merge(ats, audit2, "audit2_label", all.x = T, all.y = F)
 ats <- merge(ats, audit3, "audit3_label", all.x = T, all.y = F)
 ats <- proc.AUDIT(ats)
 ats <- ats[audit1 %in% 2:6 & audit2 %in% 1:7,]
+hse <- hse[hse$dnnow == 1,]
 
 ```
 
@@ -45,6 +46,22 @@ in a variety of clinical and community dwelling populations [@DeMeneses-Gaya2009
 Neither the AUDIT nor the Extended AUDIT provide a measure of usual alcohol consumption, which could help individuals understand, monitor and adjust their drinking behaviour. Existing research on quantity-frequency alcohol instruments suggests that the product of the quantity and frequency questions in the AUDIT (see AUDIT-1 and AUDIT-2 in [Table 1](#table1)) could be used to produce a measure of usual consumption [@Lemmens1992].
 
 The aim of the present study is develop an algorithm producing an Estimator of usual Weekly Alcohol Consumption in units (EWAC) using Extended AUDIT data as an input.
+
+
+## Literature on accuracy
+
+A review by @Greenfield2000 clarified the various constructs operationalised in existing alcohol measurement tools. 
+
+
+
+
+The review by @Feunekes1999 
+
+With respect to construct validity, QF does not capture variability of drinking, while GF and WDD do. I
+
+Boniface S, Kneale J, Shelton N. Drinking pattern is more strongly associated with under-reporting of alcohol consumption than socio-demographic factors: evidence from a mixed-methods study. BMC Public Health [Internet] 2014;14(1):1297. PMID:25519144
+
+Boniface S, Fuller E. Drinking diary. In: Craig R, Mindell J, editors. Heal Surv Engl 2011 Vol 1 Heal Soc care lifestyles [Internet] Health and Social Care Information Centre; 2012. Available from: http://content.digital.nhs.uk/catalogue/PUB09300
 
 
 
@@ -94,7 +111,7 @@ GF <- ecdfplot(na.omit(ats$gfmeanweekly[ats$gfmeanweekly > 0]),
                 xlim = xlims, col = alpha("black", .7), lwd = 3, lty = 1,
                scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
 
-HSE <- ecdfplot(na.omit(hse$totalwu),
+HSE <- ecdfplot(na.omit(hse$totalwu[hse$dnnow == 1]),
                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
                                               groups = NULL, qtype = 7, ref = TRUE,...) {
                   panel.ecdfplot(x, f.value = NULL, type = "s",
@@ -105,7 +122,7 @@ HSE <- ecdfplot(na.omit(hse$totalwu),
                 xlim = xlims, col = alpha("red", .7), lwd = 1, lty = 1,
                 scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
 
-HSEdiary <- ecdfplot(na.omit(hse$weektot),
+HSEdiary <- ecdfplot(na.omit(hse$weektot[hse$dnnow == 1]),
                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
                                               groups = NULL, qtype = 7, ref = TRUE,...) {
                   panel.ecdfplot(x, f.value = NULL, type = "s",
@@ -113,15 +130,15 @@ HSEdiary <- ecdfplot(na.omit(hse$weektot),
                                  ref = TRUE,...)
                   panel.abline(v = 14)
                 },
-                xlim = xlims, col = alpha("red", .7), lwd = 1, lty = 2,
+                xlim = xlims, col = alpha("red", .7), lwd = 2, lty = 2,
                 scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
 
-HSEdiary + HSE +EWAC+GF
+HSEdiary + HSE +EWAC + GF
 
 ```
 
 
-```{r}
+```{r, echo=F, fig.height=8, fig.width=11}
 plot(ats$qfv,  ats$gfmeanweekly, pch =16, col = alpha(1, .2),
      ylab = "GF (units/week)", xlab = "EWAC (units/week)", main = NULL)
 abline(0,1, col = 2, lwd =1.5)
@@ -131,8 +148,15 @@ abline(0,1, col = 2, lwd =1.5)
 
 
 
+# Discussion
 
+- GF not missing at random. Impute the `r round(3883/(3883+22376)*100, 1)`% missing cases
 
+# Limitations
+
+The three sources of information used in this validation measure different constructs: the HSE quantity-frequency does not capture variability, whereas the HSE weekly diary and the ATS graduated frequency schedule do. The HSE diary should nevertheless exhibit smaller recall error.
+
+The AUDIT-E used is administred using a CAPI. These findings are not easily transferable to self-administered AUDITs. Mention the difference between CAPI and self admin AUDIT in previous literature. Higher or lower?
 
 
 # Tables
