@@ -50,9 +50,16 @@ The aim of the present study is develop an algorithm producing an Estimator of u
 
 ## Literature on accuracy
 
-A review by @Greenfield2000 clarified the various constructs operationalised in existing alcohol measurement tools. 
+A fundamental hindrance at the core of alcohol research and care is the absence of a measurement gold standard. A number of instruments exist which have been subjected to concurrent validity analysis instead. A review by @Greenfield2000 clarified how the various constructs have been operationalised through the Quantity-Frequency (QF) measures, Graduated-Frequency (GF) measures and prospective weekly diaries (WD). Broadly, WD tend to capture the highest alcohol consumption levels, followed by GF and the lowest levels are recorded by QF measures [@Heeb2005, @Rehm1998]. A large investigation conducted as part of the Health Survey for England (HSE) [@Boniface2014] compared a WD with an interview-based specific-beverage QF method. The authors found consistent mean weekly drinking estimates in the two methods, with most differences being associated with drink type and venue.
+
+@Stockwell2004
+
+@Stockwell2014
+
+Neumann, Heeb2005, 
 
 
+GF Hilton ME: A comparison of a prospective diary and two summary recall techniques for recording alcohol consumption. Br J Addict 84: 1085- 1092, 1989
 
 
 The review by @Feunekes1999 
@@ -67,6 +74,9 @@ Boniface S, Fuller E. Drinking diary. In: Craig R, Mindell J, editors. Heal Surv
 
 # Methods 
 
+- estimating coefficients
+- aggregate consistency between 2 sources
+- missing data
 
 
 

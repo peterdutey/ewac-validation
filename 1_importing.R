@@ -54,8 +54,6 @@ hse <- hse[,c("hserial", "pserial", "hhsize", "psu", "wt_int", "age",  "wt_drink
               "totalwu", "alcbase", "totalwug", "diaryrec", "ddunitwk", "ddunitwd",
               "weektot", "ddalclim", "sex", "tenureb", "gor1", "dnoft", "dnnow")]
 
-
-
 save(hse, file =  file.path(atsfiles, "HSE.RData"))
 
 
@@ -86,6 +84,7 @@ library(scales)
 plot(ats$qfv, ats$gfmeanweekly, pch =16, col = alpha(1, .2),
      ylab = "GF (units/week)", xlab = "EWAC (units/week)", main = NULL)
 abline(0,1, col = 2, lwd =1.5)
+
 
 
 plot(ats$qfv, ats$gfmeanweekly,  col = alpha(1, .5),
@@ -125,6 +124,9 @@ summary(m2)
 
 
 
+mhse <- gam((totalwu - weektot)~s(age)+factor(sex), data=hse)
+summary(mhse)
+
 
 summary(ats[,grep("gf", names(ats), value = T)])
 # Removing never drinkers, 
@@ -140,7 +142,50 @@ exp(summary(m3)$coef)
 
 
 
+m <- glm(weektot~1, data = hse, family = Gamma)
+library(MASS)
 
+plot(density(hse$totalwu[which(hse$totalwu>0)]), col = 3, xlim = c(0, 150))
+lines(density(hse$weektot[which(hse$weektot>0)]))
+lines(density(ats$gfmeanweekly[which(ats$gfmeanweekly>0)]), col = 2)
+
+
+
+
+
+plot(density(na.omit(hse$totalwu[which(hse$dnnow ==1)])), col = 3, 
+     xlim = c(0, 50), main="audit-c>=1", ylim = c(0, .12))
+lines(density(na.omit(ats$qfv[which(ats$auditc >=1)])), col = "grey75")
+lines(density(na.omit(hse$weektot[which(hse$dnnow ==1)])))
+lines(density(na.omit(ats$gfmeanweekly[which(ats$auditc >=1)])), col = 2)
+legend("topright", 
+       legend=c("HSE", "HSE diary", "ATS GF"), 
+       lwd= 2,
+       col = c(3, 1, 2))
+
+library(fitdistrplus)
+fitdist(na.omit(ats$gfmeanweekly[which(ats$auditc >=1 & ats$gfmeanweekly>0)]), distr = "gamma")
+
+
+shapediary = 1.3401780
+ratediary= 0.1080454
+
+theta = 19.03
+k = 0.69
+
+curve(dpoisson(x, shape = shapediary, rate = ratediary), from=0, to =150)
+curve(dpoisson(x, shape = k  , scale = theta*7/10), from=0, to =200, add = T, col = 2)
+curve(dpoisson(x, shape = 0.78345929  , rate = 0.07667736), from=0, to =200, add = T, col = 3)
+
+glm(ats$gfmeanweekly[which(ats$auditc >=1)]~1, family = poisson)
+plot(density(na.omit(ats$gfmeanweekly[which(ats$auditc >=1)])), col = 3, 
+     xlim = c(0, 50), main="audit-c>=1", ylim = c(0, .12))
+curve(dpois(x, 9.954254), from=0, to =150, add = T)
+
+
+
+library(fitdistrplus)
+tlfb <- fitdist(hse$weektot[which(hse$weektot>0)], "gamma")
 
 
 
