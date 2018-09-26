@@ -5,6 +5,9 @@ library(data.table)
 library(haven)
 ats <- haven::read_dta(file.path(atsfiles, "qfmodule.dta"))
 ats <- ats[,listvar]
+ats$ageg <- cut(ats$actage, breaks = c(17, 25, 35, 45, 55, 65, 75, 85, 105), include.lowest = F, right = F)
+levels(hse$ageg) <- c("18-24 years","25-34 years","35-44 years","45-54 years",
+                      "55-64 years","65-74 years","75-84 years","85 years and over")
 
 alctypes <- data.frame(list(alctype1 = c('Wine', 'Beer or lager', 
                                          'Spirits on their own (for example whisky, vodka)',
@@ -16,12 +19,34 @@ alctypes <- data.frame(list(alctype1 = c('Wine', 'Beer or lager',
 
 ats$alctype1 <- as_factor(ats$alctype1)
 ats <- merge(ats, alctypes, by = "alctype1", all.x = T, all.y = F)
+ats$ethnic <- as.character(as_factor(ats$ethnic))
+ethnicgrp <- data.frame(list(ethnic = c('WHITE BRITISH', 'WHITE IRISH', 
+                                        'WHITE GYPSY /TRAVELLER', 'WHITE OTHER', 
+                                        'MIXED WHITE/BLACK CARIBBEAN', 
+                                        'MIXED WHITE/BLACK AFRICAN', 
+                                        'MIXED WHITE AND ASIAN', 'MIXED OTHER', 
+                                        'ASIAN INDIAN', 'ASIAN PAKISTANI', 
+                                        'ASIAN BANGLADESHI', 'ASIAN CHINESE', 
+                                        'ASIAN OTHER', 'BLACK AFRICAN', 
+                                        'BLACK CARIBBEAN', 'BLACK OTHER', 'ARAB', 
+                                        'OTHER', "DON'T KNOW", 'REFUSED'),
+                             ethgrp = c('White British', 'White Other',
+                                        'White Other', 'White Other',
+                                        'Mixed', 'Mixed', 'Mixed', 'Mixed',
+                                        'Asian', 'Asian', 'Asian', 'Asian', 'Asian',
+                                        'Black', 'Black', 'Black',
+                                        'Other', 'Other', NA, NA)))
+ats <- merge(ats, ethnicgrp, by = "ethnic", all.x =T)
 ats$audit1_label <- as.character(as_factor(ats$audit1))
 ats$audit2_label <- as.character(as_factor(ats$audit2))
 ats$audit3_label <- as.character(as_factor(ats$audit3))
 ats <- data.table(ats)
 ats$sex <- as_factor(ats$sexz)
 ats$sex <- relevel(ats$sex, "Women")
+ats <- merge(ats, audit1, "audit1_label", all.x = T, all.y = F)
+ats <- merge(ats, audit2, "audit2_label", all.x = T, all.y = F)
+ats <- merge(ats, audit3, "audit3_label", all.x = T, all.y = F)
+ats <- proc.AUDIT(ats)
 save(ats, file = file.path(atsfiles, "qfmodule.RData"))
 
 
@@ -29,7 +54,7 @@ save(ats, file = file.path(atsfiles, "qfmodule.RData"))
 
 hse <- foreign::read.dta("~/0 Datasets/HSE 2011/stata9_se/hse2011ai.dta", convert.factors = F)
 names(hse) <- tolower(names(hse))
-hse <- hse[hse$age > 17 & hse$sex ==2 ,]
+hse <- hse[hse$age > 17 ,]
 hse$ageg <- cut(hse$age, breaks = c(17, 25, 35, 45, 55, 65, 75, 85, 105), include.lowest = F, right = F)
 levels(hse$ageg) <- c("18-24 years","25-34 years","35-44 years","45-54 years",
                       "55-64 years","65-74 years","75-84 years","85 years and over")
@@ -50,7 +75,7 @@ hse$ddunitwd[hse$ddunitwd <0 ] <- NA
 hse$dnoft <- factor(hse$dnoft, labels = names(attributes(hse)$label.table$DNOFT[attributes(hse)$label.table$DNOFT > 0]))
 hse$dnnow[hse$dnnow < 0] <- NA
 
-hse <- hse[,c("hserial", "pserial", "hhsize", "psu", "wt_int", "age",  "wt_drink",
+hse <- hse[,c("hserial", "pserial", "hhsize", "psu", "wt_int", "age", "ageg", "wt_drink",
               "totalwu", "alcbase", "totalwug", "diaryrec", "ddunitwk", "ddunitwd",
               "weektot", "ddalclim", "sex", "tenureb", "gor1", "dnoft", "dnnow")]
 
@@ -152,7 +177,6 @@ lines(density(ats$gfmeanweekly[which(ats$gfmeanweekly>0)]), col = 2)
 
 
 
-
 plot(density(na.omit(hse$totalwu[which(hse$dnnow ==1)])), col = 3, 
      xlim = c(0, 50), main="audit-c>=1", ylim = c(0, .12))
 lines(density(na.omit(ats$qfv[which(ats$auditc >=1)])), col = "grey75")
@@ -187,7 +211,13 @@ curve(dpois(x, 9.954254), from=0, to =150, add = T)
 library(fitdistrplus)
 tlfb <- fitdist(hse$weektot[which(hse$weektot>0)], "gamma")
 
+ats$sexz <- as.factor(ats$sexz)
+ats$agez <- as.factor(ats$agez)
+
+
+mbias <- lm(qfv-gfmeanweekly ~ as_factor(agez) + sex + favdrink +
+              auditc + as_factor(ethnic), data = ats)
+stargazer(mbias, align=TRUE,type = "html",style = "io")
 
 
 
-      

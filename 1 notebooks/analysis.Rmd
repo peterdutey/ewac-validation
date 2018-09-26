@@ -5,12 +5,11 @@ csl: elsevier-vancouver.csl
 link-citations: yes
 output:
   html_notebook:
+    number_sections: yes
     toc: yes
-    number_sections: true
-  #   df_print: paged
-  #   toc: yes
-  #   number_sections: true
-  # html_document:
+  html_document:
+    df_print: paged
+    toc: yes
 bibliography: bibliography.bib
 ---
 
@@ -19,18 +18,20 @@ bibliography: bibliography.bib
 # Loading data
 source("../0 functions/functions.R")
 source("../0 functions/filepaths.R")
-library(data.table)
-library(haven)
-library(scales)
+library("data.table")
+library("haven")
+library("scales")
+library("knitr")
+library("xtable")
+library("stargazer")
+
 load(file.path(atsfiles, "HSE.RData"))
 load(file.path(atsfiles, "qfmodule.RData"))
-ats <- merge(ats, audit1, "audit1_label", all.x = T, all.y = F)
-ats <- merge(ats, audit2, "audit2_label", all.x = T, all.y = F)
-ats <- merge(ats, audit3, "audit3_label", all.x = T, all.y = F)
-ats <- proc.AUDIT(ats)
 ats <- ats[audit1 %in% 2:6 & audit2 %in% 1:7,]
-hse <- hse[hse$dnnow == 1,]
-
+ats <- ats[actage >= 18,]
+hse <- hse[hse$dnnow == 1,] # Take only those drinking 'at all these days'
+hse$agez <- cut(hse$age, breaks = c(18, 25, 35, 45, 55, 65, 140), right = F)
+levels(hse$agez) <- c("18-24", "25-34", "35-44", "45-54", "55-64", "65+")
 ```
 
 
@@ -69,7 +70,6 @@ With respect to construct validity, QF does not capture variability of drinking,
 Boniface S, Kneale J, Shelton N. Drinking pattern is more strongly associated with under-reporting of alcohol consumption than socio-demographic factors: evidence from a mixed-methods study. BMC Public Health [Internet] 2014;14(1):1297. PMID:25519144
 
 Boniface S, Fuller E. Drinking diary. In: Craig R, Mindell J, editors. Heal Surv Engl 2011 Vol 1 Heal Soc care lifestyles [Internet] Health and Social Care Information Centre; 2012. Available from: http://content.digital.nhs.uk/catalogue/PUB09300
-
 
 
 # Methods 
@@ -150,11 +150,30 @@ HSEdiary + HSE +EWAC + GF
 
 ```{r, echo=F, fig.height=8, fig.width=11}
 plot(ats$qfv,  ats$gfmeanweekly, pch =16, col = alpha(1, .2),
-     ylab = "GF (units/week)", xlab = "EWAC (units/week)", main = NULL)
+     ylab = "GF (units/week)", xlab = "EWAC (units/week)", main = NULL,
+     xlim = c(0, 50), ylim = c(0,50))
 abline(0,1, col = 2, lwd =1.5)
 ```
 
 
+## Regression analysis
+
+```{r echo =F}
+
+#mbias <- lm(qfv-gfmeanweekly ~ as_factor(agez) + as_factor(sexz) + as_factor(favdrink), data = ats) #[gfmeanweekly <20,]
+ats$alcorisk <- cut(ats$auditc_score, breaks = c(1, 4, 8, 13))
+levels(ats$alcorisk) <- c("Low", "Increased", "Higher")
+mbias <- lm(qfv-gfmeanweekly ~ as_factor(ageg) + sex + favdrink + (alcorisk), data = ats)
+ tab3 <- stargazer(mbias, title="Bias regression results",
+                     align=TRUE, type = "html",style = "ajs")
+ 
+merr <- lm((qfv-gfmeanweekly)^2 ~ as_factor(ageg) + sex + favdrink + (alcorisk), data = ats)
+ tab4 <- stargazer(mbias, title="MSE regression results",
+                     align=TRUE, type = "html",style = "ajs")
+#kable(tab2)
+kable(xtable(mbias))
+ kable(xtable(merr))
+```
 
 
 

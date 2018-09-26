@@ -2,7 +2,7 @@
 # 
 # #Version 3
 # audit1 <- data.frame(list(#ID = 1:6,
-#                           audit1_label = c('Never', 'Monthly or less', 
+#                           audit1_label = c('Never', 'Monthly or less',
 #                                            '2 to 4 times a month', '2 to 3 times a week',
 #                                            '4 to 5 times a week', '6 or more times a week'),
 #                           audit1_value = c(0, 4.5 * 12,
