@@ -18,21 +18,18 @@ bibliography: bibliography.bib
 # Loading data
 source("../01_src/functions.R")
 source("../01_src/filepaths.R")
-library("data.table")
-library("haven")
 library("scales")
-library("knitr")
-library("xtable")
-library("stargazer")
+# library("knitr")
+# library("xtable")
+# library("stargazer")
 
-load(file.path(atsfiles, "HSE.RData"))
-load(file.path(atsfiles, "qfmodule.RData"))
-ats <- ats[audit1 %in% 2:6 & audit2 %in% 1:7,]
-ats$auditc_risklevel <- cut(ats$auditc_score, c(0,1,5,8,13), right = F)
+load(file.path("..", "02_data", "HSE.rda"))
+load(file.path("..", "02_data", "ATS.rda"))
 ats <- ats[actage >= 18,]
-hse <- hse[hse$dnnow == 1,] # Take only those drinking 'at all these days'
-hse$agez <- cut(hse$age, breaks = c(18, 25, 35, 45, 55, 65, 140), right = F)
-levels(hse$agez) <- c("18-24", "25-34", "35-44", "45-54", "55-64", "65+")
+
+# ats <- ats[audit1 %in% 2:6 & audit2 %in% 1:7,]
+# hse <- hse[hse$dnnow == 1,] # Take only those drinking 'at all these days'
+
 ```
 
 
@@ -44,9 +41,9 @@ A variant of the AUDIT schedule known as the ‘Extended AUDIT’ improves the g
 
 Neither the AUDIT nor the Extended AUDIT provide a measure of usual alcohol consumption, which could help individuals understand, monitor and adjust their drinking behaviour. Making individuals more aware of the consumption and associated risk is a key recommendation in the recent literature [@Nutt2014, @Rehm2016] and modern government alcohol policy guidelines [@AU.alcoguidelines2009, @AlcoholCMO2016b].
 
-The aim of the present study is develop and validate an Estimator of usual Weekly Alcohol Consumption in units (EWAC) based on the Extended AUDIT. We 
-This paper reports on a series of empirical studies examining the error of this to
+The aim of the present study is develop and validate an Estimator of usual Weekly Alcohol Consumption in units (EWAC) based on the Extended AUDIT. The product of frequency of drinking (AUDIT item 1) and quantity of drinking (AUDIT item 2) can be used to estimate usual alcohol consumption. In addition, measures of heavy use (AUDIT item 3) have been found to improve the consistency of the estimator with other data sources in previous research [@Lemmens1992]. 
 
+This paper reports four distinct empirical studies. Study 1 estimates coefficients to apply to each of the AUDIT response items to compute an EWAC using data from a large English household survey, the Alcohol Toolkit Study (ATS). Using the same source, Study 2 models measures of deviation between the EWAC and alcohol consumption as estimated in the survey's graduated-frequency schedule. This analysis seeks to identify measures of bias and variance in the EWAC under the assumption that the graduated-frequency schedule constitutes a gold-standard. Study 3 models the deviation between EWAC and another comparator from the 28-day Timeline Followback in a questionnaire study conducted amongst visitors of an acute hospital based in Southampton, UK. Finally, Study 4 compares the population-wide total and empirical cumulative distribution of alcohol consumption in England using the EWAC,  the ATS graduated frequency schedule, the Health Survey for England, and official statistics on alcohol sales.
 
 # Methods
 
@@ -61,7 +58,10 @@ Broadly, WD tend to capture the highest alcohol consumption levels, followed by 
 
 ## EWAC 
 
-Existing research on quantity-frequency alcohol instruments suggests that the product of the quantity and frequency questions in the AUDIT (see AUDIT-1 and AUDIT-2 in [Table 1](#table1)) could be used to produce a measure of usual consumption [@Lemmens1992].
+Previous research on quantity-frequency alcohol instruments suggests that the product of the quantity and frequency questions in the AUDIT (see AUDIT-1 and AUDIT-2 in [Table 1](#table1)) could be used to produce a measure of usual consumption [@Lemmens1992].
+
+
+![Quantity-Frequency-Variability estimator overview (adapted from @Lemmens1992)](qfv.png)
 
 
 - estimating coefficients
@@ -86,11 +86,11 @@ The protocol for this analysis was pre-registered [@Dutey2018].
 ## Empirical distribution functions
 
 
-| Study     | Mean (units/week)     | Median | Variance | N |
-| ----------| ---------------------:| --------:|--------:| ----: |
-| HSE (all)      | `r tbrounding(mean(hse$totalwu, na.rm =T),1)`   | `r tbrounding(median(hse$totalwu, na.rm =T),1)`     | `r tbrounding(var(hse$totalwu, na.rm =T),1)` |  `r sum(!is.na(hse$totalwu))` |
-| HSE diary | `r tbrounding(mean(hse$weektot, na.rm =T),1)`   | `r tbrounding(median(hse$weektot, na.rm =T),1)`     | `r tbrounding(var(hse$weektot, na.rm =T),1)` |  `r sum(!is.na(hse$weektot))` |
-| ATS QF    | `r tbrounding(mean(ats$gfmeanweekly, na.rm =T),1)`   | `r tbrounding(median(ats$gfmeanweekly, na.rm =T),1)`   | `r tbrounding(var(ats$gfmeanweekly, na.rm =T),1)` |  `r sum(!is.na(ats$gfmeanweekly))` |
+<!-- | Study     | Mean (units/week)     | Median | Variance | N | -->
+<!-- | ----------| ---------------------:| --------:|--------:| ----: | -->
+<!-- | HSE (all)      | `r tbrounding(mean(hse$totalwu, na.rm =T),1)`   | `r tbrounding(median(hse$totalwu, na.rm =T),1)`     | `r tbrounding(var(hse$totalwu, na.rm =T),1)` |  `r sum(!is.na(hse$totalwu))` | -->
+<!-- | HSE diary | `r tbrounding(mean(hse$weektot, na.rm =T),1)`   | `r tbrounding(median(hse$weektot, na.rm =T),1)`     | `r tbrounding(var(hse$weektot, na.rm =T),1)` |  `r sum(!is.na(hse$weektot))` | -->
+<!-- | ATS QF    | `r tbrounding(mean(ats$gfmeanweekly, na.rm =T),1)`   | `r tbrounding(median(ats$gfmeanweekly, na.rm =T),1)`   | `r tbrounding(var(ats$gfmeanweekly, na.rm =T),1)` |  `r sum(!is.na(ats$gfmeanweekly))` | -->
 
 
 
@@ -180,11 +180,12 @@ abline(0,1, col = 2, lwd =1.5)
 
 - GF not missing at random. Impute the `r round(3883/(3883+22376)*100, 1)`% missing cases
 
-# Limitations
-
 The three sources of information used in this validation measure different constructs: the HSE quantity-frequency does not capture variability, whereas the HSE weekly diary and the ATS graduated frequency schedule do. The HSE diary should nevertheless exhibit smaller recall error.
 
-The AUDIT-E used is administred using a CAPI. These findings are not easily transferable to self-administered AUDITs. Mention the difference between CAPI and self admin AUDIT in previous literature. Higher or lower?
+## Limitations
+
+Findings reported in this paper only concern adult residents of private households in England, and may not generalise to other countries or age groups. The ATS is a computer-assisted personal interview survey, which may improve data quality for the Extended AUDIT compared with, for instance, a self-administered Extended AUDIT in a health care context. During data collection, we recorded a frequent confusion with the AUDIT's item 1: some participants being confused as to whether the question refers to number of days in which alcohol has been consumed, or number of occasions on any given day. We believe this to be a common occurrence when the AUDIT is self-administered.
+
 
 
 # Tables
