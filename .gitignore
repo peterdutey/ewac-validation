@@ -2,4 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
+01_src/filepaths.R
 02_data/*.rda
