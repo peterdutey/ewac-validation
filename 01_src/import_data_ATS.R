@@ -1,6 +1,8 @@
 
 source("01_src/functions.R")
 source("01_src/filepaths.R")
+source("01_src/audit_weights.R")
+
 
 listvar <- c('xwave', 'A_weight0', 'weighttns', 'weighttns13', 'sttime', 'tatime', 'ststart', 
              'tastart', 'weekz', 'rectool', 'recz', 'st01', 'ta01', 'month', 'quarter', 
@@ -64,11 +66,8 @@ ats$audit1_label <- as.character(as_factor(ats$audit1))
 ats$audit2_label <- as.character(as_factor(ats$audit2))
 ats$audit3_label <- as.character(as_factor(ats$audit3))
 
+ats$auditc_risk_level <- proc_AUDIT_risk(ats$auditc)
 
-ats <- merge(ats, audit1, "audit1_label", all.x = T, all.y = F)
-ats <- merge(ats, audit2, "audit2_label", all.x = T, all.y = F)
-ats <- merge(ats, audit3, "audit3_label", all.x = T, all.y = F)
-ats <- proc.AUDIT(ats)
-save(ats, file = file.path(dir_ats, "qfmodule.RData"))
+save(ats, file = file.path("02_data", "ATS.rda"))
 
 rm(list = ls())

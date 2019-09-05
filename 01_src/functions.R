@@ -1,73 +1,24 @@
-# 
-# 
-# #Version 3
-# audit1 <- data.frame(list(#ID = 1:6,
-#                           audit1_label = c('Never', 'Monthly or less',
-#                                            '2 to 4 times a month', '2 to 3 times a week',
-#                                            '4 to 5 times a week', '6 or more times a week'),
-#                           audit1_value = c(0, 4.5 * 12,
-#                                            3 * 365 / 7, # the item caused most problems
-#                                            6 * 365 / 7,
-#                                            5 * 365 / 7, 7 * 365 / 7),
-#                           audit1_score = c( 0L, 1L, 2L, 3L, 4L, 4L)))
-# audit2 <- data.frame(list(#ID = 1:7,
-#                           audit2_label = c("1 to 2", "3 to 4", "5 to 6",
-#                                            "7 to 9", "10 to 12", "13 to 15", "16 or more"),
-#                           audit2_value = c(3.5, 5.5, 8,
-#                                            11, 12, 15, 18),
-#                           audit2_score = c(0L, 1L, 2L, 3L, 4L, 4L, 4L)))
-# 
-# 
-# audit3 <- data.frame(list(#ID = 1:5,
-#                           audit3_label = c("Never", "Less than monthly", "Monthly",
-#                                            "Weekly", "Daily or almost daily"),
-#                           audit3_value = c(0, 6, 15,
-#                                            1 * 365 / 7, 6.5 * 365 / 7),
-#                           audit3_score = 0:4))
 
-
-# Version 4
-audit1 <- data.frame(list(#ID = 1:6,
-  audit1_label = c('Never', 'Monthly or less', 
-                   '2 to 4 times a month', '2 to 3 times a week',
-                   '4 to 5 times a week', '6 or more times a week'),
-  audit1_value = c(0, .3465425, .9434469 , 2.216192 ,4.199273, 6.053639)*365 / 7,
-  audit1_score = c( 0L, 1L, 2L, 3L, 4L, 4L)))
-
-audit2 <- data.frame(list(#ID = 1:7,
-  audit2_label = c("1 to 2", "3 to 4", "5 to 6",
-                   "7 to 9", "10 to 12", "13 to 15", "16 or more"),
-  audit2_value = c(2.290841, 4.045133, 5.81638, 7.71108, 9.645919, 11.45553, 15.12373),
-  audit2_score = c(0L, 1L, 2L, 3L, 4L, 4L, 4L)))
-
-audit3 <- data.frame(list(#ID = 1:5,
-  audit3_label = c("Never", "Less than monthly", "Monthly",
-                   "Weekly", "Daily or almost daily"),
-  audit3_value = c(0, 6, 15,
-                   1 * 365 / 7, 6.5 * 365 / 7),
-  audit3_score = 0:4))
-
-
-proc.AUDIT <- function(X){
-  X[,c("audit1_value", "audit1_score")] <- audit1[match(X$audit1_label,audit1$audit1_label), c("audit1_value", "audit1_score")]
-  X[,c("audit2_value", "audit2_score")] <- audit2[match(X$audit2_label,audit2$audit2_label), c("audit2_value", "audit2_score")]
-  X[,c("audit3_value", "audit3_score")] <- audit3[match(X$audit3_label,audit3$audit3_label), c("audit3_value", "audit3_score")]
-  # X$audit2_label <- merge(X, audit2[,-1], all.x = T, by = "audit2_label")
-  # X$audit3_label <- merge(X, audit3[,-1], all.x = T, by = "audit3_label")
-  X$auditc_score <- X$audit1_score + ifelse(X$audit1_score == 0, 0, X$audit2_score + X$audit3_score )
-  X$intake <- X$audit1_value * ifelse(X$audit1_value==0, NA, X$audit2_value )/52.1 
-  bingeval <- 8
-  X$qfv <- ifelse(X$audit1_score > 0,
-                  ifelse(X$audit2_score >= 2,
-                         ifelse(X$audit1_value >= X$audit3_value,
-                                X$audit1_value * X$audit2_value  / 52.1,
-                                X$audit3_value * X$audit2_value  / 52.1),
-                         ifelse(X$audit1_value == X$audit3_value,
-                                X$audit1_value * bingeval / 52.1,
-                                ((X$audit1_value * X$audit2_value ) + (X$audit3_value * bingeval ) ) /52.1)),
-                  0)
-  return(X)
-}
+# proc.AUDIT <- function(X){
+#   X[,c("audit1_value", "audit1_score")] <- audit1[match(X$audit1_label,audit1$audit1_label), c("audit1_value", "audit1_score")]
+#   X[,c("audit2_value", "audit2_score")] <- audit2[match(X$audit2_label,audit2$audit2_label), c("audit2_value", "audit2_score")]
+#   X[,c("audit3_value", "audit3_score")] <- audit3[match(X$audit3_label,audit3$audit3_label), c("audit3_value", "audit3_score")]
+#   # X$audit2_label <- merge(X, audit2[,-1], all.x = T, by = "audit2_label")
+#   # X$audit3_label <- merge(X, audit3[,-1], all.x = T, by = "audit3_label")
+#   X$auditc_score <- X$audit1_score + ifelse(X$audit1_score == 0, 0, X$audit2_score + X$audit3_score )
+#   X$intake <- X$audit1_value * ifelse(X$audit1_value==0, NA, X$audit2_value )/52.1 
+#   bingeval <- 8
+#   X$qfv <- ifelse(X$audit1_score > 0,
+#                   ifelse(X$audit2_score >= 2,
+#                          ifelse(X$audit1_value >= X$audit3_value,
+#                                 X$audit1_value * X$audit2_value  / 52.1,
+#                                 X$audit3_value * X$audit2_value  / 52.1),
+#                          ifelse(X$audit1_value == X$audit3_value,
+#                                 X$audit1_value * bingeval / 52.1,
+#                                 ((X$audit1_value * X$audit2_value ) + (X$audit3_value * bingeval ) ) /52.1)),
+#                   0)
+#   return(X)
+# }
 
 convpDrink <- function(prev_nondrinkers = NULL){
   cutoff = round(prev_nondrinkers, 2)
@@ -96,3 +47,79 @@ keyABH <- list(space="right", cex = 1.5,
 ecdfxlab=list(label="Average units/week", cex=1.5)
 ecdfylab=list(label="Empirical cumulative density", cex=1.5)
 
+
+
+proc_AUDIT_score <- function(X, audit_coef, zero.if.A1.Never = F){
+  # Compute AUDIT-C score
+  # X:                 data.frame containing AUDIT1, AUDIT2, and AUDIT3 columns in order 
+  # audit_coef:        list of coefficients to apply to AUDIT response items (see audit_weights.R)
+  # zero.if.A1.Never:  whether AUDIT-1 = 'Never' is treated as AUDIT-C = 0. Default is FALSE.
+  
+  X[,c("audit1_score")] <- audit_coef$audit1[match(X[,1], audit_coef$audit1$audit1_label), c("audit1_score")]
+  X[,c("audit2_score")] <- audit_coef$audit2[match(X[,2], audit_coef$audit2$audit2_label), c("audit2_score")]
+  X[,c("audit3_score")] <- audit_coef$audit3[match(X[,3], audit_coef$audit3$audit3_label), c("audit3_score")]
+  
+  if(zero.if.A1.Never){
+    X$audit1_score + ifelse(X$audit1_score == 0, 0, X$audit2_score + X$audit3_score )
+  } else {
+    X$audit1_score + X$audit2_score + X$audit3_score 
+  }
+}
+
+proc_AUDIT_risk <- function(X){
+  # Compute Public Health England alcohol risk levels
+  # X: vector of AUDIT-C scores
+  cut(X, breaks = c(0, 5, 8, 13), right = F,
+      labels = c("Low", "Increasing", "High"))
+}
+
+
+proc_EWAC <- function(X, audit_coef, method = "qfv", binge.val = 8){
+  # Compute the EWAC
+  # X:                 data.frame containing AUDIT1, AUDIT2, and AUDIT3 columns in order 
+  # audit_coef:        list of coefficients to apply to AUDIT response items (see audit_weights.R)
+  # method:            character string indicating the estimation method: 
+  #                      - "qfv" for the quantity-frequency-variably method
+  #                      - "qf" for the simple quantity-frequency method.
+  # binge.val:         number of UK units assumed for a bringe drinking session. Default is 8.
+  
+  X[,c("audit1_value")] <- audit_coef$audit1[match(X[,1], audit_coef$audit1$audit1_label), c("audit1_value")]
+  X[,c("audit2_value")] <- audit_coef$audit2[match(X[,2], audit_coef$audit2$audit2_label), c("audit2_value")]
+  X[,c("audit3_value")] <- audit_coef$audit3[match(X[,3], audit_coef$audit3$audit3_label), c("audit3_value")]
+  
+  if (method == "qf"){
+    
+    stop("to be implemented")
+    # X$audit1_value * ifelse(X$audit1_value==0, NA, X$audit2_value )/52.1 
+    
+  } else if (method == "qfv") {
+    
+    # ifelse(X$audit1_score > 0,
+    #        ifelse(X$audit2_score >= 2,
+    #               ifelse(X$audit1_value >= X$audit3_value,
+    #                      X$audit1_value * X$audit2_value  / 52.1,
+    #                      X$audit3_value * X$audit2_value  / 52.1),
+    #               ifelse(X$audit1_value == X$audit3_value,
+    #                      X$audit1_value * bingeval / 52.1,
+    #                      ((X$audit1_value * X$audit2_value ) + (X$audit3_value * bingeval ) ) /52.1)),
+    #        0)
+    
+    ifelse(X$audit2_value >= binge.val,
+           ifelse(X$audit1_value >= X$audit3_value,
+                  #QF:
+                  X$audit1_value * X$audit2_value  / 52.1,
+                  #QV:
+                  X$audit3_value * X$audit2_value  / 52.1),
+           ifelse(X$audit1_value == X$audit3_value,
+                  #binge x F
+                  X$audit1_value * binge.val / 52.1, 
+                  #QF + binge x V
+                  ((X$audit1_value * X$audit2_value ) + (X$audit3_value * binge.val ) ) /52.1))
+    
+  } else {
+    
+    stop("Invalid method input.")
+    
+  }
+  
+}
