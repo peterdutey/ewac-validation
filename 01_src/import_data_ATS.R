@@ -21,6 +21,7 @@ listvar <- c('xwave', 'A_weight0', 'weighttns', 'weighttns13', 'sttime', 'tatime
              'gf4150', 'gf5160', 'gfgroups', 'gfmax', 'gfmeanweekly', 'gfsumdays', 'gftotal')
 
 library(haven)
+library(lubridate)
 ats <- read_dta(file.path(dir_ats, "qfmodule.dta"))
 ats <- ats[, listvar]
 ats$ageg <- cut(ats$actage, breaks = c(17, 25, 35, 45, 55, 65, 75, 85, 105), 
@@ -61,6 +62,8 @@ ats <- merge(ats, ethnicgrp, by = "ethnic", all.x =T)
 
 ats$sex <- as_factor(ats$sexz)
 ats$sex <- relevel(ats$sex, "Women")
+
+ats$date_wave <- as.Date("2014/03/01") %m+% months(ats$xwave - 90)
 
 ats$audit1_label <- as.character(as_factor(ats$audit1))
 ats$audit2_label <- as.character(as_factor(ats$audit2))
