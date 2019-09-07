@@ -27,7 +27,7 @@ ats <- ats[, listvar]
 ats$ageg <- cut(ats$actage, breaks = c(15, 17, 25, 35, 45, 55, 65, 75, 85, 105), 
                 include.lowest = F, right = F)
 levels(ats$ageg) <- c("16-17 years", "18-24 years","25-34 years","35-44 years","45-54 years",
-                      "55-64 years","65-74 years","75-84 years","85 years and over")
+                      "55-64 years","65-74 years","75-84 years","85+ years")
 
 alctypes <- data.frame(list(
         alctype1 = c('Wine', 'Beer or lager', 
