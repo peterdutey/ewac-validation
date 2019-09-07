@@ -1,14 +1,13 @@
 source("01_src/functions.R")
 source("01_src/filepaths.R")
 
-library(data.table)
 library(foreign)
 
 hse <- read.dta(dir_hse, convert.factors = F)
 names(hse) <- tolower(names(hse))
-hse <- hse[ hse$age > 17 ,]
-hse$ageg <- cut(hse$age, breaks = c(17, 25, 35, 45, 55, 65, 75, 85, 105), include.lowest = F, right = F)
-levels(hse$ageg) <- c("18-24 years","25-34 years","35-44 years","45-54 years",
+hse <- hse[ hse$age > 15 ,]
+hse$ageg <- cut(hse$age, breaks = c(15, 17, 25, 35, 45, 55, 65, 75, 85, 105), include.lowest = F, right = F)
+levels(hse$ageg) <- c("16-17 years", "18-24 years","25-34 years","35-44 years","45-54 years",
                       "55-64 years","65-74 years","75-84 years","85 years and over")
 hse$totalwu[hse$totalwu < 0] <- NA
 hse$dnoft[hse$dnoft < 0] <- NA
