@@ -4,3 +4,6 @@
 .Ruserdata
 01_src/filepaths.R
 02_data/*.rda
+03_notebooks/analysis.nb.html
+03_notebooks/output_lm_rmse.html
+03_notebooks/output_lm_bias.html
