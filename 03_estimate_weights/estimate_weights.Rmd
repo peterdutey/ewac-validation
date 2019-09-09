@@ -19,13 +19,20 @@ library(rstan)
 # library("stargazer")
 
 load(file.path("..", "02_data", "ATS.rda"))
-ats <- ats[ats$actage >= 18,]
+ats <- ats %>% 
+  # filter(actage >= 18) %>%
+  filter(audit1 > 1 & audit1 < 7) %>% 
+  filter(!audit2_label %in% c("Refused", "Don't know")) %>% 
+  filter(!audit3_label %in% c("Refused", "Don't know")) %>% 
+  mutate(audit1_label = factor(audit1_label),
+         audit2_label = factor(audit2_label), 
+         audit3_label = factor(audit3_label))
 
-ats$ewac_mp <- proc_EWAC(ats[,c("audit1_label", "audit2_label", "audit3_label")],
-                         audit_coef = audit_weights_midpoints, method = "qfv")
+ats$ewac_mp <- proc_EWAC(
+  ats[,c("audit1_label", "audit2_label", "audit3_label")],
+  audit_coef = audit_weights_midpoints, method = "qfv")
 
 ats_subset <- ats %>% 
-  filter(audit1 > 1 & audit1 < 7) %>% 
   transmute(GF = gfmeanweekly,
             audit1_ = as.factor(audit1),
             audit2_ = as.factor(audit2),
@@ -87,5 +94,22 @@ results
 
 ```{r}
 plot(mod1_fit, plotfun = "trace", pars = c('F2', 'F3', 'F4', 'F5', 'F6', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'V1', 'V2', 'V3', 'V4'))
+```
+ 
+ 
+ 
+```{r}
+
+library(randomForest)
+rf1 <- ats %>% 
+  select(gfmeanweekly, audit1_label, audit2_label, audit3_label) %>% 
+  na.omit() %>%
+  randomForest(gfmeanweekly ~ audit1_label + audit2_label + audit3_label,
+             data = ., ntree = 50)
+
+ats$ewac_rf <- predict(rf1, newdata = ats)
+
+save(rf1, file = "../02_data/random_forest_model.rda")
+
 ```
  
