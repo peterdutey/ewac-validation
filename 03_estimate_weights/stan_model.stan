@@ -69,23 +69,24 @@ transformed parameters{
 // and standard deviation 'sigma'.
 model {
   
-  F2 ~ uniform (0.1, 0.5);
-  F3 ~ uniform (0.5, 2);
-  F4 ~ uniform (2, 3.5);
-  F5 ~ uniform (3.5, 5.5);
-  F6 ~ uniform (5.5, 7);
-  Q1 ~ uniform (1, 2.5);
-  Q2 ~ uniform (2.5, 4.5);
-  Q3 ~ uniform (4.5, 6.5);
-  Q4 ~ uniform (6.5, 9.5);
-  Q5 ~ uniform (9.5, 12.5);
-  Q6 ~ uniform (12.5, 15.5);
-  Q7 ~ uniform (15.5, 25);
-  V1 ~ uniform (0, 6);
-  V2 ~ uniform (0.1, 0.5);
-  V3 ~ uniform (0.5, 1);
-  V4 ~ uniform (1, 3);
-  V5 ~ uniform (3, 7);
+  F2 ~ unif(0.1, 0.5);
+  F3 ~ unif(0.5, 1.5);
+  F4 ~ unif(1.5, 3.5);
+  F5 ~ unif(3.5, 5.5);
+  F6 ~ unif(5.5, 7);
+  Q1 ~ unif(1, 2.5);
+  Q2 ~ unif(2.5, 4.5);
+  Q3 ~ unif(4.5, 6.5);
+  Q4 ~ unif(6.5, 9.5);
+  Q5 ~ unif(9.5, 12);
+  Q6 ~ unif(12, 15.5);
+  Q7 ~ unif(15.5, 25);
+  V1 ~ unif(0, 0.1);
+  V2 ~ unif(0.1, 0.5);
+  V3 ~ unif(0.5, 1);
+  V4 ~ unif(1, 3);
+  V5 ~ unif(3, 7);
+
 
   binge ~ uniform (5, 10);
  
