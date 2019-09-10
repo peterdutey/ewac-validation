@@ -8,7 +8,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Loading data
 source("../01_src/functions.R")
-source("../01_src/filepaths.R")
 source("../01_src/audit_weights.R")
 
 library(tidyverse)
@@ -65,16 +64,16 @@ mod1_fit <- stan(
   file = "stan_model.stan",  # Stan program
   data = stan_input,    # named list of data
   chains = 2,             # number of Markov chains
-  warmup = 500,          # number of warmup iterations per chain
-  iter = 1000,            # total number of iterations per chain
+  warmup = 2000,          # number of warmup iterations per chain
+  iter = 5000,            # total number of iterations per chain
   cores = 2,              # number of cores (could use one per chain)
   init = list(
     list(sigma = 10, binge = 6, 
-         F2 = 0.173, F3 = 0.69, F4 = 2.5, F5 = 4.5, F6 = 6.5, 
+         F2 = 0.173, F3 = 0.69, F4 = 2.1, F5 = 4.5, F6 = 6.5, 
          Q1 = 1.5, Q2 = 3.5, Q3 = 5.5, Q4 = 8, Q5 = 11, Q6 = 14, Q7 = 20, 
          V1 = 0, V2 = 0.3, V3 = 0.7, V4 = 2, V5 = 5),
     list(sigma = 12, binge = 8, 
-         F2 = 0.192, F3 = 0.767, F4 = 2.667, F5 = 4.667, F6 = 6.667, 
+         F2 = 0.192, F3 = 0.767, F4 = 2.5, F5 = 4.667, F6 = 6.667, 
          Q1 = 1.667, Q2 = 3.667, Q3 = 5.667, Q4 = 8.333, Q5 = 11.333, Q6 = 14.333, Q7 = 21, 
          V1 = 0, V2 = 0.4, V3 = 0.8, V4 = 2.5, V5 = 6)
   ))
@@ -93,7 +92,9 @@ results
 ```
 
 ```{r}
-plot(mod1_fit, plotfun = "trace", pars = c('F2', 'F3', 'F4', 'F5', 'F6', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'V1', 'V2', 'V3', 'V4'))
+plot(mod1_fit, plotfun = "trace", pars = c('F2', 'F3', 'F4', 'F5', 'F6'))
+plot(mod1_fit, plotfun = "trace", pars = c('Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7'))
+plot(mod1_fit, plotfun = "trace", pars = c('sigma', 'V1', 'V2', 'V3', 'V4'))
 ```
  
  
