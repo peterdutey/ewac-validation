@@ -68,11 +68,11 @@ mod1_fit <- stan(
   iter = 5000,            # total number of iterations per chain
   cores = 2,              # number of cores (could use one per chain)
   init = list(
-    list(sigma = 10, binge = 6, 
+    list(sigma = 10, binge = 8, 
          F2 = 0.173, F3 = 0.69, F4 = 2.1, F5 = 4.5, F6 = 6.5, 
          Q1 = 1.5, Q2 = 3.5, Q3 = 5.5, Q4 = 8, Q5 = 11, Q6 = 14, Q7 = 20, 
          V1 = 0, V2 = 0.3, V3 = 0.7, V4 = 2, V5 = 5),
-    list(sigma = 12, binge = 8, 
+    list(sigma = 12, binge = 6, 
          F2 = 0.192, F3 = 0.767, F4 = 2.5, F5 = 4.667, F6 = 6.667, 
          Q1 = 1.667, Q2 = 3.667, Q3 = 5.667, Q4 = 8.333, Q5 = 11.333, Q6 = 14.333, Q7 = 21, 
          V1 = 0, V2 = 0.4, V3 = 0.8, V4 = 2.5, V5 = 6)
@@ -85,16 +85,33 @@ mod1_fit <- stan(
 You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
-results <- summary(mod1_fit, pars = c('F2', 'F3', 'F4', 'F5', 'F6', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'V1', 'V2', 'V3', 'V4'))$summary
+new_results_dir <- "results_5000_2019-09-11"
+if (!dir.exists(new_results_dir)) { 
+  dir.create(new_results_dir)
+}
 
-write.csv(results, file = "results1000its.csv")
+results <- summary(mod1_fit, pars = c('F2', 'F3', 'F4', 'F5', 'F6', 'Q1', 'Q2', 'Q3', 
+                                      'Q4', 'Q5', 'Q6', 'Q7', 'V1', 'V2', 'V3', 'V4', 'sigma'))$summary
+write.csv(results, file = file.path(new_results_dir, "coefficients.csv"))
 results
 ```
 
 ```{r}
-plot(mod1_fit, plotfun = "trace", pars = c('F2', 'F3', 'F4', 'F5', 'F6'))
-plot(mod1_fit, plotfun = "trace", pars = c('Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7'))
-plot(mod1_fit, plotfun = "trace", pars = c('sigma', 'V1', 'V2', 'V3', 'V4'))
+
+d1 <- plot(mod1_fit, plotfun = "trace", pars = c('F2', 'F3', 'F4', 'F5', 'F6'))
+d2 <- plot(mod1_fit, plotfun = "trace", pars = c('Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7'))
+d3 <- plot(mod1_fit, plotfun = "trace", pars = c('sigma', 'V1', 'V2', 'V3', 'V4'))
+
+save_trace_plots <- function(x, file){
+  pdf(file, width = 8, height = 4)
+  plot(x)
+  dev.off()
+  x
+}
+save_trace_plots(d1, file.path(new_results_dir, "traces_AUDIT1.pdf"))
+save_trace_plots(d2, file.path(new_results_dir, "traces_AUDIT2.pdf"))
+save_trace_plots(d3, file.path(new_results_dir, "traces_AUDIT3.pdf"))
+ 
 ```
  
  
