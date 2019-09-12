@@ -100,7 +100,7 @@ results
 
 d1 <- plot(mod1_fit, plotfun = "trace", pars = c('F2', 'F3', 'F4', 'F5', 'F6'))
 d2 <- plot(mod1_fit, plotfun = "trace", pars = c('Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7'))
-d3 <- plot(mod1_fit, plotfun = "trace", pars = c('sigma', 'V1', 'V2', 'V3', 'V4'))
+d3 <- plot(mod1_fit, plotfun = "trace", pars = c('V1', 'V2', 'V3', 'V4', 'binge', 'sigma'))
 
 save_trace_plots <- function(x, file){
   pdf(file, width = 8, height = 4)
