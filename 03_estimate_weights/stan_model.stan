@@ -71,9 +71,9 @@ model {
   
   F2 ~ uniform(0.1, 0.5);
   F3 ~ uniform(0.5, 1.5);
-  F4 ~ uniform(1.5, 3.5);
-  F5 ~ uniform(3.5, 5.5);
-  F6 ~ uniform(5.5, 7);
+  F4 ~ uniform(1.5, 3);
+  F5 ~ uniform(3, 5);
+  F6 ~ uniform(5, 7);
   Q1 ~ uniform(1, 2.5);
   Q2 ~ uniform(2.5, 4.5);
   Q3 ~ uniform(4.5, 6.5);
@@ -87,8 +87,7 @@ model {
   V4 ~ uniform(1, 3);
   V5 ~ uniform(3, 7);
 
-
-  binge ~ uniform (5, 10);
+  binge ~ normal (6, 1);
  
   sigma ~ exponential(0.1);
   GF ~ normal(mu, sigma);

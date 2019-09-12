@@ -1,0 +1,11 @@
+the traces for the initial run look like priors require some tweaking.
+
+> The initial binge prior was very wide (5 to 10 units) which is a very wide search space.
+Replaced it with a more informative prior of normal(6, 1) which should be anchored far enough from zero/negative values.
+
+> F5 (4 to 5 times a week) looks like chains are almost mixing but minimuming out at 3.5 units. F4 is solidly lower than 2 units so moving the boundary slightly down, at 3 units.
+ 
+> F6 (6 or more times a week) likewise seems like chain 2 is stuck at 5.5 units, the minimum. I will likewise move the boudary down to 5 units.
+
+> Q6 (13 to 15 units) looks challenging with chain 2 not converging, and chain 1 minimuming out (stuck on 12 units) which may suggest 12 units is too high a bound. Will leave unchanged for now but monitor.
+
