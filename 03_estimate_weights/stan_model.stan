@@ -78,8 +78,8 @@ model {
   Q2 ~ uniform(2.5, 4.5);
   Q3 ~ uniform(4.5, 6.5);
   Q4 ~ uniform(6.5, 9.5);
-  Q5 ~ uniform(9.5, 12);
-  Q6 ~ uniform(12, 15.5);
+  Q5 ~ uniform(9.5, 11.5);
+  Q6 ~ uniform(11.5, 15.5);
   Q7 ~ uniform(15.5, 25);
   V1 ~ uniform(0, 0.1);
   V2 ~ uniform(0.1, 0.5);

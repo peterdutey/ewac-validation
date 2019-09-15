@@ -1,0 +1,5 @@
+Second run improved things for F and V. Chain 2 is still stuck which is expected since starting values are set further away from where parameters are expected to be.
+Will now add a third chain and consider running model longer soon.
+
+> Q6 is still getting stuck at the minimum (12 units). All Q seem to be more hesitant than F or V. This could be where a gender difference is more pronounced. Going to reduce the interval down to 11.5 and modify Q5 accordingly.
+

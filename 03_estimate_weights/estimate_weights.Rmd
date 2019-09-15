@@ -64,19 +64,24 @@ mod1_fit <- stan(
   file = "stan_model.stan",  # Stan program
   data = stan_input,    # named list of data
   chains = 2,             # number of Markov chains
-  warmup = 2000,          # number of warmup iterations per chain
+  warmup = 3000,          # number of warmup iterations per chain
   iter = 5000,            # total number of iterations per chain
-  cores = 2,              # number of cores (could use one per chain)
+  cores = 3,              # number of cores (could use one per chain)
+  control = list(max_treedepth = 15),
   init = list(
-    list(sigma = 10, binge = 8, 
+    list(sigma = 10, binge = 6, 
          F2 = 0.173, F3 = 0.69, F4 = 2.1, F5 = 4.5, F6 = 6.5, 
          Q1 = 1.5, Q2 = 3.5, Q3 = 5.5, Q4 = 8, Q5 = 11, Q6 = 14, Q7 = 20, 
          V1 = 0, V2 = 0.3, V3 = 0.7, V4 = 2, V5 = 5),
-    list(sigma = 12, binge = 6, 
+    list(sigma = 12, binge = 5, 
          F2 = 0.192, F3 = 0.767, F4 = 2.5, F5 = 4.667, F6 = 6.667, 
          Q1 = 1.667, Q2 = 3.667, Q3 = 5.667, Q4 = 8.333, Q5 = 11.333, Q6 = 14.333, Q7 = 21, 
-         V1 = 0, V2 = 0.4, V3 = 0.8, V4 = 2.5, V5 = 6)
-  ))
+         V1 = 0, V2 = 0.4, V3 = 0.8, V4 = 2.5, V5 = 6),
+    list(sigma = 8, binge = 7, 
+         F2 = 0.162, F3 = 0.65, F4 = 2.412, F5 = 4.412, F6 = 6.412, 
+         Q1 = 1.412, Q2 = 3.412, Q3 = 5.412, Q4 = 7.824, Q5 = 10.824, Q6 = 13.824, Q7 = 19, 
+         V1 = 0.5, V2 = 0.25, V3 = 0.75, V4 = 1.9, V5 = 5.5)
+    ))
 
 ```
 
@@ -85,7 +90,7 @@ mod1_fit <- stan(
 You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
-new_results_dir <- "results_5000_2019-09-11"
+new_results_dir <- "results_5000_2019-09-12"
 if (!dir.exists(new_results_dir)) { 
   dir.create(new_results_dir)
 }
