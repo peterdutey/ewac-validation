@@ -7,9 +7,7 @@ output:
   html_notebook:
     number_sections: yes
     toc: yes
-  html_document:
     df_print: paged
-    toc: yes
 bibliography: bibliography.bib
 ---
 
@@ -72,7 +70,7 @@ This paper reports four distinct empirical studies. Study 1 estimates coefficien
 ## Overview of alcohol consumption estimation methods
 A fundamental hindrance at the core of alcohol research and care is the absence of a measurement gold standard. A number of instruments exist which have been subjected to concurrent validity analysis instead. A state-of-the art review is available from @Greenfield2000 and summarised in the Table below
 
-```{r tab_comparison_schedules, fig.cap = tab.comparison_schedules}
+```{r tab_comparison_schedules, fig.cap = tab.comparison_schedules, echo = FALSE}
 read.csv("table_comparison_alco_schedules.csv") %>% 
   kable %>%
   kable_styling()
@@ -84,7 +82,7 @@ Broadly, WD tend to capture the highest alcohol consumption levels, followed by 
 
 The present paper employs four sources of data. An overview is available in Table 1 below, together with references to publicly available methodological descriptions. Only the hospital study was conducted specifically for this paper and requires further description. Participants were recruited from a range of clinics at a large acute hospital in Southampton, UK: orthopaedics outpatient, endoscopy day cases, young adult outpatient, infusion ???. 
 
-```{r tab.overview_datasets, fig.cap = table_overview_datasets}
+```{r table_overview_datasets, fig.cap = tab.overview_datasets, echo = FALSE}
 read.csv("table_overview_datasets.csv") %>% 
   kable %>%
   kable_styling()
@@ -109,8 +107,8 @@ To replicate this approach, we determine coefficients to be applied to each Exte
 
 Next, we quantify the deviation between the EWAC and the GF schedule. A pre-registered protocol for this analysis is available from @Dutey2018. Succintly, this analysis treats GF like a gold standard. It enables the examination of two types of deviations across every participant $i$ in the ATS sample:
 
-- MD: the mean deviation $$\sum_{i=1}^{n}{n^{-1}(\rm{EWAC_i} - \rm{GF_i} )}$$ can be assimilated to a measure of bias under the assumption that GF is a gold standard.
-- RMSD: the root mean squared deviation $$\sum_{i}{\sqrt{( \rm{EWAC_i} - \rm{GF_i} )^2}}$$ can be assimilated to a measure of total error: it capture both bias and random deviation from the gold standard.
+- MD: the mean deviation $\sum_{i=1}^{n}{n^{-1}(\rm{EWAC_i} - \rm{GF_i} )}$ can be assimilated to a measure of bias under the assumption that GF is a gold standard.
+- RMSD: the root mean squared deviation $\sum_{i}{\sqrt{( \rm{EWAC_i} - \rm{GF_i} )^2}}$ can be assimilated to a measure of total error: it capture both bias and random deviation from the gold standard.
 
 We test the hypothesis that the EWAC's validity varies across population subgroups by regressing both (a) the simple deviation and (b) the root squared deviation in linear regression models, against the following predictors: sex by age group; ethnic group; favourite drink (wine, beer, etc.); highest educational qualification; religion; smoking status; general health; recent attempts at reducing or stopping drinking.
 
@@ -186,63 +184,63 @@ htmltools::includeHTML("output_lm_rmse.html")
 
 
 ```{r echo=F, fig.height=10, fig.width=15}
-library(latticeExtra)
-library(scales)
-xlims = c(-3, 153)
-EWAC <- ecdfplot(na.omit(ats$qfv[ats$qfv > 0]),
-                key= keyABH, panel = function(x, f.value = NULL, type = "s",
-                                              groups = NULL, qtype = 7, ref = TRUE,...) {
-                  panel.ecdfplot(x, f.value = NULL, type = "s",
-                                 groups = NULL, qtype = 7,
-                                 ref = TRUE,...)
-                  panel.abline(v = 14)
-                },
-                xlim = xlims, col = alpha("orange", .7), lwd = 3, lty = 1,
-                scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
-
-GF <- ecdfplot(na.omit(ats$gfmeanweekly[ats$gfmeanweekly > 0]),
-                key= keyABH, panel = function(x, f.value = NULL, type = "s",
-                                              groups = NULL, qtype = 7, ref = TRUE,...) {
-                  panel.ecdfplot(x, f.value = NULL, type = "s",
-                                 groups = NULL, qtype = 7,
-                                 ref = TRUE,...)
-                  panel.abline(v = 14)
-                },
-                xlim = xlims, col = alpha("black", .7), lwd = 3, lty = 1,
-               scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
-
-HSE <- ecdfplot(na.omit(hse$totalwu[hse$dnnow == 1]),
-                key= keyABH, panel = function(x, f.value = NULL, type = "s",
-                                              groups = NULL, qtype = 7, ref = TRUE,...) {
-                  panel.ecdfplot(x, f.value = NULL, type = "s",
-                                 groups = NULL, qtype = 7,
-                                 ref = TRUE,...)
-                  panel.abline(v = 14)
-                },
-                xlim = xlims, col = alpha("red", .7), lwd = 1, lty = 1,
-                scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
-
-HSEdiary <- ecdfplot(na.omit(hse$weektot[hse$dnnow == 1]),
-                key= keyABH, panel = function(x, f.value = NULL, type = "s",
-                                              groups = NULL, qtype = 7, ref = TRUE,...) {
-                  panel.ecdfplot(x, f.value = NULL, type = "s",
-                                 groups = NULL, qtype = 7,
-                                 ref = TRUE,...)
-                  panel.abline(v = 14)
-                },
-                xlim = xlims, col = alpha("red", .7), lwd = 2, lty = 2,
-                scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
-
-HSEdiary + HSE +EWAC + GF
+# library(latticeExtra)
+# library(scales)
+# xlims = c(-3, 153)
+# EWAC <- ecdfplot(na.omit(ats$qfv[ats$qfv > 0]),
+#                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
+#                                               groups = NULL, qtype = 7, ref = TRUE,...) {
+#                   panel.ecdfplot(x, f.value = NULL, type = "s",
+#                                  groups = NULL, qtype = 7,
+#                                  ref = TRUE,...)
+#                   panel.abline(v = 14)
+#                 },
+#                 xlim = xlims, col = alpha("orange", .7), lwd = 3, lty = 1,
+#                 scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
+# 
+# GF <- ecdfplot(na.omit(ats$gfmeanweekly[ats$gfmeanweekly > 0]),
+#                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
+#                                               groups = NULL, qtype = 7, ref = TRUE,...) {
+#                   panel.ecdfplot(x, f.value = NULL, type = "s",
+#                                  groups = NULL, qtype = 7,
+#                                  ref = TRUE,...)
+#                   panel.abline(v = 14)
+#                 },
+#                 xlim = xlims, col = alpha("black", .7), lwd = 3, lty = 1,
+#                scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
+# 
+# HSE <- ecdfplot(na.omit(hse$totalwu[hse$dnnow == 1]),
+#                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
+#                                               groups = NULL, qtype = 7, ref = TRUE,...) {
+#                   panel.ecdfplot(x, f.value = NULL, type = "s",
+#                                  groups = NULL, qtype = 7,
+#                                  ref = TRUE,...)
+#                   panel.abline(v = 14)
+#                 },
+#                 xlim = xlims, col = alpha("red", .7), lwd = 1, lty = 1,
+#                 scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
+# 
+# HSEdiary <- ecdfplot(na.omit(hse$weektot[hse$dnnow == 1]),
+#                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
+#                                               groups = NULL, qtype = 7, ref = TRUE,...) {
+#                   panel.ecdfplot(x, f.value = NULL, type = "s",
+#                                  groups = NULL, qtype = 7,
+#                                  ref = TRUE,...)
+#                   panel.abline(v = 14)
+#                 },
+#                 xlim = xlims, col = alpha("red", .7), lwd = 2, lty = 2,
+#                 scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
+# 
+# HSEdiary + HSE +EWAC + GF
 
 ```
 
 
 ```{r, echo=F, fig.height=8, fig.width=11}
-plot(ats$qfv,  ats$gfmeanweekly, pch =16, col = alpha(1, .2),
-     ylab = "GF (units/week)", xlab = "EWAC (units/week)", main = NULL,
-     xlim = c(0, 50), ylim = c(0,50))
-abline(0,1, col = 2, lwd =1.5)
+# plot(ats$qfv,  ats$gfmeanweekly, pch =16, col = alpha(1, .2),
+#      ylab = "GF (units/week)", xlab = "EWAC (units/week)", main = NULL,
+#      xlim = c(0, 50), ylim = c(0,50))
+# abline(0,1, col = 2, lwd =1.5)
 ```
 
 
