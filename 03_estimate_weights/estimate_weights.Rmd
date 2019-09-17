@@ -23,13 +23,20 @@ ats <- ats %>%
   filter(audit1 > 1 & audit1 < 7) %>% 
   filter(!audit2_label %in% c("Refused", "Don't know")) %>% 
   filter(!audit3_label %in% c("Refused", "Don't know")) %>% 
-  mutate(audit1_label = factor(audit1_label),
-         audit2_label = factor(audit2_label), 
-         audit3_label = factor(audit3_label))
+  mutate(audit1_label = factor(audit1_label, 
+                               levels = c('Never', 'Monthly or less',
+                                          '2 to 4 times a month', '2 to 3 times a week',
+                                          '4 to 5 times a week', '6 or more times a week')),
+         audit2_label = factor(audit2_label,
+                               levels = c("1 to 2", "3 to 4", "5 to 6",
+                                          "7 to 9", "10 to 12", "13 to 15", "16 or more")), 
+         audit3_label = factor(audit3_label, 
+                               levels = c("Never", "Less than monthly", "Monthly",
+                                          "Weekly", "Daily or almost daily")))
 
-ats$ewac_mp <- proc_EWAC(
-  ats[,c("audit1_label", "audit2_label", "audit3_label")],
-  audit_coef = audit_weights_midpoints, method = "qfv")
+# ats$ewac_mp <- proc_EWAC(
+#   ats[,c("audit1_label", "audit2_label", "audit3_label")],
+#   audit_coef = audit_weights_midpoints, method = "qfv")
 
 ats_subset <- ats %>% 
   transmute(GF = gfmeanweekly,
@@ -66,7 +73,7 @@ mod1_fit <- stan(
   chains = 3,             # number of Markov chains
   warmup = 3000,          # number of warmup iterations per chain
   iter = 5000,            # total number of iterations per chain
-  cores = 4,              # number of cores (could use one per chain)
+  cores = 3,              # number of cores (could use one per chain)
   control = list(max_treedepth = 15),
   init = list(
     list(sigma = 10, binge = 6, 
@@ -90,7 +97,7 @@ mod1_fit <- stan(
 You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
-new_results_dir <- "results_5000_2019-09-15"
+new_results_dir <- "results_5000_2019-09-17"
 if (!dir.exists(new_results_dir)) { 
   dir.create(new_results_dir)
 }
