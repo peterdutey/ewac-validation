@@ -1,0 +1,7 @@
+The third run mixes a little better, but remains too slow.
+In addition the Q coefficients just don't converge at all, suggesting a bigger problem here (mentioned the potential gender interaction before).
+
+To do:
+- move from uniform to more informative priors based on a beta(2,2) density to hopefully facilitate convergence
+- investigate the gender difference in Q coefficients using the simpler fitting approach and review
+- allow for overlap between Q5 and Q6 as Q6 is definitely still hitting the lower bound of its prior.
