@@ -60,7 +60,7 @@ tab.overview_datasets <- table_nums(name = "tab_overview_datasets",
 
 # Introduction
 
-Alcohol consumption is a significant cause of death and ill health. A number of strategies for prevention [@PH24], treatment and harm reduction [@CG115]. Many of those rely on the use of a screening tool. In the UK, the reference tool is the Alcohol Use Disorders Identification Test (AUDIT) [@Babor2001], a 10-item questionnaire schedule widely employed in clinical practice and clinical research as a diagnostic test for alcohol use disorder (ICD-10 F10.1/F10.2; ICD-11 QE10/6C40.1). The short, 3 consumption item version known as AUDIT-C has good diagnostics accuracy for both: (a) interview-based clinical diagnoses; and (b) consumption in excess of maximum recommended intakes (e.g. 140g/week in Australia, 112 g/week in UK) in a variety of populations [@DeMeneses-Gaya2009].
+Alcohol consumption is a significant cause of death and ill health. A number of strategies for prevention [@NICE-PH24], treatment and harm reduction [@NICE-CG115]. Many of those rely on the use of a screening tool. In the UK, the reference tool is the Alcohol Use Disorders Identification Test (AUDIT) [@Babor2001], a 10-item questionnaire schedule widely employed in clinical practice and clinical research as a diagnostic test for alcohol use disorder (ICD-10 F10.1/F10.2; ICD-11 QE10/6C40.1). The short, 3 consumption item version known as AUDIT-C has good diagnostics accuracy for both: (a) interview-based clinical diagnoses; and (b) consumption in excess of maximum recommended intakes (e.g. 140g/week in Australia, 112 g/week in UK) in a variety of populations [@DeMeneses-Gaya2009].
 
 A variant of the AUDIT-C schedule known as the ‘Extended AUDIT-C’ improves the granularity of the information collected on alcohol consumption, thanks to a greater range of response options on quantity and frequency (items 1 and 2). The Extended AUDIT-C has been used in UK research as part of two trials [@Kaner2013c, @Crane2018] and one continuous household survey [@Beard2015a] to capture greater information on the higher risk drinkers, based on the observation that AUDIT consumption items are right-truncated.
 
@@ -152,7 +152,7 @@ ggplot(aes(gfmeanweekly, ewac_mp)) +
 
 ## Study 4: Aggregate concurrent validity
 
-Alcohol sales (both on-trade and off-trade) estimates for England (population aged 18 years and over) in 2014 were obtained from Public Health England [@PHE2017].
+We examine the aggregate consistency in alcohol consumption estimates across all residents of England aged 18 years and over by plotting the empirical cumulative distribution of alcohol consumption given by (1) the gender-blind EWAC estimated from the ATS; (2) the quantity-frequency estimated in the ATS; (3) the beverage-specific estimators in HSE in 2011; (4) the prospective diary estimator in HSE 2011. In this analysis, survey weights are used: in (1-3), poststratification weights estimated using calibration and age-sex MYPES; in (4), similar postratification weights adjusted for self-selection into participation to the prospective diary data collection. Finally, we examine the percentage of total alcohol sales for England accounted for by each method. Alcohol sales (both on-trade and off-trade) estimates for England (population aged 18 years and over) in 2014 were obtained from Public Health England [@PHE2017].
 
 
 # Results
@@ -274,19 +274,57 @@ htmltools::includeHTML("output_lm_rmse.html")
 
 # Discussion
 
-- GF not missing at random. Impute the `r round(3883/(3883+22376)*100, 1)`% missing cases
-
-The three sources of information used in this validation measure different constructs: the HSE quantity-frequency does not capture variability, whereas the HSE weekly diary and the ATS graduated frequency schedule do. The HSE diary should nevertheless exhibit smaller recall error.
 
 
-This paper adopted a QFV approach to compute the EWAC over arguably more direct approaches possible with the ATS, such as supervised machine learning or direct estimation of the mean alcohol consumption for every observed combination of Extended AUDIT-C responses. Although cumbersome, the deterministic nature of the QFV algorithm is meant to be easier to estimate with small training datasets. It is also easier to implement in relational databases employed in electronic record systems compared to many manchine learning techniques.
 
-## Limitations
+<!-- This paper adopted a QFV approach to compute the EWAC over arguably more direct approaches possible with the ATS, such as supervised machine learning or direct estimation of the mean alcohol consumption for every observed combination of Extended AUDIT-C responses. Although cumbersome, the deterministic nature of the QFV algorithm is meant to be easier to estimate with small training datasets. It is also easier to implement in relational databases employed in electronic record systems compared to many manchine learning techniques. -->
 
-Findings reported in this paper only concern adult residents of private households in England, and may not generalise to other countries, age groups, or residing in health care or criminal facilities. The ATS is a computer-assisted personal interview survey, which may improve data quality for the Extended AUDIT compared with, for instance, a self-administered Extended AUDIT in a health care context. During data collection, we recorded a frequent confusion with the AUDIT's item 1: some participants being confused as to whether the question refers to number of days in which alcohol has been consumed, or number of occasions on any given day. We believe this to be a common occurrence when the AUDIT is self-administered.
 
-The ATS presents some limitations. First, the high levels of data missingness and the exclusion of respondents answering 'Never' in AUDIT item 1 constituted a high risk of introducing bias in Study 1. Second, there is to our knowledge no validation data available for the ATS graduated-frequency schedule. For these reasons, basing the EWAC on ATS alone would have been hazardous. Such inferential risks are nevertheless addressed in the present paper through Study 3, through data collected from a health care setting, which low levels of missingness, using a different alcohol schedule known to exhibit more variability, but lower bias.
+## Main findings
 
+To the best of our knowledge, this is the first paper to develop an EWAC using a well-accepted and fast alcohol questionnaire such as the AUDIT. We used the Extended AUDIT-C to address the AUDIT-C's right-truncation and estimate consumption even for heavy consumers.
+
+We find that it is possible to provide an EWAC with a margin of error of XX units using gender-specific coefficients, with consistent results across the English population.
+
+Much like we produced gender-specific coefficients, it would be possible to use age information to adjust coefficients.
+is consitent with previous research suggesting  largest discrepancy is noted for individuals aged 85 years and over
+
+Knowledge of alcohol beverage content remains insufficient in the UK. In the 2007 HSE, just 31% of frequent beer drinkers and 17% of frequent wine drinkers were not aware of the unit equivalence to their intake. These proportions were found to be even lower in all other drinkers. 
+
+
+This study reports an extensive range of validation analyses on the EWAC's validity and reliability. Findings are valid for the general population of England, although they may not generalise to other populations excluded from our sampling frames, such as residents of communal and carceral institutions, homeless people, or migrant populations. Similarly, findings may not designated to small subpopulations with an atypical alcohol consumption, such as patients seeking care for conditions such as addition or alcohol liver disease.
+
+
+## Limitations 
+
+As noted previously, a low proportion of the population knows the alcohol content of what they drink in units. This may influence the reliability of AUDIT item 2 (quantity), particularly in cases when it is self-administered or administered without guidance on beverage alcohol content. In this paper, the AUDIT scheduled was administered by a researcher in all cases but XXX participants in study 3; and even those were given a showcard summarising the unit content of most popular beverages. 
+<!-- During data collection, we recorded a frequent confusion with the AUDIT's item 1: some participants being confused as to whether the question refers to number of days in which alcohol has been consumed, or number of occasions on any given day. We believe this to be a common occurrence when the AUDIT is self-administered. -->
+
+respondents who drank beer and those who drank wine at least once a week were much more likely to know how many units were in that drink than were those who seldom drank these drinks, but even so, a of the
+
+
+
+drinking diary was given to all participants aged 18 and over who completed the main HSE interview and had had an alcoholic drink in the previous 12 months.
+
+
+
+<!-- The ATS presents some limitations. First, the high levels of data missingness and the exclusion of respondents answering 'Never' in AUDIT item 1 constituted a high risk of introducing bias in Study 1. Second, there is to our knowledge no validation data available for the ATS graduated-frequency schedule. For these reasons, basing the EWAC on ATS alone would have been hazardous. Such inferential risks are nevertheless addressed in the present paper through Study 3, through data collected from a health care setting, which low levels of missingness, using a different alcohol schedule known to exhibit more variability, but lower bias. -->
+
+<!-- - GF not missing at random. Impute the `r round(3883/(3883+22376)*100, 1)`% missing cases -->
+
+
+
+## Is the EWAC good enough to be used?
+
+Our findings demonstrate that the mean deviation between EWAC and a more time-consuming alcohol schedule is XX (GF) and XX (TFLB). In other words, 95% of respondents' expected alcohol intake may be up to X units away from the EWAC. Other clinical parameters may be affected by similar uncertainty. For instance, blood pressure is highly variables and can be xx off using a single reading. 
+Specific patient and public involvement is needed to understand how satisfactory this precision is. In the meantime, we argue that the EWAC can be useful to both clinicians and patients alongside established AUDIT-C thresholds: it can be used to engage a conversation around health risks of alcohol and recommendations to maintain consumption below 14 units in the UK. We also think it can be less stigmatising than a score in excess of 5, which can often be interpreted by patients as being labelled as alcohol dependent or problem drinker.
+
+## What are the potential applications?
+
+Important contributions by Nutt and Rehm invite us to reconsider alcohol care practice in favour of a more clinical approach. These authors argue that alcohol consumption should be treated like any other risk factor: blood pressure or cholesterol are frequently monitored by general physicians in a non stigmatising way and managed as well as possible. Similarly, Rehm and Nutt's view is that  individuals should know their consumption, and general practitioners should be able to engage with patients effectively in managing risks. Where lifestyle interventions are unsuccessful, pharmacological alternatives should be sought. All recommendations participate to a single goal: preventing the very emergence of alcohol harm, by which state treatment is often less successful. 
+
+Supportive of their argument, we propose that the EWAC could be employed in routine clinical practice to feedback results from an AUDIT-C check and provide recommendations to all types of drinkers; encouraging low-risk drinkers to maintain this lifestyle, and informing those close to 14 units or exceeding that limit that monitoring and controling alcohol consumption can be easy and improve long-term health. The EWAC can realistically only be computed by software and we have made such a calculator available online to this end: soton.ac.uk. It may be particularly suitable to digital intervention where personalised feedback can be generated as a function of not just mean alcohol consumption, but also intensity of alcohol consumption. For instance, some individuals drinking very rarely do so in large quantities in any given session. The EWAC and the AUDIT item 3 can be used to provide more relevant advice on consuming no more than 5 units in any given session. Study 3 showed in clinical population that the EWAC seemed to be as reliable when the Extended AUDIT-C is self-administered as when it is administered by a researcher. 
+ 
 # Tables
 
 
