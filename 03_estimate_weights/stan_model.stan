@@ -27,30 +27,47 @@ parameters {
 
   real<lower=0> sigma;
 
-  real F2;
-  real F3;
-  real F4;
-  real F5;
-  real F6;
-  real Q1;
-  real Q2;
-  real Q3;
-  real Q4;
-  real Q5;
-  real Q6;
-  real Q7;
-  real V1;
-  real V2;
-  real V3;
-  real V4;
-  real V5;
+  real F2hyper;
+  real F3hyper;
+  real F4hyper;
+  real F5hyper;
+  real F6hyper;
+  real Q1hyper;
+  real Q2hyper;
+  real Q3hyper;
+  real Q4hyper;
+  real Q5hyper;
+  real Q6hyper;
+  real Q7hyper;
+  real V1hyper;
+  real V2hyper;
+  real V3hyper;
+  real V4hyper;
+  real V5hyper;
   real binge;
 
 }
 
 transformed parameters{
   
-  
+  real F2 =  ((F2hyper * 0.4) + 0.1);
+  real F3 =  ((F3hyper * 1) + 0.5);
+  real F4 =  ((F4hyper * 1.5) + 1.5);
+  real F5 =  ((F5hyper * 2) + 3);
+  real F6 =  ((F6hyper * 2) + 5);
+  real Q1 =  ((Q1hyper * 1.5) + 1);
+  real Q2 =  ((Q2hyper * 2) + 2.5);
+  real Q3 =  ((Q3hyper * 2) + 4.5);
+  real Q4 =  ((Q4hyper * 3) + 6.5);
+  real Q5 =  ((Q5hyper * 2) + 9.5);
+  real Q6 =  ((Q6hyper * 5.5) + 10);
+  real Q7 =  ((Q7hyper * 9.5) + 15.5);
+  real V1 =  ((V1hyper * 0.1) + 0);
+  real V2 =  ((V2hyper * 0.4) + 0.1);
+  real V3 =  ((V3hyper * 0.5) + 0.5);
+  real V4 =  ((V4hyper * 2) + 1);
+  real V5 =  ((V5hyper * 4) + 3);
+
   vector[N] mu;
 
   vector[N] F = (F2*audit1_2) + (F3*audit1_3) + (F4*audit1_4) + (F5*audit1_5) + (F6*audit1_6);
@@ -69,24 +86,24 @@ transformed parameters{
 // and standard deviation 'sigma'.
 model {
   
-  F2 ~ uniform(0.1, 0.5);
-  F3 ~ uniform(0.5, 1.5);
-  F4 ~ uniform(1.5, 3);
-  F5 ~ uniform(3, 5);
-  F6 ~ uniform(5, 7);
-  Q1 ~ uniform(1, 2.5);
-  Q2 ~ uniform(2.5, 4.5);
-  Q3 ~ uniform(4.5, 6.5);
-  Q4 ~ uniform(6.5, 9.5);
-  Q5 ~ uniform(9.5, 11.5);
-  Q6 ~ uniform(11.5, 15.5);
-  Q7 ~ uniform(15.5, 25);
-  V1 ~ uniform(0, 0.1);
-  V2 ~ uniform(0.1, 0.5);
-  V3 ~ uniform(0.5, 1);
-  V4 ~ uniform(1, 3);
-  V5 ~ uniform(3, 7);
-
+  F2hyper ~ beta(2, 2);
+  F3hyper ~ beta(2, 2);
+  F4hyper ~ beta(2, 2);
+  F5hyper ~ beta(2, 2);
+  F6hyper ~ beta(2, 2);
+  Q1hyper ~ beta(2, 2);
+  Q2hyper ~ beta(2, 2);
+  Q3hyper ~ beta(2, 2);
+  Q4hyper ~ beta(2, 2);
+  Q5hyper ~ beta(2, 2);
+  Q6hyper ~ beta(2, 2);
+  Q7hyper ~ beta(2, 2);
+  V1hyper ~ beta(2, 2);
+  V2hyper ~ beta(2, 2);
+  V3hyper ~ beta(2, 2);
+  V4hyper ~ beta(2, 2);
+  V5hyper ~ beta(2, 2);
+  
   binge ~ normal (6, 1);
  
   sigma ~ exponential(0.1);
