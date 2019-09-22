@@ -6,127 +6,24 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-# Loading data
-source("../01_src/functions.R")
-source("../01_src/audit_weights.R")
 
-library(tidyverse)
-library(rstan)
-
-# library("knitr")
-# library("xtable")
-# library("stargazer")
-
-load(file.path("..", "02_data", "ATS.rda"))
-ats <- ats %>% 
-  # filter(actage >= 18) %>%
-  filter(audit1 > 1 & audit1 < 7) %>% 
-  filter(!audit2_label %in% c("Refused", "Don't know")) %>% 
-  filter(!audit3_label %in% c("Refused", "Don't know")) %>% 
-  mutate(audit1_label = factor(audit1_label, 
-                               levels = c('Never', 'Monthly or less',
-                                          '2 to 4 times a month', '2 to 3 times a week',
-                                          '4 to 5 times a week', '6 or more times a week')),
-         audit2_label = factor(audit2_label,
-                               levels = c("1 to 2", "3 to 4", "5 to 6",
-                                          "7 to 9", "10 to 12", "13 to 15", "16 or more")), 
-         audit3_label = factor(audit3_label, 
-                               levels = c("Never", "Less than monthly", "Monthly",
-                                          "Weekly", "Daily or almost daily")))
-
-# ats$ewac_mp <- proc_EWAC(
-#   ats[,c("audit1_label", "audit2_label", "audit3_label")],
-#   audit_coef = audit_weights_midpoints, method = "qfv")
-
-ats_subset <- ats %>% 
-  transmute(GF = gfmeanweekly,
-            audit1_ = as.factor(audit1),
-            audit2_ = as.factor(audit2),
-            audit3_ = as.factor(audit3)) %>% 
-  model.frame(data = ., formula = GF ~ audit1_ + audit2_ + audit3_)
-
-stan_input <- data.frame(
-  model.matrix(~ audit1_ + audit2_ + audit3_, ats_subset, 
-                   contrasts = list(
-                     audit1_ = contrasts(ats_subset$audit1_, contrasts = F),
-                     audit2_ = contrasts(ats_subset$audit2_, contrasts = F),
-                     audit3_ = contrasts(ats_subset$audit3_, contrasts = F)
-                   ))
-)[,-1]
-
-stan_input$GF <- ats_subset$GF
-stan_input <- na.omit(stan_input)
-
-stan_input <- as.list(stan_input)
-stan_input$N <- length(stan_input$audit1_2)
-rm(ats_subset)
 ```
 
 The ATS dataset provides both GF and Extended AUDIT-C measures for a sample of household residents in England between waves 110 and 133, that is, November 2015 and October 2017. We restrict the analysis to adults aged 18 years and over. The GF schedule was not administered to participants responding 'Never' in AUDIT item 1. Consequently, this analysis is conducted only on drinkers.
 
 
 ```{r cars}
-library(rstan)
-mod1_fit <- stan(
-  file = "stan_model.stan",  # Stan program
-  data = stan_input,    # named list of data
-  chains = 3,             # number of Markov chains
-  warmup = 3000,          # number of warmup iterations per chain
-  iter = 5000,            # total number of iterations per chain
-  cores = 3,              # number of cores (could use one per chain)
-  control = list(max_treedepth = 15),
-  init = list(
-    list(sigma = 10, binge = 6, 
-         F2 = 0.173, F3 = 0.69, F4 = 2.1, F5 = 4.5, F6 = 6.5, 
-         Q1 = 1.5, Q2 = 3.5, Q3 = 5.5, Q4 = 8, Q5 = 11, Q6 = 14, Q7 = 20, 
-         V1 = 0, V2 = 0.3, V3 = 0.7, V4 = 2, V5 = 5),
-    list(sigma = 12, binge = 5, 
-         F2 = 0.192, F3 = 0.767, F4 = 2.5, F5 = 4.667, F6 = 6.667, 
-         Q1 = 1.667, Q2 = 3.667, Q3 = 5.667, Q4 = 8.333, Q5 = 11.333, Q6 = 14.333, Q7 = 21, 
-         V1 = 0, V2 = 0.4, V3 = 0.8, V4 = 2.5, V5 = 6),
-    list(sigma = 8, binge = 7, 
-         F2 = 0.162, F3 = 0.65, F4 = 2.412, F5 = 4.412, F6 = 6.412, 
-         Q1 = 1.412, Q2 = 3.412, Q3 = 5.412, Q4 = 7.824, Q5 = 10.824, Q6 = 13.824, Q7 = 19, 
-         V1 = 0.05, V2 = 0.25, V3 = 0.75, V4 = 1.9, V5 = 5.5)
-    ))
+
+# library("knitr")
+# library("xtable")
+# library("stargazer")
+
 
 ```
 
 ## Including Plots
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-new_results_dir <- "results_5000_2019-09-17"
-if (!dir.exists(new_results_dir)) { 
-  dir.create(new_results_dir)
-}
-
-results <- summary(mod1_fit, pars = c('F2', 'F3', 'F4', 'F5', 'F6', 'Q1', 'Q2', 'Q3', 
-                                      'Q4', 'Q5', 'Q6', 'Q7', 'V1', 'V2', 'V3', 'V4', 'sigma'))$summary
-write.csv(results, file = file.path(new_results_dir, "coefficients.csv"))
-results
-```
-
-```{r}
-
-d1 <- plot(mod1_fit, plotfun = "trace", pars = c('F2', 'F3', 'F4', 'F5', 'F6'))
-d2 <- plot(mod1_fit, plotfun = "trace", pars = c('Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7'))
-d3 <- plot(mod1_fit, plotfun = "trace", pars = c('V1', 'V2', 'V3', 'V4', 'binge', 'sigma'))
-
-save_trace_plots <- function(x, file){
-  pdf(file, width = 8, height = 4)
-  plot(x)
-  dev.off()
-  x
-}
-save_trace_plots(d1, file.path(new_results_dir, "traces_AUDIT1.pdf"))
-save_trace_plots(d2, file.path(new_results_dir, "traces_AUDIT2.pdf"))
-save_trace_plots(d3, file.path(new_results_dir, "traces_AUDIT3.pdf"))
- 
-```
- 
- 
  
 ```{r}
 
