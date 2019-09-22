@@ -1,0 +1,8 @@
+Gender-specific runs were very successful, reaching a much better state of convergence in no time.
+Coefficients are somewhat higher for men, but by only few decimals. Diffences are mostly noted in AUDIT item 3 and F3 (10 to 30% lower). More importantly, the standard error is 12 for men, 9 for women.
+
+Q6 still seems to 'min out' for men, but not women.
+
+Intringingly, chain 2 for Q3 gets stuck at the upper bound around 6.5 for both men and women. Will try relaxing this bound to monitor convergence.
+
+
