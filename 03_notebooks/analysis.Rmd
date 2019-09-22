@@ -3,19 +3,38 @@ title: Concurrent validity of an Estimator of Weekly Alcohol Consumption (EWAC) 
   on the Extended AUDIT
 csl: elsevier-vancouver.csl
 link-citations: yes
+always_allow_html: yes
 output:
   html_document:
-    df_print: paged
-    toc: yes
-  html_notebook:
     df_print: paged
     number_sections: yes
     toc: yes
 bibliography: bibliography.bib
 ---
 
+<!-- 
+abstract	250
+intro	456
+methods	
+results	
+discussion	858
+conclu	100
+total	1664
+
+-->
+
+<!-- # Abstract -->
+<!-- *Background and Aims:* -->
+<!-- *Design:* -->
+<!-- *Setting:* -->
+<!-- *Participants/Cases:* -->
+<!-- *Measurements:* -->
+<!-- *Findings:* -->
+<!-- *Conclusions:* -->
+
 
 ```{r loading data, include=F}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
 # Loading data
 source("../01_src/functions.R")
 source("../01_src/filepaths.R")
@@ -171,8 +190,10 @@ htmltools::includeHTML("output_lm_bias.html")
 
 
 ```{r}
+
 lm_rmse_mp <- lm(sqrt((ewac_mp-gfmeanweekly)^2) ~ favdrink + ethgrp + ageg*sex, data = ats)
 lm_rmse_stan <- lm(sqrt((ewac_stan-gfmeanweekly)^2) ~ favdrink + ethgrp + ageg*sex, data = ats)
+# write_html(mtable(lm_rmse_mp,lm_rmse_stan), file="output_lm_rmse.html")
 tab_model(lm_rmse_mp,lm_rmse_stan, file="output_lm_rmse.html")
 htmltools::includeHTML("output_lm_rmse.html")
 ```
@@ -273,9 +294,6 @@ htmltools::includeHTML("output_lm_rmse.html")
 
 
 # Discussion
-
-
-
 
 <!-- This paper adopted a QFV approach to compute the EWAC over arguably more direct approaches possible with the ATS, such as supervised machine learning or direct estimation of the mean alcohol consumption for every observed combination of Extended AUDIT-C responses. Although cumbersome, the deterministic nature of the QFV algorithm is meant to be easier to estimate with small training datasets. It is also easier to implement in relational databases employed in electronic record systems compared to many manchine learning techniques. -->
 
