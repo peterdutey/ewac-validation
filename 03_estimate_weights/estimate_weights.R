@@ -61,21 +61,20 @@ mod1_fit <- stan(
   file = "03_estimate_weights/stan_model.stan",  # Stan program
   data = stan_input,    # named list of data
   chains = 3,             # number of Markov chains
-  warmup = 1000,          # number of warmup iterations per chain
-  iter = 2000,            # total number of iterations per chain
+  warmup = 3000,          # number of warmup iterations per chain
+  iter = 5000,            # total number of iterations per chain
   cores = 3,              # number of cores (could use one per chain)
-  refresh = 200,
-  control = list(max_treedepth = 8, adapt_delta = .7),
+  # control = list(adapt_delta = .95, max_treedepth = 12),#  refresh = 200,
   init = list(
-    list(sigma = 10, binge = 6, 
+    list(sigma = 10, bingehyper = 1, 
          F2hyper = 0.182, F3hyper = 0.19, F4hyper = 0.4, F5hyper = 0.75, F6hyper = 0.75, 
          Q1hyper = 0.333, Q2hyper = 0.5, Q3hyper = 0.5, Q4hyper = 0.5, Q5hyper = 0.75, Q6hyper = 0.727, Q7hyper = 0.474, 
          V1hyper = 0.01, V2hyper = 0.5, V3hyper = 0.4, V4hyper = 0.5, V5hyper = 0.5),
-    list(sigma = 12, binge = 5, 
+    list(sigma = 12, bingehyper = 0.1, 
          F2hyper = 0.229, F3hyper = 0.267, F4hyper = 0.667, F5hyper = 0.833, F6hyper = 0.833, 
          Q1hyper = 0.444, Q2hyper = 0.583, Q3hyper = 0.583, Q4hyper = 0.611, Q5hyper = 0.917, Q6hyper = 0.788, Q7hyper = 0.579, 
          V1hyper = 0.1, V2hyper = 0.75, V3hyper = 0.6, V4hyper = 0.75, V5hyper = 0.75), 
-    list(sigma = 8, binge = 7,
+    list(sigma = 8, bingehyper = 2,
          F2hyper = 0.156, F3hyper = 0.15, F4hyper = 0.608, F5hyper = 0.706, F6hyper = 0.706,
          Q1hyper = 0.275, Q2hyper = 0.456, Q3hyper = 0.456, Q4hyper = 0.441, Q5hyper = 0.662, Q6hyper = 0.695, Q7hyper = 0.368,
          V1hyper = 0.5, V2hyper = 0.375, V3hyper = 0.5, V4hyper = 0.45, V5hyper = 0.625)
@@ -85,13 +84,14 @@ mod1_fit <- stan(
 
 # Extract results ---------------------------------------------------------
 
-new_results_dir <- file.path("03_estimate_weights", "results_5000_2019-09-20_women")
+new_results_dir <- file.path("03_estimate_weights", "results_5000_2019-09-25_women")
 if (!dir.exists(new_results_dir)) { 
   dir.create(new_results_dir)
 }
 
 results <- summary(mod1_fit, pars = c('F2', 'F3', 'F4', 'F5', 'F6', 'Q1', 'Q2', 'Q3', 
-                                      'Q4', 'Q5', 'Q6', 'Q7', 'V1', 'V2', 'V3', 'V4', 'sigma'))$summary
+                                      'Q4', 'Q5', 'Q6', 'Q7', 'V1', 'V2', 'V3', 'V4', 
+                                      'binge', 'sigma'))$summary
 write.csv(results, file = file.path(new_results_dir, "coefficients.csv"))
 
 d1 <- plot(mod1_fit, plotfun = "trace", pars = c('F2', 'F3', 'F4', 'F5', 'F6'))

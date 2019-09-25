@@ -44,7 +44,7 @@ parameters {
   real V3hyper;
   real V4hyper;
   real V5hyper;
-  real binge;
+  real bingehyper;
 
 }
 
@@ -67,6 +67,7 @@ transformed parameters{
   real V3 =  ((V3hyper * 0.5) + 0.5);
   real V4 =  ((V4hyper * 2) + 1);
   real V5 =  ((V5hyper * 4) + 3);
+  real binge = bingehyper + 5;
 
   vector[N] mu;
 
@@ -104,7 +105,7 @@ model {
   V4hyper ~ beta(2, 2);
   V5hyper ~ beta(2, 2);
   
-  binge ~ normal (6, 1);
+  bingehyper ~ gamma(4, 1.5);
  
   sigma ~ exponential(0.1);
   GF ~ normal(mu, sigma);
