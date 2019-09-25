@@ -1,0 +1,9 @@
+The long run did not improve convergence. There is a problem with Q3 '5 to 6 units' and the binge variable (in women, while in men we mostly see the Q3 divergence, no so much the binge one).
+
+Chain 2 starts with a lower binge init value and continues below this value. On the other hand Q3 stays higher than 6 units.
+
+Chains 1 and 3 on the contrary have a higher bing init value and stay there, while Q3 goes around 4.5 to 5 units.
+
+This could be closely connected to the QFV algorithm. Binge is very much defined as 6 units at minimum. Will set a stronger, exponential prior on it to avoid it going too low. Will also change the init value.
+
+
