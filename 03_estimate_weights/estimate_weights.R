@@ -6,13 +6,15 @@ rm(list = ls())
 source("01_src/functions.R")
 source("01_src/audit_weights.R")
 
+options(mc.cores = parallel::detectCores())
 library(tidyverse)
 library(rstan)
 
 load(file.path("02_data", "ATS.rda"))
 ats <- ats %>% 
   # filter(actage >= 18) %>%
-  filter(sex == "Women") %>% 
+  # filter(sex == "Women") %>%
+  filter(sex == "Men") %>%
   filter(audit1 > 1 & audit1 < 7) %>% 
   filter(!audit2_label %in% c("Refused", "Don't know")) %>% 
   filter(!audit3_label %in% c("Refused", "Don't know")) %>% 
@@ -84,7 +86,7 @@ mod1_fit <- stan(
 
 # Extract results ---------------------------------------------------------
 
-new_results_dir <- file.path("03_estimate_weights", "results_5000_2019-09-25_women")
+new_results_dir <- file.path("03_estimate_weights", "results_5000_2019-09-25")
 if (!dir.exists(new_results_dir)) { 
   dir.create(new_results_dir)
 }

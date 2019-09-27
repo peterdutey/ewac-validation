@@ -1,0 +1,3 @@
+Not quite resolved. Chain 2 is still showing a different behaviour on the entire dataset. Some ambiguity there between Q and F (chain two converges towards high Q and low F).
+
+Will restore the original prior (lower upper bound of Q3 from 7 down to 6.5) to have narrower priors.
