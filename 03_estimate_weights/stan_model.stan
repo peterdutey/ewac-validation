@@ -57,7 +57,7 @@ transformed parameters{
   real F6 =  ((F6hyper * 2) + 5);
   real Q1 =  ((Q1hyper * 1.5) + 1);
   real Q2 =  ((Q2hyper * 2) + 2.5);
-  real Q3 =  ((Q3hyper * 2.5) + 4.5);
+  real Q3 =  ((Q3hyper * 1.5) + 4.5);
   real Q4 =  ((Q4hyper * 3) + 6.5);
   real Q5 =  ((Q5hyper * 2) + 9.5);
   real Q6 =  ((Q6hyper * 6) + 9.5);

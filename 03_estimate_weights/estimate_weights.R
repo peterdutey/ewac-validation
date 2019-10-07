@@ -86,7 +86,7 @@ mod1_fit <- stan(
 
 # Extract results ---------------------------------------------------------
 
-new_results_dir <- file.path("03_estimate_weights", "results_5000_2019-09-25")
+new_results_dir <- file.path("03_estimate_weights", "results_5000_2019-10-07_men")
 if (!dir.exists(new_results_dir)) { 
   dir.create(new_results_dir)
 }
