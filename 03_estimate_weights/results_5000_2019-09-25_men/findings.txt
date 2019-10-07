@@ -1,0 +1,2 @@
+Ambiguity remains with Q3 with chain three around 6.2. In women, this correlated with convergence on lower values in F4 to F6 (not so apparent in men, perhapse due to poor convergence of F).
+Will try reducing upper bound to 6 to try and anchor the chains on lower values.
