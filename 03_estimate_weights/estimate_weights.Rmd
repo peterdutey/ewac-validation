@@ -47,5 +47,8 @@ save(rf1, file = "../02_data/random_forest_model.rda")
 plot(seq(0, 20, .01), dgamma(seq(0, 20, .01)-5, shape = 4, scale =.7), type = "l")
 plot(seq(0, 20, .01), dgamma(seq(0, 20, .01)-5, shape = 4, rate =1.5), type = "l")
 
+
+plot(seq(0, 20, .01), dbeta(seq(0, 20, .01)-5, 1.5, 1.5), type = "l")
+
 ```
 

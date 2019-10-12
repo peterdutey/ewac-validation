@@ -57,13 +57,13 @@ transformed parameters{
   real F6 =  ((F6hyper * 2) + 5);
   real Q1 =  ((Q1hyper * 1.5) + 1);
   real Q2 =  ((Q2hyper * 2) + 2.5);
-  real Q3 =  ((Q3hyper * 1.5) + 4.5);
+  real Q3 =  ((Q3hyper * 2) + 4.5);
   real Q4 =  ((Q4hyper * 3) + 6.5);
   real Q5 =  ((Q5hyper * 2) + 9.5);
   real Q6 =  ((Q6hyper * 6) + 9.5);
   real Q7 =  ((Q7hyper * 9.5) + 15.5);
-  real V1 =  ((V1hyper * 0.1) + 0);
-  real V2 =  ((V2hyper * 0.4) + 0.1);
+  real V1 =  ((V1hyper * 0.2) + 0);
+  real V2 =  ((V2hyper * 0.3) + 0.2);
   real V3 =  ((V3hyper * 0.5) + 0.5);
   real V4 =  ((V4hyper * 2) + 1);
   real V5 =  ((V5hyper * 4) + 3);
@@ -76,9 +76,8 @@ transformed parameters{
   vector[N] V = (audit3_1 * V1) + (audit3_2 * V2) + (audit3_3 * V3) + (audit3_4 * V4) + (audit3_5 * V5);
   
   
-  for(i in 1:N){
-    mu[i] = Q[i] >= binge ? ( F[i] >= V[i] ? Q[i] * F[i] : Q[i] * V[i]) : ( V[i] < F[i] ? (F[i] * Q[i]) + (V[i] * binge) : F[i] * binge);
-  }
+    mu =  (F .* Q) + (V * binge);
+
 
   
 } 

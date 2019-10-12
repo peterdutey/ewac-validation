@@ -129,34 +129,36 @@ audit_weights_STAN <- list(
                      '2 to 4 times a month', '2 to 3 times a week',
                      '4 to 5 times a week', '6 or more times a week'),
     audit1_value = c(0,
-                     14.85, 
-                     32.88, 
-                     94.86, 
-                     183.22, 
-                     288.63),
+                     9.5,
+                     29.27,
+                     84.02,
+                     173.1,
+                     269.65),
     audit1_score = c( 0L, 1L, 2L, 3L, 4L, 4L))),
   
   audit2 = data.frame(list(
     audit2_label = c("1 to 2", "3 to 4", "5 to 6",
                      "7 to 9", "10 to 12", "13 to 15", "16 or more"),
-    audit2_value = c(2.25, 
-                     3.82, 
-                     5.43, 
-                     8.8, 
-                     11.48, 
-                     13.17, 
-                     20.31),
+    audit2_value = c(2.42,
+                     4.34,
+                     5.84,
+                     6.89,
+                     9.67,
+                     9.73,
+                     17.83),
     audit2_score = c(0L, 1L, 2L, 3L, 4L, 4L, 4L))),
   
   audit3 = data.frame(list(
     audit3_label = c("Never", "Less than monthly", "Monthly",
                      "Weekly", "Daily or almost daily"),
-    audit3_value = c(4.49, 
-                     16.4, 
-                     35.08, 
-                     60.21, 
+    audit3_value = c(4.38,
+                     15.14,
+                     29.52,
+                     63.01, 
                      5 * 365 / 7),
-    audit3_score = 0:4))
+    audit3_score = 0:4)),
+  
+  binge_value = 6.45
   
 )
 

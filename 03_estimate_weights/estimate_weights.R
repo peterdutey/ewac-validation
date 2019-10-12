@@ -14,7 +14,7 @@ load(file.path("02_data", "ATS.rda"))
 ats <- ats %>% 
   # filter(actage >= 18) %>%
   # filter(sex == "Women") %>%
-  filter(sex == "Men") %>%
+  # filter(sex == "Men") %>%
   filter(audit1 > 1 & audit1 < 7) %>% 
   filter(!audit2_label %in% c("Refused", "Don't know")) %>% 
   filter(!audit3_label %in% c("Refused", "Don't know")) %>% 
@@ -63,10 +63,9 @@ mod1_fit <- stan(
   file = "03_estimate_weights/stan_model.stan",  # Stan program
   data = stan_input,    # named list of data
   chains = 3,             # number of Markov chains
-  warmup = 3000,          # number of warmup iterations per chain
-  iter = 5000,            # total number of iterations per chain
+  warmup = 5000,          # number of warmup iterations per chain
+  iter = 8000,            # total number of iterations per chain
   cores = 3,              # number of cores (could use one per chain)
-  # control = list(adapt_delta = .95, max_treedepth = 12),#  refresh = 200,
   init = list(
     list(sigma = 10, bingehyper = 1, 
          F2hyper = 0.182, F3hyper = 0.19, F4hyper = 0.4, F5hyper = 0.75, F6hyper = 0.75, 
@@ -86,7 +85,7 @@ mod1_fit <- stan(
 
 # Extract results ---------------------------------------------------------
 
-new_results_dir <- file.path("03_estimate_weights", "results_5000_2019-10-07_men")
+new_results_dir <- file.path("03_estimate_weights", "results_5000_2019-10-12")
 if (!dir.exists(new_results_dir)) { 
   dir.create(new_results_dir)
 }
