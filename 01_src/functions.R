@@ -89,20 +89,23 @@ proc_EWAC <- function(X, audit_coef, method = "qfv", binge.val = 8){
   
   if (method == "qf"){
     
-    stop("to be implemented")
-    # X$audit1_value * ifelse(X$audit1_value==0, NA, X$audit2_value )/52.1 
+    ( X$audit1_value * ifelse(X$audit1_value==0, NA, 
+                              X$audit2_value) ) /52.1 
+    
+  } else if (method == "qv"){
+    
+    ( X$audit2_value * X$audit3_value ) / 52.1 
     
   } else if (method == "qfv") {
+
+    ( (X$audit1_value * X$audit2_value ) + 
+       (X$audit3_value * binge.val ) ) / 52.1
     
-    # ifelse(X$audit1_score > 0,
-    #        ifelse(X$audit2_score >= 2,
-    #               ifelse(X$audit1_value >= X$audit3_value,
-    #                      X$audit1_value * X$audit2_value  / 52.1,
-    #                      X$audit3_value * X$audit2_value  / 52.1),
-    #               ifelse(X$audit1_value == X$audit3_value,
-    #                      X$audit1_value * bingeval / 52.1,
-    #                      ((X$audit1_value * X$audit2_value ) + (X$audit3_value * bingeval ) ) /52.1)),
-    #        0)
+  } else if (method == "qb") {
+    
+    ( X$audit3_value * binge.val ) / 52.1
+    
+  } else if (method == "ewac") {
     
     ifelse(X$audit2_value >= binge.val,
            ifelse(X$audit1_value >= X$audit3_value,
@@ -110,11 +113,12 @@ proc_EWAC <- function(X, audit_coef, method = "qfv", binge.val = 8){
                   X$audit1_value * X$audit2_value  / 52.1,
                   #QV:
                   X$audit3_value * X$audit2_value  / 52.1),
-           ifelse(X$audit1_value == X$audit3_value,
+           ifelse(X$audit1_value >= X$audit3_value,
                   #binge x F
                   X$audit1_value * binge.val / 52.1, 
                   #QF + binge x V
                   ((X$audit1_value * X$audit2_value ) + (X$audit3_value * binge.val ) ) /52.1))
+    
     
   } else {
     

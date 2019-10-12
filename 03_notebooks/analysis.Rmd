@@ -91,41 +91,44 @@ This paper reports four distinct empirical studies. Study 1 estimates coefficien
 
 # Methods
 
-## Overview of alcohol consumption estimation methods
-A longstanding fact of alcohol research and care is the absence of a diagnostic gold standard, even using biomarkers . A number of instruments to measure self-reported alcohol consumption exist which have been subjected to concurrent validity analysis instead. A state-of-the art review is available from @Greenfield2000 and summarised in the Table below
+## Data sources
+A longstanding obstacle in alcohol research and care is the absence of a diagnostic gold standard, which is not addressed even by the development of new biomarkers. Instead, a number of instruments exist which measure self-reported alcohol consumption with varying validity and reliability. A state-of-the art review from @Greenfield2000 is summarised in [Table 1](#table1) below.
 
-```{r tab_comparison_schedules, fig.cap = tab.comparison_schedules, echo = FALSE}
-read.csv("table_comparison_alco_schedules.csv") %>% 
-  kable %>%
-  kable_styling()
+*Table 1:* <a name="table1"></a>*Alcohol schedules: selective comparison*
 
-```
+| Schedule                             	| Bias    	| Variance 	| Measures variability 	|
+|--------------------------------------	|---------	|----------	|----------------------	|
+| Graduated Frequency (GF)             	| Unclear 	| Low      	| Yes                  	|
+| Quantity-Frequency (QF)              	| Unclear 	| Low      	| No                   	|
+| Quantity-Frequency-Variability (QFV) 	| Unclear 	| Low      	| Yes                  	|
+| 'Yesterday' recall                   	| Minimal 	| Large    	| No                   	|
+| Timeline Followback (TLFB)           	| Low     	| Medium   	| Yes                  	|
+| Prospective diary                    	| Low     	| Medium   	| Yes                  	|
 
+Prospective diaries tend to record higher alcohol consumption by minimising recall bias, followed by GF, while lower levels seem to be recorded with QF measures [@Heeb2005, @Rehm1998]. 
 
-Broadly, WD tend to capture the highest alcohol consumption levels, followed by GF and the lowest levels are recorded by QF measures [@Heeb2005, @Rehm1998]. A large investigation conducted as part of the Health Survey for England (HSE) [@Boniface2014] compared a WD with an interview-based specific-beverage QF method underpinning the UK national statistics on alcohol consumption. The authors found consistent mean weekly drinking estimates in the two methods, with most differences being associated with drink type and venue.
+The present paper employs four sources of data. An overview is available in [Table 2](#table2) below, together with references to publicly available methodological descriptions. Only the hospital study was conducted specifically for this paper and requires further description. Participants were recruited from a range of clinics at a large acute hospital in Southampton, UK: orthopaedics outpatient, endoscopy day cases, young adult outpatient, infusion ???. 
 
-The present paper employs four sources of data. An overview is available in Table 1 below, together with references to publicly available methodological descriptions. Only the hospital study was conducted specifically for this paper and requires further description. Participants were recruited from a range of clinics at a large acute hospital in Southampton, UK: orthopaedics outpatient, endoscopy day cases, young adult outpatient, infusion ???. 
+*Table 2:* <a name="table2"></a>*Description of data sources*
 
-```{r table_overview_datasets, fig.cap = tab.overview_datasets, echo = FALSE}
-read.csv("table_overview_datasets.csv") %>% 
-  kable %>%
-  kable_styling()
+|	Source	|	Waves	|	Population of inference	|	Alcohol schedules	|	Validation	|	Sample size	|	Design	|
+|	-------------	|	-------------	|	-------------	|	-------------	|	-------------	|	------:	|	-------------	|
+|	Alcohol Toolkit Study (ATS) [@Beard2015a]	|	November 2015-October 2017 (waves 110--133)	|	Residents of private English households aged 16 years and over	|	Extended AUDIT-C and GF	|	-	|	40,832	|	TBC	|
+|	Health Survey for England (HSE) [@NatCenSocialResearch2013]	|	2011	|	Residents of private English households aged 18 years and over	|	Beverage-specific QF	|	This UK-specific schedule is consistent with a prospective diary [@Boniface2014] and yesterday recall [@Stockwell2016].	|	8,610	|	Multistage random sampling	|
+|	Hospital questionnaire study (HOSP)	|	February 2019 to ??? 2019	|	Outpatient and day case hospital patients aged 18 years and over	|	Extended AUDIT-C and TLFB	|	TLFB records fewer drinking days and thus lower consumption than a prospective diary [@Grant1995]. This recall bias increases with the [@Hoeppner2010; @Vinson2003]	|	TBC	|	Cross-sectional recruitment with block randomisation to (a) self-administered AUDIT-C or (b) researcher-administered AUDIT-C	|
+|	Alcohol retail sales [@PHE2017]	|	2014	|	English population aged 18 years and over	|	N/A	|	See [@PHE2017].	|	N/A	|	Ratio of all alcohol produced or processed in the UK, as well as alcohol imported into the UK for sale and consumption, over the mid-year population estimate	|
 
-```
 
 All results are reported in UK alcohol units (8g or 10mL of pure alcohol). Analyses are conducted in `R` [@RCoreTeam2017] using packages `tidyverse`, `survey`, `rstan` [@package-tidyverse; @package-rstan; @package-survey; @Lumley2004]. Computer programmes for all analyses are available on an online repository.
 
-
 ## Study 1: EWAC estimation
 
-Previous research on quantity-frequency alcohol instruments suggests that the product of the quantity and frequency questions in the AUDIT-C (AUDIT items 1 and 2) could be used to produce a measure of usual consumption [@Lemmens1992].
+We apply methods developed for quantity-frequency-variability instruments [@Lemmens1992] to the Extended AUDIT-C, by adjusting the product of AUDIT items 1 and 2 with the intense drinking recorded in AUDIT item 3. We assess coefficients to be applied to each  response item:
 
-![Quantity-Frequency-Variability estimator overview (adapted from @Lemmens1992)](qfv.png)
+- using the AUDIT response item interval midpoint: for example, '2 to 3 times per week' is set to 2.5
+- using a statistical model to estimate the coefficients directly from the ATS
 
-To replicate this approach, we determine coefficients to be applied to each Extended AUDIT-C response item in order to compute the EWAC.
-
-- using the AUDIT-C response item interval midpoint: for example, 2 to 3 times per week is set to 2.5 times per week
-- using a statistical model to estimate the coefficients directly from the ATS. Missing data in the GF schedule (14.7% of participants giving a non-'Never' answer to the AUDIT-C item 1) is assumed to be missing at random conditionally on the Extended AUDIT-C responses. We employ a Bayesian hierarchical fitted in STAN setting uniform priors on the value of each AUDIT-C item. Detail is available in supplementary materials.
+Missing data in the ATS' GF schedule (14.7% of participants giving a non-'Never' answer to the AUDIT-C item 1) is assumed to be missing at random conditionally on the Extended AUDIT-C responses. We employ a Bayesian hierarchical fitted in STAN setting uniform priors on the value of each AUDIT-C item. Detail is available in supplementary materials.
 
 ## Study 2: Concurrent consistency with Graduated Frequency in England
 
@@ -147,15 +150,25 @@ This study is predominantly interested in
 It is motivated by the question: does one size fit all?
 
 ```{r}
-ats$ewac_stan <- proc_EWAC(ats[, auditx_labels],
-                           audit_coef = audit_weights_STAN, method = "qfv")
-ats$ewac_mp <- proc_EWAC(ats[, auditx_labels],
-                           audit_coef = audit_weights_midpoints, method = "qfv")
-ats$ewac_v3<- proc_EWAC(ats[, auditx_labels],
-                        audit_coef = audit_weights_version4 , method = "qfv")
+
+ats$test_qf <- proc_EWAC(ats[, auditx_labels],
+                           audit_coef = audit_weights_midpoints, binge.val = 6, method = "qf")
+ats$test_qfv <- proc_EWAC(ats[, auditx_labels],
+                           audit_coef = audit_weights_midpoints, binge.val = 6, method = "qfv")
+ats$test_qb <- proc_EWAC(ats[, auditx_labels],
+                           audit_coef = audit_weights_midpoints, binge.val = 6, method = "qb")
+ats$test_qv <- proc_EWAC(ats[, auditx_labels],
+                           audit_coef = audit_weights_midpoints, binge.val = 6, method = "qv")
+
+
+ats$test_best <- data.frame(list(ats$gfmeanweekly - ats$test_qf, ats$gfmeanweekly - ats$test_qv, ats$gfmeanweekly - ats$test_qfv, ats$gfmeanweekly - ats$test_qb)) %>% 
+  apply(., 1, function(X) if(length(which.min(abs(X)))==0) NA else which.min(abs(X))) 
+
+ats$test_best<- factor(ats$test_best, labels = c("qf", "qv", "qfv", "qb"))
+
 ats %>% 
-  select(gfmeanweekly, ewac_mp) %>% na.omit %>% 
-ggplot(aes(gfmeanweekly, ewac_mp)) +
+  select(gfmeanweekly, test_qfv) %>% na.omit %>% 
+ggplot(aes(gfmeanweekly, test_qfv)) +
   geom_point() +
   geom_abline() +
   geom_smooth(method='lm',formula=y~x) +
@@ -168,6 +181,10 @@ ggplot(aes(gfmeanweekly, ewac_mp)) +
 
 ```
 
+## Study 3: Concurrent validity in hospital outpatients
+
+<!-- discuss problems raised by Horton2007 -->
+
 
 ## Study 4: Aggregate concurrent validity
 
@@ -178,8 +195,8 @@ We examine the aggregate consistency in alcohol consumption estimates across all
 
 ```{r}
 library(sjPlot)
-lm_bias_mp <- lm((ewac_mp-gfmeanweekly)  ~ ageg*sex+ favdrink + ethgrp, data = ats)
-lm_bias_stan <- lm((ewac_stan-gfmeanweekly)  ~ ageg*sex + favdrink + ethgrp, data = ats)
+lm_bias_mp <- lm((test_qfv-gfmeanweekly)  ~ ageg*sex+ favdrink + ethgrp, data = ats)
+lm_bias_stan <- lm((test_qfv-gfmeanweekly)  ~ ageg*sex + favdrink + ethgrp, data = ats)
 
 tab_model(lm_bias_mp,lm_bias_stan, file="output_lm_bias.html")
 htmltools::includeHTML("output_lm_bias.html")
@@ -191,8 +208,8 @@ htmltools::includeHTML("output_lm_bias.html")
 
 ```{r}
 
-lm_rmse_mp <- lm(sqrt((ewac_mp-gfmeanweekly)^2) ~ favdrink + ethgrp + ageg*sex, data = ats)
-lm_rmse_stan <- lm(sqrt((ewac_stan-gfmeanweekly)^2) ~ favdrink + ethgrp + ageg*sex, data = ats)
+lm_rmse_mp <- lm(sqrt((test_qfv-gfmeanweekly)^2) ~ favdrink + ethgrp + ageg*sex, data = ats)
+lm_rmse_stan <- lm(sqrt((test_qfv-gfmeanweekly)^2) ~ favdrink + ethgrp + ageg*sex, data = ats)
 # write_html(mtable(lm_rmse_mp,lm_rmse_stan), file="output_lm_rmse.html")
 tab_model(lm_rmse_mp,lm_rmse_stan, file="output_lm_rmse.html")
 htmltools::includeHTML("output_lm_rmse.html")
@@ -346,7 +363,7 @@ Supportive of their argument, we propose that the EWAC could be employed in rout
 # Tables
 
 
-Table 1:  <a name="table1"></a>Overview of alcohol schedule used in this paper.
+Table 1:  <a name="table_questionnaires"></a>Overview of alcohol schedule used in this paper.
 
 <table style="width:100%;">
 <colgroup>
