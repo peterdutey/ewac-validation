@@ -27,7 +27,10 @@ audit_weights_midpoints <- list(
                      "Weekly", "Daily or almost daily"),
     audit3_value = c(0, 6, 12,
                      1 * 365 / 7, 6.5 * 365 / 7),
-    audit3_score = 0:4))
+    audit3_score = 0:4)),
+  
+  binge_value = 6
+  
 )
 
 
@@ -56,7 +59,10 @@ audit_weights_version3 <- list(
                      "Weekly", "Daily or almost daily"),
     audit3_value = c(0, 6, 15,
                      1 * 365 / 7, 6.5 * 365 / 7),
-    audit3_score = 0:4))
+    audit3_score = 0:4)),
+  
+  binge_value = 6
+  
   
 )
 
@@ -82,7 +88,10 @@ audit_weights_version4 <- list(
                      "Weekly", "Daily or almost daily"),
     audit3_value = c(0, 6, 15,
                      1 * 365 / 7, 6.5 * 365 / 7),
-    audit3_score = 0:4))
+    audit3_score = 0:4)),
+  
+  binge_value = 6
+  
 )
 
 
@@ -114,7 +123,10 @@ audit_weights_ATS <- list(
                      "Weekly", "Daily or almost daily"),
     audit3_value = c(0, 6, 15,
                      1 * 365 / 7, 6.5 * 365 / 7),
-    audit3_score = 0:4))
+    audit3_score = 0:4)),
+  
+  binge_value = 6
+  
   
 )
 

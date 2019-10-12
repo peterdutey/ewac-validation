@@ -74,7 +74,7 @@ proc_AUDIT_risk <- function(X){
 }
 
 
-proc_EWAC <- function(X, audit_coef, method = "qfv", binge.val = 8){
+proc_EWAC <- function(X, audit_coef, method = "qfv"){
   # Compute the EWAC
   # X:                 data.frame containing AUDIT1, AUDIT2, and AUDIT3 columns in order 
   # audit_coef:        list of coefficients to apply to AUDIT response items (see audit_weights.R)
@@ -86,7 +86,7 @@ proc_EWAC <- function(X, audit_coef, method = "qfv", binge.val = 8){
   X[,c("audit1_value")] <- audit_coef$audit1[match(X[,1], audit_coef$audit1$audit1_label), c("audit1_value")]
   X[,c("audit2_value")] <- audit_coef$audit2[match(X[,2], audit_coef$audit2$audit2_label), c("audit2_value")]
   X[,c("audit3_value")] <- audit_coef$audit3[match(X[,3], audit_coef$audit3$audit3_label), c("audit3_value")]
-  
+  binge.val <- audit_coef$binge_value
   if (method == "qf"){
     
     ( X$audit1_value * ifelse(X$audit1_value==0, NA, 
