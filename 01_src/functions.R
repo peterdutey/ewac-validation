@@ -37,8 +37,33 @@ tbrounding <- function(x, places = 1){
   format(round(x, places), nsmall = places)
 }
 
+
+pvrounding <- function(x){
+  if(x < 0.001){
+    "$p$ < 0.001"
+  } else {
+    paste("$p$ =", tbrounding(x, 3))
+  }
+}
+
 formatbm <- function(x){
   format(x, big.mark = ",")
+}
+
+chisq.test.variance <- function(X, sigma = 4){
+  # Chi-square one-sided test of sample variance (superiority)
+  # X:      vector of squared differences
+  # sigma:  maximum population variance in H0
+  
+  X <- na.omit(X)
+  df <- length(X) - 1
+  
+  statistic <-  ( (sum(X)/df) * df )/sigma
+  
+  list(
+    statistic = statistic,
+    p.value = pchisq(statistic, df = df, lower.tail = F)
+  )
 }
 
 keyABH <- list(space="right", cex = 1.5,

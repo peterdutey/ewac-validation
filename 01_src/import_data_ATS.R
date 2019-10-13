@@ -9,14 +9,14 @@ listvar <- c('xwave', 'A_weight0', 'weighttns', 'weighttns13', 'sttime', 'tatime
              'quarter2', 'qx', 'xyear', 'sexz', 'actage', 'agez', 'over35', 'sgz', 'randm', 
              'randm2', 'ab', 'sregz', 'gore', 'gor', 'nsec', 'qhhold', 'qwork', 'qemploy', 
              'q632e55', 'qstaff', 'qsuper', 'qprof', 'work', 'cie', 'mshop', 'super', 'wrkcie',
-             'maritl', 'marital2','marital3', 'marital4', 'marital5', 'marital6', 'marital7',
-             'marital8', 'marital9', 'marital10', 'tenure', 'tennet', 'income', 
+             'maritl', 'tenure', 'tennet', 'income', 'rel', 'cigsmok', 'smokstat',
              'income3', 'dethnin', 'ethnic', 'lstage', 'qual', 'audit1', 'audit2', 'audit3', 
              'auditc', 'auditce', 'fullaudit', 'fullaudite', 'auditriskzone', 'acmeanweekly',
              'acgroups', 'ta47_01_num', 'ta47_01_banded', 'ta47_02_num', 'ta47_02_banded', 
              'ta47_03_1', 'ta47_03_10', 'ta47_03_11', 'ta47_03_2', 'ta47_03_3', 'ta47_03_4', 
              'ta47_03_5', 'ta47_03_6', 'ta47_03_7', 'ta47_03_8', 'ta47_03_9', 'ta47_03_dk', 
-             'ta47_03_ref', 'ta47_04', 'alctype1', 'alcmotiv',
+             'ta47_03_ref', 'ta47_04', 'alctype1', 'alcmotiv', 'alccd1', 'alccutdown', 'alcatt', 
+             'alcattnet', 'alcatt2', 'alcatt2n', 'tryalclyc', 'tryalclyc2', 'eq5df',
              'gf0102', 'gf0304', 'gf0507', 'gf0810', 'gf1115', 'gf1620', 'gf2130', 'gf3140', 
              'gf4150', 'gf5160', 'gfgroups', 'gfmax', 'gfmeanweekly', 'gfsumdays', 'gftotal')
 
@@ -59,6 +59,54 @@ ethnicgrp <- data.frame(list(ethnic = c('WHITE BRITISH', 'WHITE IRISH',
                                         'Black', 'Black', 'Black',
                                         'Other', 'Other', NA, NA)))
 ats <- merge(ats, ethnicgrp, by = "ethnic", all.x =T)
+
+ats <- ats %>% 
+  mutate(ethgrp = factor(ethgrp, 
+                         levels = c("White British", "White Other", "Mixed",
+                                    "Asian", "Black", "Other"))) %>% 
+  mutate(marital = as_factor(ats$maritl),
+         rel = as_factor(rel),
+         qual = as_factor(qual),
+         smokstat = as_factor(smokstat)) %>% 
+  mutate(marital = case_when(
+    marital == "MARRIED - PARENT/GUARDIAN" ~ "Married",
+    marital == "MARRIED - NOT PARENT/GUARDIAN" ~ "Married",
+    marital == "SINGLE - PARENT/GUARDIAN" ~ "Single",
+    marital == "SINGLE - NOT PARENT/GUARDIAN" ~ "Single",
+    marital == "WID/DIV/SEP - PARENT/GUARDIAN" ~ "Separated/widowed",
+    marital == "WID/DIV/SEP - NOT PARENT/GUARDIAN" ~ "Separated/widowed",
+    TRUE ~ NA_character_
+  )) %>% 
+  mutate(highqual = case_when(
+    qual == 'NO FORMAL QUALIFICATIONS' ~ "No qualification",
+    qual %in% c('GCSE/O-LEVEL/CSE', 'VOCATIONAL QUALIFICATIONS (=NVQ1+2)', 
+                'A-LEVEL OR EQUIVALENT (=NVQ3)') ~ "NVQ <= 3",
+    qual %in% c('MASTERS/PHD OR EQUIVALENT', 
+                "BACHELOR DEGREE OR EQUIVALENT (=NVQ4)") ~ "NVQ4+ (degree)",
+    qual %in% c('OTHER', 'STILL STUDYING') ~ "Other",
+    TRUE ~ NA_character_
+  )) %>% 
+  mutate(highqual = factor(highqual, 
+                           levels = c("No qualification", "NVQ <= 3", 
+                           "NVQ4+ (degree)", "Other")))
+
+ats <- ats %>% 
+  mutate(religion = case_when(
+    rel %in% c("Baha'i", 'Buddhist', 'Hindu', 
+               'Jain', 'Rastafarian', 'Sikh', 'Jewish',
+               'Zoroastrian', 'Any other religion') ~'Any other religion',
+    rel == "Refused" ~ NA_character_,
+    rel == "Don't know" ~ NA_character_,
+    TRUE ~ as.character(rel)
+  )) %>% 
+  mutate(religion = factor(religion, levels = c("No religion", "Christian", "Muslim", 
+                                                "Any other religion"))) %>% 
+  mutate(tryalclyc = factor(tryalclyc, 
+                            labels = c("No attempt to cut down",
+                                       "Serious attempt to cut down in last 12 months")),
+         tryalclyc2 = factor(tryalclyc2, 
+                            labels = c("No attempt to cut down",
+                                       "Attempt to cut down in last 12 months")))
 
 ats$sex <- as_factor(ats$sexz)
 ats$sex <- relevel(ats$sex, "Women")

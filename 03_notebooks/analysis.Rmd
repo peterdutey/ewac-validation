@@ -160,90 +160,108 @@ We examine the aggregate consistency in alcohol consumption estimates across all
 
 ats$ewac_mp <- proc_EWAC(ats[, auditx_labels],
                            audit_coef = audit_weights_midpoints, method = "qfv")
-
-ats$test_qf <- proc_EWAC(ats[, auditx_labels],
+ats$ewac_qf <- proc_EWAC(ats[, auditx_labels],
                            audit_coef = audit_weights_STAN, method = "qf")
-ats$test_qfv <- proc_EWAC(ats[, auditx_labels],
+ats$ewac_qfv <- proc_EWAC(ats[, auditx_labels],
                            audit_coef = audit_weights_STAN, method = "qfv")
-ats$test_qb <- proc_EWAC(ats[, auditx_labels],
+ats$ewac_qb <- proc_EWAC(ats[, auditx_labels],
                            audit_coef = audit_weights_STAN, method = "qb")
-ats$test_qv <- proc_EWAC(ats[, auditx_labels],
+ats$ewac_qv <- proc_EWAC(ats[, auditx_labels],
                            audit_coef = audit_weights_STAN, method = "qv")
+ats$ewac_qfv_M <- proc_EWAC(ats[, auditx_labels],
+                           audit_coef = audit_weights_STAN_men, method = "qfv")
+ats$ewac_qfv_F <- proc_EWAC(ats[, auditx_labels],
+                           audit_coef = audit_weights_STAN_women, method = "qfv")
+ats <- mutate(ats, ewac_qfv_S = if_else(sex == "Men", 
+                                        ewac_qfv_M, ewac_qfv_F))
 
-
-ats$test_best <- data.frame(list(ats$gfmeanweekly - ats$test_qf, ats$gfmeanweekly - ats$test_qv, ats$gfmeanweekly - ats$test_qfv, ats$gfmeanweekly - ats$test_qb)) %>% 
+ats$ewac_best <- data.frame(list(ats$gfmeanweekly - ats$ewac_qf, ats$gfmeanweekly - ats$ewac_qv, ats$gfmeanweekly - ats$ewac_qfv, ats$gfmeanweekly - ats$ewac_qb)) %>% 
   apply(., 1, function(X) if(length(which.min(abs(X)))==0) NA else which.min(abs(X))) 
 
-ats$test_best<- factor(ats$test_best, labels = c("qf", "qv", "qfv", "qb"))
+ats$ewac_best<- factor(ats$ewac_best, labels = c("qf", "qv", "qfv", "qb"))
 
-# table(ats$test_best, ats$test_qf <= ats$test_qfv)
-MD_midpoint <- mean(ats$ewac_mp - ats$gfmeanweekly, na.rm = T)
-RMSD_midpoint <- sqrt(mean((ats$ewac_mp - ats$gfmeanweekly)^2, na.rm = T))
-MD_stan_qfv <- mean(ats$ewac_mp - ats$gfmeanweekly, na.rm = T)
-RMSD_stan_qfv <- sqrt(mean((ats$test_qfv - ats$gfmeanweekly)^2, na.rm = T))
+# table(ats$ewac_best, ats$ewac_qf <= ats$ewac_qfv)
+test_midpoint <- list(
+  MD = mean(ats$ewac_mp - ats$gfmeanweekly, na.rm = T),
+  MD.p = t.test(ats$ewac_mp - ats$gfmeanweekly)$p.value,
+  RMSD = sqrt(mean((ats$ewac_mp - ats$gfmeanweekly)^2, na.rm = T)),
+  RMSD.p = t.test( (ats$ewac_mp - ats$gfmeanweekly)^2, mu = 4)$p.value
+)
 
-MD_stan_qfv_men <- ats %>% 
+test_stan <- list(
+  MD = mean(ats$ewac_qfv - ats$gfmeanweekly, na.rm = T),
+  MD.p = t.test(ats$ewac_qfv - ats$gfmeanweekly)$p.value,
+  RMSD = sqrt(mean((ats$ewac_qfv - ats$gfmeanweekly)^2, na.rm = T)),
+  RMSD.p = chisq.test.variance( (ats$ewac_qfv - ats$gfmeanweekly)^2,
+                                sigma = 4)$p.value
+)
+
+test_stan_S <- list(
+  MD = mean(ats$ewac_qfv_S - ats$gfmeanweekly, na.rm = T),
+  MD.p = t.test(ats$ewac_qfv_S - ats$gfmeanweekly)$p.value,
+  RMSD = sqrt(mean((ats$ewac_qfv_S - ats$gfmeanweekly)^2, na.rm = T)),
+  RMSD.p = chisq.test.variance( (ats$ewac_qfv_S - ats$gfmeanweekly)^2,
+                                sigma = 4)$p.value
+)
+
+stan_qfv_S_men <- ats %>% 
   filter(sex == "Men") %>% 
-  summarise(MD_stan_qfv_men = mean(test_qfv - gfmeanweekly, na.rm = T)) %>% 
-  as.numeric(.$MD_stan_qfv_men)
+  summarise(MD = mean(ewac_qfv_S - gfmeanweekly, na.rm = T),
+            MD.p = t.test(ewac_qfv_S - gfmeanweekly)$p.value,
+            RMSD = sqrt(mean((ewac_qfv_S - gfmeanweekly)^2, na.rm = T)),
+            RMSD.p = chisq.test.variance((ewac_qfv_S - gfmeanweekly)^2,
+                                         sigma = 4)$p.value) 
+stan_qfv_S_women <- ats %>% 
+  filter(sex == "Women") %>% 
+  summarise(MD = mean(ewac_qfv_S - gfmeanweekly, na.rm = T),
+            MD.p = t.test(ewac_qfv_S - gfmeanweekly)$p.value,
+            RMSD = sqrt(mean((ewac_qfv_S - gfmeanweekly)^2, na.rm = T)),
+            RMSD.p = chisq.test.variance((ewac_qfv_S - gfmeanweekly)^2,
+                                         sigma = 4)$p.value)
 
 ```
 ## Study 1: EWAC estimation and validation
 
 ### EWAC coefficients
 
-Using midpoint coeffients, the analysis reveals that the coefficients are invalid. With a mean deviation (MD) of `r tbrounding(MD_midpoint, 2)`, the EWAC shows a positive bias by 0.7 unit. The root mean squared deviation (RMSD) is estimated at `r tbrounding(RMSD_midpoint, 2)`. 
+Using midpoint coeffients, the analysis reveals that the coefficients are invalid. With a mean deviation (MD) of `r tbrounding(test_midpoint$MD, 2)` alcohol units (`r pvrounding(test_midpoint$MD.p)`), the EWAC shows a slight positive bias. The root mean squared deviation (RMSD) is estimated at `r tbrounding(test_midpoint$RMSD, 2)` (`r pvrounding(test_midpoint$RMSD.p)`), suggesting that the EWAC of any given individual would be on average 12 units from the truth (treating GF schedule can be used as a gold-standard). Using coefficient estimated in the statistical model, bias remains statistically significant with MD = `r tbrounding(test_stan$MD, 2)` (`r pvrounding(test_stan$MD.p)`) and RMSD = `r tbrounding(test_stan$RMSD, 2)` (`r pvrounding(test_stan$RMSD.p)`).
 
-Using modelled coefficients, MD `r tbrounding(MD_stan_qfv, 2)` and RMSD of `r tbrounding(RMSD_stan_qfv, 2)`.
+<!-- With early signs that validity was strongly dependent on gender, we estimated coefficients independently for each gender to test for the use of gender-specific coefficients. This analysis was not planned in the pre-registered protocol but appeared to be justified by differences in alcohol consumption between women and men. Using gender-specific coefficients, we found HIGHER BIAS... -->
 
-With early signs that validity was strongly dependent on gender, we estimated coefficients independently for each gender to test for the use of gender-specific coefficients. This analysis was not planned in the pre-registered protocol but appeared to be justified by differences in alcohol consumption between women and men.  
 
-`r tbrounding(MD_stan_qfv_men)`
 
-```{r}
-
-ats %>% 
-  select(gfmeanweekly, ewac_mp) %>% na.omit %>% 
-ggplot(aes(gfmeanweekly, ewac_mp)) +
+```{r warning=F}
+select(ats, gfmeanweekly, ewac_qfv) %>% 
+  na.omit %>% 
+  ggplot(aes(gfmeanweekly, ewac_qfv)) +
   geom_point() +
   geom_abline() +
   geom_smooth(method='lm',formula=y~x) +
   theme_bw() +
   ylab("EWAC (UK units/week)") +
   xlab("Graduated-Frequency schedule (UK units/week)")+
-  ggtitle("Midpoint coefficients") +
   scale_x_continuous(breaks = seq(0, 150, 10), limits = c(0, 150), minor_breaks = F)+
   scale_y_continuous(breaks = seq(0, 150, 10), limits = c(0, 150), minor_breaks = F)  
 
 ```
 
-
+*Figure 1:* <a name="figure1"></a>*Plot of EWAC against GF in ATS with ordinary least square regression line ($n$ = 22,373)*
 
 
 ### Consistency across demographics
 
-deviation to protocol
+*Table 3:* <a name="table3"></a>*Coefficients of linear regression of EWAC mean deviation from GF*
+
 ```{r}
 library(sjPlot)
-lm_bias_mp <- lm((ewac_mp-gfmeanweekly)  ~ sex*ageg + favdrink + ethgrp, data = ats)
-lm_bias_stan <- lm((test_qfv-gfmeanweekly)  ~ sex*ageg + favdrink + ethgrp, data = ats)
+lm_bias_mp <- lm((ewac_mp-gfmeanweekly) ~ sex*ageg + ethgrp + favdrink + 
+                   tryalclyc2 + religion + highqual  + smokstat, data = ats)
+lm_rmse_stan <- lm(sqrt((ewac_qfv-gfmeanweekly)^2) ~ sex*ageg + ethgrp + favdrink + 
+                   tryalclyc2 + religion + highqual  + smokstat, data = ats)
 
-tab_model(lm_bias_mp,lm_bias_stan, file="output_lm_bias.html")
+tab_model(lm_bias_mp,lm_rmse_stan, file="output_lm_bias.html")
 htmltools::includeHTML("output_lm_bias.html")
 
-```
-
-
-
-
-```{r}
-
-lm_rmse_mp <- lm(sqrt((ewac_mp-gfmeanweekly)^2) ~ sex*ageg + favdrink + ethgrp, data = ats)
-lm_rmse_stan <- lm(sqrt((test_qfv-gfmeanweekly)^2) ~ sex*ageg + favdrink + ethgrp, data = ats)
-# write_html(mtable(lm_rmse_mp,lm_rmse_stan), file="output_lm_rmse.html")
-tab_model(lm_rmse_mp,lm_rmse_stan, file="output_lm_rmse.html",
-          digits = 1)
-htmltools::includeHTML("output_lm_rmse.html")
 ```
 
 
