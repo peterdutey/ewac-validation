@@ -51,8 +51,6 @@ library(kableExtra)
 auditx_labels <- c("audit1_label", "audit2_label", "audit3_label")
 
 load(file.path("..", "02_data", "HSE.rda"))
-# hse <- hse[hse$dnnow == 1,] # Take only those drinking 'at all these days'
-
 load(file.path("..", "02_data", "ATS.rda"))
 # Too small a sample size too manage
 ats$sex[ats$sex == "In another way"] <- NA
@@ -66,7 +64,12 @@ ats <- ats %>%
                            NA_character_, audit3_label))
 
 # Taken from PHE 2017
-alcohol_sales_2014 <- 361429000 # liters
+alcohol_sales_2014_liters <- 361429387
+alcohol_pcapita_adults_2014_units <-  16.3 # per capita for all population
+alcohol_pcapita_drinker_2014_units <- 19.3 # per capita for drinkers only
+MYPE_2014 <- 42724917 # population aged 18+
+
+
 
 table_nums <- captioner::captioner(prefix = "Tab.")
 tab.comparison_schedules <- table_nums(name = "tab_comparison_schedules", 
@@ -87,7 +90,7 @@ Neither the AUDIT-C nor the Extended AUDIT-C provide a measure of usual alcohol 
 
 The aim of the present study is develop and validate an Estimator of usual Weekly Alcohol Consumption in units (EWAC) based on the Extended AUDIT-C. The product of frequency of drinking (AUDIT-C item 1) and quantity of drinking (AUDIT-C item 2) can be used to estimate usual alcohol consumption. In addition, measures of heavy use (AUDIT-C item 3) have been found to improve the consistency of the estimator with other data sources in previous research [@Lemmens1992].
 
-This paper reports four distinct empirical studies. Study 1 estimates coefficients to apply to each of the AUDIT-C response items to compute an EWAC using data from a large English household survey, the Alcohol Toolkit Study (ATS). Using the same source, Study 2 tests the contingent validity of the EWAC compared with the survey's graduated-frequency schedule across a number of demographic subpopulations in England. Study 3 tests the contingent validity of the EWAC compared with the 28-day Timeline Followback in a clinical population (visitors of an acute hospital). Finally, Study 4 compares the population-wide total and empirical cumulative distribution of alcohol consumption in England using the EWAC, the ATS graduated frequency schedule, the Health Survey for England, and official statistics on alcohol sales. The article concludes on the EWAC's potential applications in research and clinical care.
+This paper reports four distinct empirical studies. Study 1 estimates coefficients to apply to each of the AUDIT-C response items to compute an EWAC using data from a large English household survey, the Alcohol Toolkit Study (ATS). It then tests the concurrent validity of the EWAC across a number of demographic subpopulations in England. Study 3 tests the contingent validity of the EWAC compared with the 28-day Timeline Followback in a clinical population (visitors of an acute hospital). Finally, Study 4 compares the population-wide total and empirical cumulative distribution of alcohol consumption in England using the EWAC, the ATS graduated frequency schedule, the Health Survey for England, and official statistics on alcohol sales. The article concludes on the EWAC's potential applications in research and clinical care.
 
 # Methods
 
@@ -107,7 +110,7 @@ A longstanding obstacle in alcohol research and care is the absence of a diagnos
 
 Prospective diaries tend to record higher alcohol consumption by minimising recall bias, followed by GF, while lower levels seem to be recorded with QF measures [@Heeb2005, @Rehm1998]. 
 
-The present paper employs four sources of data. An overview is available in [Table 2](#table2) below, together with references to publicly available methodological descriptions. Only the hospital study was conducted specifically for this paper and requires further description. Participants were recruited from a range of clinics at a large acute hospital in Southampton, UK: orthopaedics outpatient, endoscopy day cases, young adult outpatient, infusion ???. 
+The present paper employs four sources of data. An overview is available in [Table 2](#table2) below, together with references to publicly available methodological descriptions. Analysis of HSE and ATS microdata was approved by the University of Southampton's Faculty of Medicine Ethics Committee (ERGO 44682). The hospital questionnaire (Study 3) collection and analysis was approved by the Health Research Authority National Research Ethics Service (IRAS 247458;  REC 18/SC/0564). All results are reported in UK alcohol units (8g or 10mL of pure alcohol). Analyses are conducted in `R` [@RCoreTeam2017] using packages `tidyverse`, `survey`, `rstan` [@package-tidyverse; @package-rstan; @package-survey; @Lumley2004]. Computer programmes for all analyses are available on an online repository.
 
 *Table 2:* <a name="table2"></a>*Description of data sources*
 
@@ -115,50 +118,57 @@ The present paper employs four sources of data. An overview is available in [Tab
 |	-------------	|	-------------	|	-------------	|	-------------	|	-------------	|	------:	|	-------------	|
 |	Alcohol Toolkit Study (ATS) [@Beard2015a]	|	November 2015-October 2017 (waves 110--133)	|	Residents of private English households aged 16 years and over	|	Extended AUDIT-C and GF	|	-	|	40,832	|	TBC	|
 |	Health Survey for England (HSE) [@NatCenSocialResearch2013]	|	2011	|	Residents of private English households aged 18 years and over	|	Beverage-specific QF	|	This UK-specific schedule is consistent with a prospective diary [@Boniface2014] and yesterday recall [@Stockwell2016].	|	8,610	|	Multistage random sampling	|
-|	Hospital questionnaire study (HOSP)	|	February 2019 to ??? 2019	|	Outpatient and day case hospital patients aged 18 years and over	|	Extended AUDIT-C and TLFB	|	TLFB records fewer drinking days and thus lower consumption than a prospective diary [@Grant1995]. This recall bias increases with the [@Hoeppner2010; @Vinson2003]	|	TBC	|	Cross-sectional recruitment with block randomisation to (a) self-administered AUDIT-C or (b) researcher-administered AUDIT-C	|
+|	Hospital questionnaire study (HOSP)	|	February 2019 to ??? 2019	|	Outpatient and day case hospital patients aged 18 years and over	|	Extended AUDIT-C and TLFB	|	TLFB records fewer drinking days and thus lower consumption than a prospective diary [@Grant1995]. This recall bias increases with the [@Hoeppner2010; @Vinson2003]	|	TBC	|	Cross-sectional recruitment with block randomisation to (a) self-administered AUDIT-C or (b) researcher-administered AUDIT-C. More detail in section 2.2.	|
 |	Alcohol retail sales [@PHE2017]	|	2014	|	English population aged 18 years and over	|	N/A	|	See [@PHE2017].	|	N/A	|	Ratio of all alcohol produced or processed in the UK, as well as alcohol imported into the UK for sale and consumption, over the mid-year population estimate	|
 
 
-All results are reported in UK alcohol units (8g or 10mL of pure alcohol). Analyses are conducted in `R` [@RCoreTeam2017] using packages `tidyverse`, `survey`, `rstan` [@package-tidyverse; @package-rstan; @package-survey; @Lumley2004]. Computer programmes for all analyses are available on an online repository.
+## Study 1: EWAC estimation and concurrent validity
 
-## Study 1: EWAC estimation
+A pre-registered protocol for this analysis is available from @Dutey2018. We apply methods developed for quantity-frequency-variability instruments [@Lemmens1992] to the Extended AUDIT-C. For every individual $i$, we adjusting the product of $F_i$ and $Q_i$ (AUDIT items 1 and 2 respectively) with the frequency of intense drinking $V_i$ (AUDIT item 3):
 
-We apply methods developed for quantity-frequency-variability instruments [@Lemmens1992] to the Extended AUDIT-C, by adjusting the product of AUDIT items 1 and 2 with the intense drinking recorded in AUDIT item 3. We assess coefficients to be applied to each  response item:
+$$\text{EWAC}_i = F_i Q_i + V_ib$$
 
-- using the AUDIT response item interval midpoint: for example, '2 to 3 times per week' is set to 2.5
-- using a statistical model to estimate the coefficients directly from the ATS
+where $b$ denotes the average number of units of alcohol consumed in an intense drinking day. Coefficients $F, Q, V$ and $b$ are unknown and are estimated in two ways:
 
-Missing data in the ATS' GF schedule (14.7% of participants giving a non-'Never' answer to the AUDIT-C item 1) is assumed to be missing at random conditionally on the Extended AUDIT-C responses. We employ a Bayesian hierarchical fitted in STAN setting uniform priors on the value of each AUDIT-C item. Detail is available in supplementary materials.
+- using the AUDIT response item interval midpoint: for example, 2.5 for '2 to 3 times per week' in AUDIT item 2
+- using a statistical model to estimate the coefficients directly from the ATS.
 
-## Study 2: Concurrent consistency with Graduated Frequency in England
+The ATS data is strongly affected by data missingness: a high proportion of respondents (`r tbrounding(mean(ats$audit1 == 1)*100)`%, $n$ = `r formatbm(sum(ats$audit1 == 1))`) reported never drinking alcohol in AUDIT item 1 and were not asks any further questions about alcohol consumption. They were thus excluded from the analysis, despite many occasional drinkers amongst them. A further `r formatbm(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly)))` respondents (`r tbrounding(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly))/sum(ats$audit1 != 1))`% of those reporting drinking in AUDIT item 1) did not have a valid GF alcohol consumption record and were also excluded. Missing data in the ATS' GF schedule is assumed to be missing at random conditionally on the Extended AUDIT-C responses. We employ a Bayesian hierarchical fitted in STAN on the remaining sample ($n$ = `r formatbm(nrow(na.omit(select(ats, audit1, audit2, audit3, gfmeanweekly))))`) with bell-shaped beta priors on coefficients $F, Q, V$ bounded by their nominal values, and an exponential prior on $b$ with a lower bound of 5.5 units. Further detail on the modelling is available in supplementary materials.
 
-Next, we quantify the deviation between the EWAC and the GF schedule. A pre-registered protocol for this analysis is available from @Dutey2018. Succintly, this analysis treats GF like a gold standard. It enables the examination of two types of deviations across every participant $i$ in the ATS sample:
+Next, we quantify the deviation between the EWAC and the GF schedule.  Succintly, this analysis treats GF like a gold standard. It enables the examination of two types of deviations across every participant $i$ in the ATS sample:
 
 - MD: the mean deviation $\sum_{i=1}^{n}{n^{-1}(\rm{EWAC_i} - \rm{GF_i} )}$ can be assimilated to a measure of bias under the assumption that GF is a gold standard.
 - RMSD: the root mean squared deviation $\sum_{i}{\sqrt{( \rm{EWAC_i} - \rm{GF_i} )^2}}$ can be assimilated to a measure of total error: it capture both bias and random deviation from the gold standard.
 
 We test the hypothesis that the EWAC's validity varies across population subgroups by regressing both (a) the simple deviation and (b) the root squared deviation in linear regression models, against the following predictors: sex by age group; ethnic group; favourite drink (wine, beer, etc.); highest educational qualification; religion; smoking status; general health; recent attempts at reducing or stopping drinking.
 
+## Study 2: Concurrent validity in hospital outpatients
+
+Participants were recruited from a range of clinics at a large acute hospital in Southampton, UK: orthopaedics outpatient, endoscopy day cases, young adult outpatient, infusion ???. 
+
+<!-- discuss problems raised by Horton2007 -->
 
 
+## Study 3: Aggregate concurrent validity
+
+We examine the aggregate consistency in alcohol consumption estimates across all residents of England aged 18 years and over by plotting the empirical cumulative distribution of alcohol consumption given by (1) the gender-blind EWAC estimated from the ATS; (2) the quantity-frequency estimated in the ATS; (3) the beverage-specific estimators in HSE in 2011; (4) the prospective diary estimator in HSE 2011. In this analysis, survey weights are used: in (1-3), poststratification weights estimated using calibration and age-sex MYPES; in (4), similar postratification weights adjusted for self-selection into participation to the prospective diary data collection. Finally, we examine the percentage of total alcohol sales for England accounted for by each method. Alcohol sales (both on-trade and off-trade) estimates for England (population aged 18 years and over) in 2014 were obtained from Public Health England [@PHE2017].
 
 
-## Study 2: 
-
-This study is predominantly interested in 
-
-It is motivated by the question: does one size fit all?
+# Results
 
 ```{r}
 
+ats$ewac_mp <- proc_EWAC(ats[, auditx_labels],
+                           audit_coef = audit_weights_midpoints, method = "qfv")
+
 ats$test_qf <- proc_EWAC(ats[, auditx_labels],
-                           audit_coef = audit_weights_midpoints, binge.val = 6, method = "qf")
+                           audit_coef = audit_weights_STAN, method = "qf")
 ats$test_qfv <- proc_EWAC(ats[, auditx_labels],
-                           audit_coef = audit_weights_midpoints, binge.val = 6, method = "qfv")
+                           audit_coef = audit_weights_STAN, method = "qfv")
 ats$test_qb <- proc_EWAC(ats[, auditx_labels],
-                           audit_coef = audit_weights_midpoints, binge.val = 6, method = "qb")
+                           audit_coef = audit_weights_STAN, method = "qb")
 ats$test_qv <- proc_EWAC(ats[, auditx_labels],
-                           audit_coef = audit_weights_midpoints, binge.val = 6, method = "qv")
+                           audit_coef = audit_weights_STAN, method = "qv")
 
 
 ats$test_best <- data.frame(list(ats$gfmeanweekly - ats$test_qf, ats$gfmeanweekly - ats$test_qv, ats$gfmeanweekly - ats$test_qfv, ats$gfmeanweekly - ats$test_qb)) %>% 
@@ -166,9 +176,35 @@ ats$test_best <- data.frame(list(ats$gfmeanweekly - ats$test_qf, ats$gfmeanweekl
 
 ats$test_best<- factor(ats$test_best, labels = c("qf", "qv", "qfv", "qb"))
 
+# table(ats$test_best, ats$test_qf <= ats$test_qfv)
+MD_midpoint <- mean(ats$ewac_mp - ats$gfmeanweekly, na.rm = T)
+RMSD_midpoint <- sqrt(mean((ats$ewac_mp - ats$gfmeanweekly)^2, na.rm = T))
+MD_stan_qfv <- mean(ats$ewac_mp - ats$gfmeanweekly, na.rm = T)
+RMSD_stan_qfv <- sqrt(mean((ats$test_qfv - ats$gfmeanweekly)^2, na.rm = T))
+
+MD_stan_qfv_men <- ats %>% 
+  filter(sex == "Men") %>% 
+  summarise(MD_stan_qfv_men = mean(test_qfv - gfmeanweekly, na.rm = T)) %>% 
+  as.numeric(.$MD_stan_qfv_men)
+
+```
+## Study 1: EWAC estimation and validation
+
+### EWAC coefficients
+
+Using midpoint coeffients, the analysis reveals that the coefficients are invalid. With a mean deviation (MD) of `r tbrounding(MD_midpoint, 2)`, the EWAC shows a positive bias by 0.7 unit. The root mean squared deviation (RMSD) is estimated at `r tbrounding(RMSD_midpoint, 2)`. 
+
+Using modelled coefficients, MD `r tbrounding(MD_stan_qfv, 2)` and RMSD of `r tbrounding(RMSD_stan_qfv, 2)`.
+
+With early signs that validity was strongly dependent on gender, we estimated coefficients independently for each gender to test for the use of gender-specific coefficients. This analysis was not planned in the pre-registered protocol but appeared to be justified by differences in alcohol consumption between women and men.  
+
+`r tbrounding(MD_stan_qfv_men)`
+
+```{r}
+
 ats %>% 
-  select(gfmeanweekly, test_qfv) %>% na.omit %>% 
-ggplot(aes(gfmeanweekly, test_qfv)) +
+  select(gfmeanweekly, ewac_mp) %>% na.omit %>% 
+ggplot(aes(gfmeanweekly, ewac_mp)) +
   geom_point() +
   geom_abline() +
   geom_smooth(method='lm',formula=y~x) +
@@ -181,22 +217,16 @@ ggplot(aes(gfmeanweekly, test_qfv)) +
 
 ```
 
-## Study 3: Concurrent validity in hospital outpatients
-
-<!-- discuss problems raised by Horton2007 -->
 
 
-## Study 4: Aggregate concurrent validity
 
-We examine the aggregate consistency in alcohol consumption estimates across all residents of England aged 18 years and over by plotting the empirical cumulative distribution of alcohol consumption given by (1) the gender-blind EWAC estimated from the ATS; (2) the quantity-frequency estimated in the ATS; (3) the beverage-specific estimators in HSE in 2011; (4) the prospective diary estimator in HSE 2011. In this analysis, survey weights are used: in (1-3), poststratification weights estimated using calibration and age-sex MYPES; in (4), similar postratification weights adjusted for self-selection into participation to the prospective diary data collection. Finally, we examine the percentage of total alcohol sales for England accounted for by each method. Alcohol sales (both on-trade and off-trade) estimates for England (population aged 18 years and over) in 2014 were obtained from Public Health England [@PHE2017].
+### Consistency across demographics
 
-
-# Results
-
+deviation to protocol
 ```{r}
 library(sjPlot)
-lm_bias_mp <- lm((test_qfv-gfmeanweekly)  ~ ageg*sex+ favdrink + ethgrp, data = ats)
-lm_bias_stan <- lm((test_qfv-gfmeanweekly)  ~ ageg*sex + favdrink + ethgrp, data = ats)
+lm_bias_mp <- lm((ewac_mp-gfmeanweekly)  ~ sex*ageg + favdrink + ethgrp, data = ats)
+lm_bias_stan <- lm((test_qfv-gfmeanweekly)  ~ sex*ageg + favdrink + ethgrp, data = ats)
 
 tab_model(lm_bias_mp,lm_bias_stan, file="output_lm_bias.html")
 htmltools::includeHTML("output_lm_bias.html")
@@ -208,84 +238,109 @@ htmltools::includeHTML("output_lm_bias.html")
 
 ```{r}
 
-lm_rmse_mp <- lm(sqrt((test_qfv-gfmeanweekly)^2) ~ favdrink + ethgrp + ageg*sex, data = ats)
-lm_rmse_stan <- lm(sqrt((test_qfv-gfmeanweekly)^2) ~ favdrink + ethgrp + ageg*sex, data = ats)
+lm_rmse_mp <- lm(sqrt((ewac_mp-gfmeanweekly)^2) ~ sex*ageg + favdrink + ethgrp, data = ats)
+lm_rmse_stan <- lm(sqrt((test_qfv-gfmeanweekly)^2) ~ sex*ageg + favdrink + ethgrp, data = ats)
 # write_html(mtable(lm_rmse_mp,lm_rmse_stan), file="output_lm_rmse.html")
-tab_model(lm_rmse_mp,lm_rmse_stan, file="output_lm_rmse.html")
+tab_model(lm_rmse_mp,lm_rmse_stan, file="output_lm_rmse.html",
+          digits = 1)
 htmltools::includeHTML("output_lm_rmse.html")
 ```
 
 
-
-## Empirical distribution functions
-
-
-<!-- | Study     | Mean (units/week)     | Median | Variance | N | -->
-<!-- | ----------| ---------------------:| --------:|--------:| ----: | -->
-<!-- | HSE (all)      | `r tbrounding(mean(hse$totalwu, na.rm =T),1)`   | `r tbrounding(median(hse$totalwu, na.rm =T),1)`     | `r tbrounding(var(hse$totalwu, na.rm =T),1)` |  `r sum(!is.na(hse$totalwu))` | -->
-<!-- | HSE diary | `r tbrounding(mean(hse$weektot, na.rm =T),1)`   | `r tbrounding(median(hse$weektot, na.rm =T),1)`     | `r tbrounding(var(hse$weektot, na.rm =T),1)` |  `r sum(!is.na(hse$weektot))` | -->
-<!-- | ATS QF    | `r tbrounding(mean(ats$gfmeanweekly, na.rm =T),1)`   | `r tbrounding(median(ats$gfmeanweekly, na.rm =T),1)`   | `r tbrounding(var(ats$gfmeanweekly, na.rm =T),1)` |  `r sum(!is.na(ats$gfmeanweekly))` | -->
+## Study 2: Concurrent validity in hospital patients
 
 
+## Study 3: Empirical distribution functions
 
-```{r echo=F, fig.height=10, fig.width=15}
-# library(latticeExtra)
-# library(scales)
-# xlims = c(-3, 153)
-# EWAC <- ecdfplot(na.omit(ats$qfv[ats$qfv > 0]),
-#                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
-#                                               groups = NULL, qtype = 7, ref = TRUE,...) {
-#                   panel.ecdfplot(x, f.value = NULL, type = "s",
-#                                  groups = NULL, qtype = 7,
-#                                  ref = TRUE,...)
-#                   panel.abline(v = 14)
-#                 },
-#                 xlim = xlims, col = alpha("orange", .7), lwd = 3, lty = 1,
-#                 scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
-# 
-# GF <- ecdfplot(na.omit(ats$gfmeanweekly[ats$gfmeanweekly > 0]),
-#                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
-#                                               groups = NULL, qtype = 7, ref = TRUE,...) {
-#                   panel.ecdfplot(x, f.value = NULL, type = "s",
-#                                  groups = NULL, qtype = 7,
-#                                  ref = TRUE,...)
-#                   panel.abline(v = 14)
-#                 },
-#                 xlim = xlims, col = alpha("black", .7), lwd = 3, lty = 1,
-#                scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
-# 
-# HSE <- ecdfplot(na.omit(hse$totalwu[hse$dnnow == 1]),
-#                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
-#                                               groups = NULL, qtype = 7, ref = TRUE,...) {
-#                   panel.ecdfplot(x, f.value = NULL, type = "s",
-#                                  groups = NULL, qtype = 7,
-#                                  ref = TRUE,...)
-#                   panel.abline(v = 14)
-#                 },
-#                 xlim = xlims, col = alpha("red", .7), lwd = 1, lty = 1,
-#                 scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
-# 
-# HSEdiary <- ecdfplot(na.omit(hse$weektot[hse$dnnow == 1]),
-#                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
-#                                               groups = NULL, qtype = 7, ref = TRUE,...) {
-#                   panel.ecdfplot(x, f.value = NULL, type = "s",
-#                                  groups = NULL, qtype = 7,
-#                                  ref = TRUE,...)
-#                   panel.abline(v = 14)
-#                 },
-#                 xlim = xlims, col = alpha("red", .7), lwd = 2, lty = 2,
-#                 scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
-# 
-# HSEdiary + HSE +EWAC + GF
+
+```{r}
+# From this point onwards, only drinkers aged 18 years and over
+
+hse_dk18 <- filter(hse, age >= 18 & dnnow == 1) # only those drinking 'at all these days'
+ats_dk18 <- filter(ats, actage >= 18 & audit1 > 1) %>%  # not 'never' drinkers
+  mutate(agg_qfv = ewac_mp)
+# ats_dk18$gfmeanweekly > 0 ???
 
 ```
 
+*Table 3:* <a name="table3"></a>*Summary statistics on alcohol consumption in England (excluding abstainers)*
 
-```{r, echo=F, fig.height=8, fig.width=11}
-# plot(ats$qfv,  ats$gfmeanweekly, pch =16, col = alpha(1, .2),
-#      ylab = "GF (units/week)", xlab = "EWAC (units/week)", main = NULL,
-#      xlim = c(0, 50), ylim = c(0,50))
-# abline(0,1, col = 2, lwd =1.5)
+| Study     | Mean (units/week)     | Median | Variance | N | % of alcohol sold |
+| ----------| ---------------------:| --------:|--------:| ----: | -----:
+| HSE beverage-specific QF      | `r tbrounding(mean(hse_dk18$totalwu, na.rm =T))`   | `r tbrounding(median(hse_dk18$totalwu, na.rm =T))`     | `r tbrounding(var(hse_dk18$totalwu, na.rm =T))` |  `r formatbm(sum(!is.na(hse_dk18$totalwu)))` | `r tbrounding(mean(hse_dk18$totalwu, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)` |
+| HSE pospective diary | `r tbrounding(mean(hse_dk18$weektot, na.rm =T))`   | `r tbrounding(median(hse_dk18$weektot, na.rm =T))`     | `r tbrounding(var(hse_dk18$weektot, na.rm =T))` |  `r sum(!is.na(hse_dk18$weektot))` |`r tbrounding(mean(hse_dk18$weektot, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)` |
+| ATS GF    | `r tbrounding(mean(ats_dk18$gfmeanweekly, na.rm =T))`   | `r tbrounding(median(ats_dk18$gfmeanweekly, na.rm =T))`   | `r tbrounding(var(ats_dk18$gfmeanweekly, na.rm =T))` |  `r sum(!is.na(ats_dk18$gfmeanweekly))` |`r tbrounding(mean(ats_dk18$gfmeanweekly, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)` |
+| ATS EWAC    | `r tbrounding(mean(ats_dk18$agg_qfv, na.rm =T))`   | `r tbrounding(median(ats_dk18$agg_qfv, na.rm =T))`   | `r tbrounding(var(ats_dk18$agg_qfv, na.rm =T))` |  `r sum(!is.na(ats_dk18$agg_qfv))` |`r tbrounding(mean(ats_dk18$agg_qfv, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)` |
+| Retail sales | `r tbrounding(alcohol_pcapita_drinker_2014_units)` | -- | -- | -- | --|
+
+
+
+```{r}
+# ggplot() + 
+#   stat_ecdf(aes(agg_qfv, colour = "ATS EWAC"), data = ats_dk18, geom = "step") +
+#   stat_ecdf(aes(gfmeanweekly, colour = "ATS GF"), data = ats_dk18, geom = "step") +
+#   stat_ecdf(aes(totalwu, colour = "HSE QF"), data = hse_dk18, geom = "step") +
+#   stat_ecdf(aes(weektot, colour = "HSE Diary"), data = hse_dk18, geom = "step") +
+#   ylab("Empirical cumulative density") +
+#   xlab("Average units/week") +
+#   scale_y_continuous(breaks = seq(0, 1, .1)) +
+#   scale_x_continuous(limits = c(1, 100), 
+#                      breaks = seq(0, 500, 10),
+#                      minor_breaks = seq(0, 500, 5)) +
+#   geom_vline(xintercept = 14)
+#   
+```
+
+```{r echo=F, fig.height=10, fig.width=15}
+library(latticeExtra)
+library(scales)
+xlims = c(-3, 153)
+EWAC <- ecdfplot(na.omit(ats_dk18$agg_qfv),
+                key= keyABH, panel = function(x, f.value = NULL, type = "s",
+                                              groups = NULL, qtype = 7, ref = TRUE,...) {
+                  panel.ecdfplot(x, f.value = NULL, type = "s",
+                                 groups = NULL, qtype = 7,
+                                 ref = TRUE,...)
+                  panel.abline(v = 14)
+                },
+                xlim = xlims, col = alpha("orange", .7), lwd = 3, lty = 1,
+                scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
+
+GF <- ecdfplot(na.omit(ats_dk18$gfmeanweekly),
+                key= keyABH, panel = function(x, f.value = NULL, type = "s",
+                                              groups = NULL, qtype = 7, ref = TRUE,...) {
+                  panel.ecdfplot(x, f.value = NULL, type = "s",
+                                 groups = NULL, qtype = 7,
+                                 ref = TRUE,...)
+                  panel.abline(v = 14)
+                },
+                xlim = xlims, col = alpha("black", .7), lwd = 3, lty = 1,
+               scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
+
+HSE <- ecdfplot(na.omit(hse_dk18$totalwu),
+                key= keyABH, panel = function(x, f.value = NULL, type = "s",
+                                              groups = NULL, qtype = 7, ref = TRUE,...) {
+                  panel.ecdfplot(x, f.value = NULL, type = "s",
+                                 groups = NULL, qtype = 7,
+                                 ref = TRUE,...)
+                  panel.abline(v = 14)
+                },
+                xlim = xlims, col = alpha("red", .7), lwd = 1, lty = 1,
+                scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
+
+HSEdiary <- ecdfplot(na.omit(hse_dk18$weektot),
+                key= keyABH, panel = function(x, f.value = NULL, type = "s",
+                                              groups = NULL, qtype = 7, ref = TRUE,...) {
+                  panel.ecdfplot(x, f.value = NULL, type = "s",
+                                 groups = NULL, qtype = 7,
+                                 ref = TRUE,...)
+                  panel.abline(v = 14)
+                },
+                xlim = xlims, col = alpha("red", .7), lwd = 2, lty = 2,
+                scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
+
+HSEdiary + HSE +EWAC + GF
+
 ```
 
 
@@ -360,6 +415,14 @@ Important contributions by Nutt and Rehm invite us to reconsider alcohol care pr
 
 Supportive of their argument, we propose that the EWAC could be employed in routine clinical practice to feedback results from an AUDIT-C check and provide recommendations to all types of drinkers; encouraging low-risk drinkers to maintain this lifestyle, and informing those close to 14 units or exceeding that limit that monitoring and controling alcohol consumption can be easy and improve long-term health. The EWAC can realistically only be computed by software and we have made such a calculator available online to this end: soton.ac.uk. It may be particularly suitable to digital intervention where personalised feedback can be generated as a function of not just mean alcohol consumption, but also intensity of alcohol consumption. For instance, some individuals drinking very rarely do so in large quantities in any given session. The EWAC and the AUDIT item 3 can be used to provide more relevant advice on consuming no more than 5 units in any given session. Study 3 showed in clinical population that the EWAC seemed to be as reliable when the Extended AUDIT-C is self-administered as when it is administered by a researcher. 
  
+# Conclusion
+
+
+# Ethics
+
+
+
+
 # Tables
 
 

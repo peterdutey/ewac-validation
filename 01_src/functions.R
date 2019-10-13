@@ -34,9 +34,12 @@ convpDrink <- function(prev_nondrinkers = NULL){
 }
 
 tbrounding <- function(x, places = 1){
-  return(format(round(x, places), nsmall = places))
+  format(round(x, places), nsmall = places)
 }
 
+formatbm <- function(x){
+  format(x, big.mark = ",")
+}
 
 keyABH <- list(space="right", cex = 1.5,
                lines=list(col=c("red", "red", "black", "orange"),

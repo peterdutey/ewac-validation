@@ -52,3 +52,39 @@ plot(seq(0, 20, .01), dbeta(seq(0, 20, .01)-5, 1.5, 1.5), type = "l")
 
 ```
 
+
+```{r}
+
+for(i in 1:nrow(priors)){
+  prior_data[, priors$var[i]] <- (dbeta(prior_data$x, 2, 2) * (priors$max_prior[i] - priors$min_prior[i])) + priors$min_prior[i]
+}
+for(i in grep("Q.", names(prior_data), value = T)){
+  eval(parse(text = paste0("prior_plot <- prior_plot + geom_line(aes(y = prior_data[,'", i, "']), group = '", i, "')")))
+}
+
+prior_plot_Q
+
+plot(seq(0, 20, .01), dbeta(seq(0, 20, .01)-5, 1.5, 1.5), type = "l")
+
+
+ # (("&$A3&"hyper * "&($G3 - $F3)&") + "&$F3&");"
+
+
+
+priors <- readxl::read_xlsx("../03_estimate_weights/AUDIT_item_intervals.xlsx",
+                            n_max = 18) %>% 
+  transmute(var, label, min_prior = as.numeric(min_prior), 
+            max_prior = as.numeric(max_prior))
+
+prior_data <- data.frame(list(x = seq(0, 20, .01))) 
+
+
+
+plot(1, 1, xlim = c(0, 20), ylim = c(0, 1))
+for(i in 7:13){
+  # prior_data[, priors$var[i]] <- (dbeta(prior_data$x, 2, 2) * (priors$max_prior[i] - priors$min_prior[i])) + priors$min_prior[i]
+  lines(seq(priors$min_prior[i]+0.01, priors$max_prior[i]-.01, length.out = 99), qbeta(seq(0.01, .99, length.out = 99), 2, 2)* (priors$max_prior[i] - priors$min_prior[i]) + priors$min_prior[i] )
+}
+```
+
+
