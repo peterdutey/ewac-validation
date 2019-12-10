@@ -9,6 +9,13 @@ output:
     df_print: paged
     number_sections: yes
     toc: yes
+  pdf_document: 
+    citation_package: natbib
+    df_print: kable
+    fig_caption: yes
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
 bibliography: bibliography.bib
 ---
 
@@ -40,9 +47,10 @@ source("../01_src/functions.R")
 source("../01_src/filepaths.R")
 source("../01_src/audit_weights.R")
 
+options(knitr.table.format = "pdf") 
 library(tidyverse)
 library(knitr)
-# library(captioner)
+library(captioner)
 library(kableExtra)
 # library("scales")
 # library("xtable")
@@ -70,12 +78,14 @@ alcohol_pcapita_drinker_2014_units <- 19.3 # per capita for drinkers only
 MYPE_2014 <- 42724917 # population aged 18+
 
 
-# 
-# table_nums <- captioner::captioner(prefix = "Tab.")
-# tab.comparison_schedules <- table_nums(name = "tab_comparison_schedules", 
-#                         caption = "Alcohol schedules: selective comparison")
-# tab.overview_datasets <- table_nums(name = "tab_overview_datasets", 
-#                         caption = "Description of data sources")
+
+table_nums <- captioner::captioner(prefix = "Table")
+tab_comparison_schedules <- table_nums(name = "tab_comparison_schedules",
+                        caption = "Alcohol schedules: selective comparison")
+tab_overview_datasets <- table_nums(name = "tab_overview_datasets",
+                        caption = "Description of data sources")
+tab_ewac_validity_reg <- table_nums(name = "tab_ewac_validity_reg",
+                   caption = "Coefficients of linear regression of the bias and error of EWAC compared with GF")
 
 # Hospital data
 
@@ -119,22 +129,20 @@ This paper reports three distinct empirical studies. Study 1 estimates coefficie
 ## Data sources
 A longstanding obstacle in alcohol research and care is the absence of a diagnostic gold standard, which is not addressed even by the development of new biomarkers. Instead, a number of instruments exist which measure self-reported alcohol consumption with varying validity and reliability. A state-of-the art review from @Greenfield2000 is summarised in [Table 1](#table1) below.
 
-*Table 1:* <a name="table1"></a>*Alcohol schedules: selective comparison*
+`r table_nums("tab_comparison_schedules")`
 
-| Schedule                             	| Bias    	| Variance 	| Measures variability 	|
-|--------------------------------------	|---------	|----------	|----------------------	|
-| Graduated Frequency (GF)             	| Unclear 	| Low      	| Yes                  	|
-| Quantity-Frequency (QF)              	| Unclear 	| Low      	| No                   	|
-| Quantity-Frequency-Variability (QFV) 	| Unclear 	| Low      	| Yes                  	|
-| 'Yesterday' recall                   	| Minimal 	| Large    	| No                   	|
-| Timeline Followback (TLFB)           	| Low     	| Medium   	| Yes                  	|
-| Prospective diary                    	| Low     	| Medium   	| Yes                  	|
+```{r table_comparison_schedules, fig.cap = tab_comparison_schedules, message=F}
+readr::read_csv("table_overview_schedules.csv")  %>% 
+  kable(format = "latex") %>% 
+  kable_styling()
+```
+
 
 Prospective diaries tend to record higher alcohol consumption by minimising recall bias, followed by GF, while lower levels seem to be recorded with QF measures [@Heeb2005, @Rehm1998]. 
 
 The present paper employs four sources of data. An overview is available in [Table 2](#table2) below, together with references to publicly available methodological descriptions. Analysis of HSE and ATS microdata was approved by the University of Southampton's Faculty of Medicine Ethics Committee (ERGO 44682). The hospital questionnaire (Study 3) collection and analysis was approved by the Health Research Authority National Research Ethics Service (IRAS 247458;  REC 18/SC/0564). All results are reported in UK alcohol units (8g or 10mL of pure alcohol). Analyses are conducted in `R` [@RCoreTeam2017] using packages `tidyverse`, `survey`, `rstan` [@package-tidyverse; @package-rstan; @package-survey; @Lumley2004]. Computer programmes for all analyses are available on an online repository.
 
-*Table 2:* <a name="table2"></a>*Description of data sources*
+`r table_nums("tab_overview_datasets")`
 
 |	Source	|	Waves	|	Population of inference	|	Alcohol schedules	|	Validation	|	Sample size	|	Design	|
 |	-------------	|	-------------	|	-------------	|	-------------	|	-------------	|	------:	|	-------------	|
@@ -255,13 +263,14 @@ Using midpoint coeffients, the analysis reveals that the coefficients are invali
 ```{r warning=F}
 select(ats, gfmeanweekly, ewac_qfv) %>% 
   na.omit %>% 
-  ggplot(aes(gfmeanweekly, ewac_qfv)) +
+  ggplot(aes(x = gfmeanweekly, y = ewac_qfv)) +
   geom_point(alpha = .2) +
   geom_abline() +
   geom_smooth(method='lm',formula=y~x) +
   theme_bw() +
   ylab("EWAC (UK units/week)") +
-  xlab("Graduated-Frequency schedule (UK units/week)")+
+  xlab("Graduated-Frequency schedule (UK units/week)") +
+  coord_equal() +
   scale_x_continuous(breaks = seq(0, 150, 10), limits = c(0, 150), minor_breaks = F)+
   scale_y_continuous(breaks = seq(0, 150, 10), limits = c(0, 150), minor_breaks = F)+
   geom_hline(yintercept = 14, color = "grey50") + 
@@ -269,22 +278,36 @@ select(ats, gfmeanweekly, ewac_qfv) %>%
 
 ```
 
-*Figure 1:* <a name="figure1"></a>*Plot of EWAC against GF in ATS with ordinary least square regression line ($n$ = 22,373)*
+Figure 1: <a name="figure1"></a> Plot of EWAC against GF in ATS with ordinary least square regression line ($n$ = 22,373)
 
 
 ### Consistency across demographics
 
-*Table 3:* <a name="table3"></a>*Coefficients of linear regression of EWAC mean deviation from GF*
+
+`r table_nums('tab_ewac_validity_reg')`
 
 ```{r}
-library(sjPlot)
+# library(sjPlot)
 lm_bias_mp <- lm((ewac_mp-gfmeanweekly) ~ sex*ageg + ethgrp + favdrink + 
+                   tryalclyc2 + religion + highqual  + smokstat, data = ats)
+lm_rmse_mp <- lm(sqrt((ewac_mp-gfmeanweekly)^2) ~ sex*ageg + ethgrp + favdrink + 
+                   tryalclyc2 + religion + highqual  + smokstat, data = ats)
+lm_bias_stan <- lm((ewac_qfv-gfmeanweekly) ~ sex*ageg + ethgrp + favdrink + 
                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
 lm_rmse_stan <- lm(sqrt((ewac_qfv-gfmeanweekly)^2) ~ sex*ageg + ethgrp + favdrink + 
                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
 
-tab_model(lm_bias_mp,lm_rmse_stan, file="output_lm_bias.html")
-htmltools::includeHTML("output_lm_bias.html")
+require(memisc)
+ewac_reg_results <- mtable('MP bias' = lm_bias_mp,
+            'MP RMSE' = lm_rmse_mp,
+            'Stan bias' = lm_bias_stan,
+            'STAN RMSE' = lm_rmse_stan,
+            summary.stats = c('sigma', 'R-squared','F','p','N'))
+# tab_model(lm_bias_mp,lm_rmse_stan, file="output_lm_bias.html")
+# htmltools::includeHTML("output_lm_bias.html")
+library(pander)
+pander( ewac_reg_results, style='rmarkdown' )
+# pander::pander(mtable123)
 
 ```
 
@@ -326,8 +349,9 @@ ggplot(scatterdata, aes(ewac_qfv, tlfb_units)) +
   geom_abline() +
   geom_smooth(method='lm',formula=y~x) +
   theme_bw() +
-  xlab("EWAC (UK units/week)") +
-  ylab("Crude TLFB sample mean (UK units/week)")+
+  ylab("EWAC (UK units/week)") +
+  xlab("Crude TLFB sample mean (UK units/week)")+
+  # coord_
   scale_x_continuous(breaks = seq(0, 100, 2), minor_breaks = F) +
   scale_y_continuous(breaks = seq(0, 100, 2), minor_breaks = F) +
   geom_hline(yintercept = 14, color = "grey50") + 
