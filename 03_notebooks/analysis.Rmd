@@ -187,6 +187,10 @@ Participants were recruited from a range of clinics at a large acute hospital in
 <!-- discuss problems raised by Horton2007 -->
 
 
+To model the relationship between the EWAC and the TLFB, the number of units consumed on any day was assumed to follow a Poisson distribution, the rate of which is determined by the latent usual alcohol consumption as well as the following variables: AUDIT mode of administration (self-administered; researcher-administered), week day, number of days elapsed since (1-7; 8-14; 15-21; 22-28). TLFB daily number of units consumed were rounded to the nearest integer and regressed in a Poisson regression model against the aforementioned predictor, as well as the EWAC divided by 7 to obtain its daily equivalent. The corresponding regression coefficient measures the ratio of TLFB to EWAC. 
+
+
+
 ## Study 3: Aggregate concurrent validity
 
 We examine the aggregate consistency in alcohol consumption estimates across all residents of England aged 18 years and over by plotting the empirical cumulative distribution of alcohol consumption given by (1) the EWAC estimated from the ATS; (2) the quantity-frequency estimated in the ATS; (3) the beverage-specific estimators in HSE in 2011; (4) the prospective diary estimator in HSE 2011. In this analysis, survey weights are used: in (1-3), poststratification weights estimated using calibration and age-sex MYPES; in (4), similar postratification weights adjusted for self-selection into participation to the prospective diary data collection. Finally, we examine the percentage of total alcohol sales for England accounted for by each method. Alcohol sales (both on-trade and off-trade) estimates for England (population aged 18 years and over) in 2014 were obtained from Public Health England [@PHE2017].
@@ -313,10 +317,12 @@ Figure 1: <a name="figure1"></a> Plot of EWAC against GF in ATS with ordinary le
 
 ### Heterogeneous error
 
-Next, the MD and RMSE are regressed against respondents characteristics in order to identify subgroups with potentially stronger bias or error ([Table 3](#tab_ewac_validity_reg)). Models suggest that the factors account for a negligible proportion of both MD and RMSE (<2%). Despite this: 
-- MD is 4.8 units [2.1, 7.5] with in Black respondents and 5.9 units [1.6, 10.2] higher in respondents from Black and Other ethnic groups respectively, while RMSE not significantly different from the  similar. This suggests EWAC has a strong positive bias in Black respondents.
-- 
+Next, the MD and RMSD are regressed against respondents characteristics in order to identify subgroups with potentially stronger bias or error ([Table 3](#tab_ewac_validity_reg)). Models suggest that the factors account for a negligible proportion of both MD and RMSD (<2%). Despite this: 
+- MD is 4.8 units [2.1, 7.5] with in Black respondents and 5.9 units [1.6, 10.2] higher in respondents from Black and Other ethnic groups respectively, while RMSD not significantly different from the rest of the population. This suggests EWAC has a strong positive bias in Black respondents.
+- RMSD is reduced by an average 2 units with an educational qualification compared to no qualifications, without effect on MD
+- MD is reduced by 1.1 units [0.4, 1.8], while RMSD is increased by 2.5 units [1.8, 3.1] in current smokers compared with never-smokers.
 
+There was no evidence of properties of the EWAC being different across gender and age groups. 
 
 
 `r table_nums('tab_ewac_validity_reg')`
@@ -325,17 +331,17 @@ Next, the MD and RMSE are regressed against respondents characteristics in order
 library(stargazer)
 lm_bias_mp <- lm((ewac_mp-gfmeanweekly) ~ sex*ageg + ethgrp + favdrink + 
                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
-lm_rmse_mp <- lm(sqrt((ewac_mp-gfmeanweekly)^2) ~ sex*ageg + ethgrp + favdrink + 
+lm_rmsd_mp <- lm(sqrt((ewac_mp-gfmeanweekly)^2) ~ sex*ageg + ethgrp + favdrink + 
                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
 lm_bias_stan <- lm((ewac_qfv-gfmeanweekly) ~ sex*ageg + ethgrp + favdrink + 
                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
-lm_rmse_stan <- lm(sqrt((ewac_qfv-gfmeanweekly)^2) ~ sex*ageg + ethgrp + favdrink + 
+lm_rmsd_stan <- lm(sqrt((ewac_qfv-gfmeanweekly)^2) ~ sex*ageg + ethgrp + favdrink + 
                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
 
-stargazer(#lm_bias_mp, lm_rmse_mp, 
-          lm_bias_stan, lm_rmse_stan, 
+stargazer(#lm_bias_mp, lm_rmsd_mp, 
+          lm_bias_stan, lm_rmsd_stan, 
           type = ifelse(knit_output_pdf, "latex", "html"),
-          out = "truc.html", ci = rep(T, 2),
+          ci = rep(T, 2),
           digits = 1, digits.extra	= 1, initial.zero = T, style = "ajs",
           single.row = T, intercept.bottom = F, align=TRUE, no.space= T,
           report = "vcs*")
@@ -345,46 +351,80 @@ stargazer(#lm_bias_mp, lm_rmse_mp,
 
 ## Study 2: Concurrent validity in hospital patients
 
-A total of `r nrow(qdata)` participants were recruited, with data successfully collected on the Extended AUDIT-C for `r round(mean(!is.na(qdata$auditc_score))*100)`% ($n$ = `r sum(!is.na(qdata$auditc_score))` of participants.
+A total of `r nrow(qdata)` participants were recruited in hospital clinics, with data successfully collected on the Extended AUDIT-C for `r round(mean(!is.na(qdata$auditc_score))*100)`% of participants ($n$ = `r sum(!is.na(qdata$auditc_score))`) at baseline. The Extended AUDIT-C was administered first, with `r nrow(filter(qdata, !is.na(auditc_score) & q_admin_mode == "Self"))` participants randomised to self-administration using a pen and paper form, while the remaining `r nrow(filter(qdata, !is.na(auditc_score) & q_admin_mode == "Researcher"))` were administered by a researcher.
 
 
-```{r}
+
+
+The MD of 
+
+```{r results='asis'}
 library(lme4)
-require(pscl)
+
+tdata_b <- filter(tdata_b, days_since <= 28)
 tdata_b$qfv_log <- log(tdata_b$ewac_qfv/7)
 tdata_b$mp_log <- log(tdata_b$ewac_mp/7)
 
-mhosp <- glm(round(alcunits) ~ qfv_log + 
-                 week_since, family = poisson, data = tdata_b)
-mzip <- zeroinfl(round(alcunits) ~ qfv_log + tlfb_weekday +
-                 week_since | week_since + tlfb_weekday, data = tdata_b)
+mhosp <- glm(round(alcunits) ~ qfv_log + q_admin_mode+
+                 week_since + tlfb_weekday, family = poisson, data = tdata_b)
 
-summary(mhosp)
+# require(pscl)
+# mzip <- zeroinfl(round(alcunits) ~ qfv_log + q_admin_mode +
+#                  week_since | week_since + tlfb_weekday, data = tdata_b)
 
+stargazer(mhosp, type = ifelse(knit_output_pdf, "latex", "html"), ci = rep(T, 2),
+          digits = 1, digits.extra	= 1, initial.zero = T, style = "ajs",
+          single.row = T, intercept.bottom = F, align=TRUE, no.space= T,
+          report = "vcs*")
+# summary(mzip)
 
 ```
 
-
 ```{r}
-scatterdata <- tdata_b %>% 
-  filter(days_since <=28) %>% 
-  group_by(pid) %>% 
-  summarise(
-    tlfb_units = mean(alcunits, na.rm = T)*7,
-    ewac_mp = mean(ewac_mp),
-    ewac_qfv = mean(ewac_qfv)) %>% 
-  na.omit
+tlfb_measured <- tdata_b %>% 
+  filter(days_since <= 28 & !is.na(alcunits) & !is.na(ewac_qfv)) %>% 
+  dplyr::select(pid, q_admin_mode, ewac_qfv, alcunits)
 
-ggplot(scatterdata, aes(y = ewac_qfv, x = tlfb_units)) +
+tlfb_imputed <- tdata_b %>% 
+  filter(days_since <= 28 & is.na(alcunits) & !is.na(ewac_qfv)) 
+tlfb_imputed$alcunits <-  predict(mhosp, tlfb_imputed, type = "response")
+
+tlfb_person <- dplyr::select(tlfb_imputed, pid, q_admin_mode, ewac_qfv, alcunits) %>% 
+  bind_rows(., tlfb_measured) %>% 
+  group_by(pid, q_admin_mode, ewac_qfv) %>% 
+  summarise(tlfb_units = sum(alcunits)/4)
+  
+tlfb_descriptives <- list(
+  MD = mean(tlfb_person$ewac_qfv - tlfb_person$tlfb_units),
+  MD.p = t.test(tlfb_person$ewac_qfv - tlfb_person$tlfb_units)$p.value,
+  RMSD = sqrt(mean((tlfb_person$ewac_qfv - tlfb_person$tlfb_units)^2, na.rm = T)),
+  RMSD.p = chisq.test.variance( (tlfb_person$ewac_qfv - tlfb_person$tlfb_units)^2,
+                                sigma = 4)$p.value
+)
+```
+
+To estimate comparable measures of deviaiton as in previous sections, the model is used to impute the `r nrow(tlfb_imputed)` out of `r formatbm(nrow(tlfb_person))` daily consumption figures that were missing in total for `r length(unique(tlfb_imputed$pid))` participants. In this small pilot dataset, MD = `r tbrounding(tlfb_descriptives$MD)` unit is measured (`r pvrounding(tlfb_descriptives$MD.p)`) while RMSD = `r tbrounding(tlfb_descriptives$RMSD)` and is statistically significantly greater than 2 units (`r pvrounding(tlfb_descriptives$RMSD.p)`) 
+
+
+
+```{r warning=F}
+
+ggplot(tlfb_person, aes(y = ewac_qfv, x = tlfb_units)) +
   geom_point() +
-  geom_abline() +
-  geom_smooth(method='lm',formula=y~x) +
+  geom_abline(aes(intercept = 0, slope = 1, col = "Identity", linetype = "Identity")) +
+  geom_smooth(aes(col="OLS", linetype = "OLS"), method ='lm', formula=y~x) +
+  geom_smooth(aes(col="Spline", linetype = "Spline"), 
+              method = 'auto') +
+  scale_colour_manual(name="Line of fit",
+    values = c("Identity" = "black", "OLS" = "blue", "Spline" = "red")) +
+  scale_linetype_manual(name="Line of fit",
+    values = c("Identity" = "solid", "OLS" = "longdash", "Spline" = "dotted")) +
   theme_bw() +
   ylab("EWAC (UK units/week)") +
   xlab("Crude TLFB sample mean (UK units/week)")+
   coord_equal() +
-  scale_x_continuous(breaks = seq(0, 100, 2), limits = c(0, 50), minor_breaks = F) +
-  scale_y_continuous(breaks = seq(0, 100, 2), limits = c(0, 50), minor_breaks = F) +
+  scale_x_continuous(breaks = seq(0, 100, 2), limits = c(0, 44), minor_breaks = F) +
+  scale_y_continuous(breaks = seq(0, 100, 2), limits = c(0, 44), minor_breaks = F) +
   geom_hline(yintercept = 14, color = "grey50") + 
   geom_vline(xintercept = 14, color = "grey50")
 
@@ -484,7 +524,6 @@ HSEdiary + HSE +EWAC + GF
 ```
 
 
-## Regression analysis
 
 ```{r echo =F}
 
