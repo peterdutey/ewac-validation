@@ -47,7 +47,15 @@ source("../01_src/functions.R")
 source("../01_src/filepaths.R")
 source("../01_src/audit_weights.R")
 
-options(knitr.table.format = "pdf") 
+
+knit_output_pdf <- F
+if(knit_output_pdf){
+  options(knitr.table.format = "pdf")
+} else {
+  options(knitr.table.format = "pandoc")
+}
+
+
 library(tidyverse)
 library(knitr)
 library(captioner)
@@ -133,7 +141,7 @@ A longstanding obstacle in alcohol research and care is the absence of a diagnos
 
 ```{r table_comparison_schedules, fig.cap = tab_comparison_schedules, message=F}
 readr::read_csv("table_overview_schedules.csv")  %>% 
-  kable(format = "latex") %>% 
+  kable(., format = ifelse(knit_output_pdf, "latex", "html")) %>% 
   kable_styling()
 ```
 
@@ -158,17 +166,17 @@ A pre-registered protocol for this analysis is available from @Dutey2018. We app
 
 $$\text{EWAC}_i = F_i Q_i + V_ib$$
 
-where $b$ denotes the average number of units of alcohol consumed in an intense drinking day. Coefficients $F, Q, V$ and $b$ are unknown and are estimated in two ways:
+where $b$ denotes the average number of units of alcohol consumed in an intense drinking day. Coefficients $F, Q, V$ and $b$ are unknown. In this study, two sets of potential coefficients are evaluated:
 
 - using the AUDIT response item interval midpoint: for example, 2.5 for '2 to 3 times per week' in AUDIT item 2
-- using a statistical model to estimate the coefficients directly from the ATS.
+- using a statistical model to estimate the coefficients directly from the ATS (further detail in supplementary material).
 
-The ATS data is strongly affected by data missingness: a high proportion of respondents (`r tbrounding(mean(ats$audit1 == 1)*100)`%, $n$ = `r formatbm(sum(ats$audit1 == 1))`) reported never drinking alcohol in AUDIT item 1 and were not asks any further questions about alcohol consumption. They were thus excluded from the analysis, despite many occasional drinkers amongst them. A further `r formatbm(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly)))` respondents (`r tbrounding(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly))/sum(ats$audit1 != 1))`% of those reporting drinking in AUDIT item 1) did not have a valid GF alcohol consumption record and were also excluded. Missing data in the ATS' GF schedule is assumed to be missing at random conditionally on the Extended AUDIT-C responses. We employ a Bayesian hierarchical fitted in STAN on the remaining sample ($n$ = `r formatbm(nrow(na.omit(select(ats, audit1, audit2, audit3, gfmeanweekly))))`) with bell-shaped beta priors on coefficients $F, Q, V$ bounded by their nominal values, and an exponential prior on $b$ with a lower bound of 5.5 units. Further detail on the modelling is available in supplementary materials.
+The ATS data is affected by missing data: `r tbrounding(mean(ats$audit1 == 1)*100)`% of respondents (`r formatbm(sum(ats$audit1 == 1))`) reported never drinking alcohol in AUDIT item 1 and were not asks any further AUDIT or GF questions.^[Note: Data from HSE on 'never-never?' indicates that a third are probably occasional drinkers. Consider adding the diagram previously drawn for ABH] They were thus excluded from the analysis. A further `r formatbm(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly)))` respondents (`r tbrounding(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly))/sum(ats$audit1 != 1))`% of those reporting drinking in AUDIT item 1) did not have a valid GF alcohol consumption record and were also excluded. Missing data in the ATS' GF schedule is assumed to be missing at random conditionally on the Extended AUDIT-C responses.
 
-Next, we quantify the deviation between the EWAC and the GF schedule.  Succintly, this analysis treats GF like a gold standard. It enables the examination of two types of deviations across every participant $i$ in the ATS sample:
+The discrepancy between the EWAC and the GF schedule is quantified, by treating GF as a gold standard. It enables the examination of two types of deviations across every participant $i$ in the ATS sample:
 
 - MD: the mean deviation $\sum_{i=1}^{n}{n^{-1}(\rm{EWAC_i} - \rm{GF_i} )}$ can be assimilated to a measure of bias under the assumption that GF is a gold standard.
-- RMSD: the root mean squared deviation $\sum_{i}{\sqrt{( \rm{EWAC_i} - \rm{GF_i} )^2}}$ can be assimilated to a measure of total error: it capture both bias and random deviation from the gold standard.
+- RMSD: the root mean squared deviation $\sum_{i}{\sqrt{( \rm{EWAC_i} - \rm{GF_i} )^2}}$ can be assimilated to a measure of total error: it capture both bias and random deviation from the assumed gold standard.
 
 We test the hypothesis that the EWAC's validity varies across population subgroups by regressing both (a) the simple deviation and (b) the root squared deviation in linear regression models, against the following predictors: sex by age group; ethnic group; favourite drink (wine, beer, etc.); highest educational qualification; religion; smoking status; general health; recent attempts at reducing or stopping drinking.
 
@@ -181,7 +189,7 @@ Participants were recruited from a range of clinics at a large acute hospital in
 
 ## Study 3: Aggregate concurrent validity
 
-We examine the aggregate consistency in alcohol consumption estimates across all residents of England aged 18 years and over by plotting the empirical cumulative distribution of alcohol consumption given by (1) the gender-blind EWAC estimated from the ATS; (2) the quantity-frequency estimated in the ATS; (3) the beverage-specific estimators in HSE in 2011; (4) the prospective diary estimator in HSE 2011. In this analysis, survey weights are used: in (1-3), poststratification weights estimated using calibration and age-sex MYPES; in (4), similar postratification weights adjusted for self-selection into participation to the prospective diary data collection. Finally, we examine the percentage of total alcohol sales for England accounted for by each method. Alcohol sales (both on-trade and off-trade) estimates for England (population aged 18 years and over) in 2014 were obtained from Public Health England [@PHE2017].
+We examine the aggregate consistency in alcohol consumption estimates across all residents of England aged 18 years and over by plotting the empirical cumulative distribution of alcohol consumption given by (1) the EWAC estimated from the ATS; (2) the quantity-frequency estimated in the ATS; (3) the beverage-specific estimators in HSE in 2011; (4) the prospective diary estimator in HSE 2011. In this analysis, survey weights are used: in (1-3), poststratification weights estimated using calibration and age-sex MYPES; in (4), similar postratification weights adjusted for self-selection into participation to the prospective diary data collection. Finally, we examine the percentage of total alcohol sales for England accounted for by each method. Alcohol sales (both on-trade and off-trade) estimates for England (population aged 18 years and over) in 2014 were obtained from Public Health England [@PHE2017].
 
 
 # Results
@@ -254,27 +262,37 @@ stan_qfv_S_women <- ats %>%
 
 ### EWAC coefficients
 
-Using midpoint coeffients, the analysis reveals that the coefficients are invalid. With a mean deviation (MD) of `r tbrounding(test_midpoint$MD, 2)` alcohol units (`r pvrounding(test_midpoint$MD.p)`), the EWAC shows a slight positive bias. The root mean squared deviation (RMSD) is estimated at `r tbrounding(test_midpoint$RMSD, 2)` (`r pvrounding(test_midpoint$RMSD.p)`), suggesting that the EWAC of any given individual would be on average 12 units from the truth (treating GF schedule can be used as a gold-standard). Using coefficients estimated by the statistical model, bias remains statistically significant with MD = `r tbrounding(test_stan$MD, 2)` (`r pvrounding(test_stan$MD.p)`) and RMSD = `r tbrounding(test_stan$RMSD, 2)` (`r pvrounding(test_stan$RMSD.p)`).
+The first step involved choosing a set of coefficients to compute the EWAC. We compare using the midpoint of the AUDIT item intervals; and coefficients estimated using a statistical model. 
+The EWAC based on midpoint coeffients produces a mean deviation (MD) of `r tbrounding(test_midpoint$MD, 2)` alcohol units (`r pvrounding(test_midpoint$MD.p)`), suggesting a slight positive bias. The root mean squared deviation (RMSD) is estimated at `r tbrounding(test_midpoint$RMSD, 2)`, significantly grater than 4 (`r pvrounding(test_midpoint$RMSD.p)`), suggesting that the EWAC of any given individual would be on average 12 units from the truth (treating GF schedule can be used as a gold-standard). 
+
+Coefficients estimated by the statistical model provide a small improvement, but bias remains statistically significant with MD = `r tbrounding(test_stan$MD, 2)` (`r pvrounding(test_stan$MD.p)`). Error remains statistically significantly greater than 4 with  RMSD = `r tbrounding(test_stan$RMSD, 2)` (`r pvrounding(test_stan$RMSD.p)`). [Figure 1](#figure1) compares individual EWAC and GF values. We note the significant departure of lines of best fit, whether estimated using ordinary least squares or using c-splines.
+
 
 <!-- With early signs that validity was strongly dependent on gender, we estimated coefficients independently for each gender to test for the use of gender-specific coefficients. This analysis was not planned in the pre-registered protocol but appeared to be justified by differences in alcohol consumption between women and men. Using gender-specific coefficients, we found HIGHER BIAS... -->
 
 
 
 ```{r warning=F}
-select(ats, gfmeanweekly, ewac_qfv) %>% 
+dplyr::select(ats, gfmeanweekly, ewac_qfv) %>% 
   na.omit %>% 
-  ggplot(aes(x = gfmeanweekly, y = ewac_qfv)) +
+  ggplot(mapping = aes(x = gfmeanweekly, y = ewac_qfv)) +
   geom_point(alpha = .2) +
-  geom_abline() +
-  geom_smooth(method='lm',formula=y~x) +
-  theme_bw() +
+  geom_abline(aes(intercept = 0, slope = 1, col = "Identity", linetype = "Identity")) +
+  geom_smooth(aes(col="OLS", linetype = "OLS"), method ='lm', formula=y~x) +
+  geom_smooth(aes(col="Spline", linetype = "Spline"), 
+              method = 'gam', formula = y~s(x, bs="cs")) +
+  scale_colour_manual(name="Line of fit",
+    values = c("Identity" = "black", "OLS" = "blue", "Spline" = "red")) +
+  scale_linetype_manual(name="Line of fit",
+    values = c("Identity" = "solid", "OLS" = "longdash", "Spline" = "dotted")) +
   ylab("EWAC (UK units/week)") +
   xlab("Graduated-Frequency schedule (UK units/week)") +
   coord_equal() +
   scale_x_continuous(breaks = seq(0, 150, 10), limits = c(0, 150), minor_breaks = F)+
   scale_y_continuous(breaks = seq(0, 150, 10), limits = c(0, 150), minor_breaks = F)+
   geom_hline(yintercept = 14, color = "grey50") + 
-  geom_vline(xintercept = 14, color = "grey50")
+  geom_vline(xintercept = 14, color = "grey50") +
+  theme_bw() 
 
 ```
 
@@ -286,8 +304,8 @@ Figure 1: <a name="figure1"></a> Plot of EWAC against GF in ATS with ordinary le
 
 `r table_nums('tab_ewac_validity_reg')`
 
-```{r}
-# library(sjPlot)
+```{r, results='asis'}
+library(stargazer)
 lm_bias_mp <- lm((ewac_mp-gfmeanweekly) ~ sex*ageg + ethgrp + favdrink + 
                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
 lm_rmse_mp <- lm(sqrt((ewac_mp-gfmeanweekly)^2) ~ sex*ageg + ethgrp + favdrink + 
@@ -297,17 +315,10 @@ lm_bias_stan <- lm((ewac_qfv-gfmeanweekly) ~ sex*ageg + ethgrp + favdrink +
 lm_rmse_stan <- lm(sqrt((ewac_qfv-gfmeanweekly)^2) ~ sex*ageg + ethgrp + favdrink + 
                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
 
-require(memisc)
-ewac_reg_results <- mtable('MP bias' = lm_bias_mp,
-            'MP RMSE' = lm_rmse_mp,
-            'Stan bias' = lm_bias_stan,
-            'STAN RMSE' = lm_rmse_stan,
-            summary.stats = c('sigma', 'R-squared','F','p','N'))
-# tab_model(lm_bias_mp,lm_rmse_stan, file="output_lm_bias.html")
-# htmltools::includeHTML("output_lm_bias.html")
-library(pander)
-pander( ewac_reg_results, style='rmarkdown' )
-# pander::pander(mtable123)
+stargazer(lm_bias_mp, lm_rmse_mp, 
+          lm_bias_stan, lm_rmse_stan, 
+          type = ifelse(knit_output_pdf, "latex", "html"), style = "ajs",
+          ci = rep(T, 4), digits = 2, single.row = T, intercept.bottom = F, align=TRUE)
 
 ```
 
@@ -344,16 +355,16 @@ scatterdata <- tdata_b %>%
     ewac_qfv = mean(ewac_qfv)) %>% 
   na.omit
 
-ggplot(scatterdata, aes(ewac_qfv, tlfb_units)) +
+ggplot(scatterdata, aes(y = ewac_qfv, x = tlfb_units)) +
   geom_point() +
   geom_abline() +
   geom_smooth(method='lm',formula=y~x) +
   theme_bw() +
   ylab("EWAC (UK units/week)") +
   xlab("Crude TLFB sample mean (UK units/week)")+
-  # coord_
-  scale_x_continuous(breaks = seq(0, 100, 2), minor_breaks = F) +
-  scale_y_continuous(breaks = seq(0, 100, 2), minor_breaks = F) +
+  coord_equal() +
+  scale_x_continuous(breaks = seq(0, 100, 2), limits = c(0, 50), minor_breaks = F) +
+  scale_y_continuous(breaks = seq(0, 100, 2), limits = c(0, 50), minor_breaks = F) +
   geom_hline(yintercept = 14, color = "grey50") + 
   geom_vline(xintercept = 14, color = "grey50")
 

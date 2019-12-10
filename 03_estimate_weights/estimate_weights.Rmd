@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 The ATS dataset provides both GF and Extended AUDIT-C measures for a sample of household residents in England between waves 110 and 133, that is, November 2015 and October 2017. We restrict the analysis to adults aged 18 years and over. The GF schedule was not administered to participants responding 'Never' in AUDIT item 1. Consequently, this analysis is conducted only on drinkers.
 
+We employ a Bayesian hierarchical fitted in STAN on the remaining sample ($n$ = `r formatbm(nrow(na.omit(select(ats, audit1, audit2, audit3, gfmeanweekly))))`) with bell-shaped beta priors on coefficients $F, Q, V$ bounded by their nominal values, and an exponential prior on $b$ with a lower bound of 5.5 units. Further detail on the modelling is available in supplementary materials.
+
 
 ```{r cars}
 
