@@ -265,7 +265,7 @@ stan_qfv_S_women <- ats %>%
 The first step involved choosing a set of coefficients to compute the EWAC. We compare using the midpoint of the AUDIT item intervals; and coefficients estimated using a statistical model. 
 The EWAC based on midpoint coeffients produces a mean deviation (MD) of `r tbrounding(test_midpoint$MD, 2)` alcohol units (`r pvrounding(test_midpoint$MD.p)`), suggesting a slight positive bias. The root mean squared deviation (RMSD) is estimated at `r tbrounding(test_midpoint$RMSD, 2)`, significantly grater than 4 (`r pvrounding(test_midpoint$RMSD.p)`), suggesting that the EWAC of any given individual would be on average 12 units from the truth (treating GF schedule can be used as a gold-standard). 
 
-Coefficients estimated by the statistical model provide a small improvement, but bias remains statistically significant with MD = `r tbrounding(test_stan$MD, 2)` (`r pvrounding(test_stan$MD.p)`). Error remains statistically significantly greater than 4 with  RMSD = `r tbrounding(test_stan$RMSD, 2)` (`r pvrounding(test_stan$RMSD.p)`). [Figure 1](#figure1) compares individual EWAC and GF values. We note the significant departure of lines of best fit, whether estimated using ordinary least squares or using c-splines.
+Coefficients estimated by the statistical model provide a small improvement, but bias remains statistically significant with MD = `r tbrounding(test_stan$MD, 2)` (`r pvrounding(test_stan$MD.p)`). Error remains statistically significantly greater than 4 with  RMSD = `r tbrounding(test_stan$RMSD, 2)` (`r pvrounding(test_stan$RMSD.p)`). [Figure 1](#figure1) compares individual EWAC and GF values. We note the departure of lines of best fit from the diagonal, whether estimated using ordinary least squares or using a thin plate regression spline. This is an indication that the EWAC is consistently lower than GF, even with coefficients estimated from the statistical model on the same data source. This discrepancy is noticeable for high levels of consumption (at least 30 units per week).
 
 
 <!-- With early signs that validity was strongly dependent on gender, we estimated coefficients independently for each gender to test for the use of gender-specific coefficients. This analysis was not planned in the pre-registered protocol but appeared to be justified by differences in alcohol consumption between women and men. Using gender-specific coefficients, we found HIGHER BIAS... -->
@@ -273,14 +273,14 @@ Coefficients estimated by the statistical model provide a small improvement, but
 
 
 ```{r warning=F}
-dplyr::select(ats, gfmeanweekly, ewac_qfv) %>% 
+scatterplot_1 <- dplyr::select(ats, gfmeanweekly, ewac_qfv) %>% 
   na.omit %>% 
   ggplot(mapping = aes(x = gfmeanweekly, y = ewac_qfv)) +
-  geom_point(alpha = .2) +
+  geom_point(alpha = .1) +
   geom_abline(aes(intercept = 0, slope = 1, col = "Identity", linetype = "Identity")) +
   geom_smooth(aes(col="OLS", linetype = "OLS"), method ='lm', formula=y~x) +
   geom_smooth(aes(col="Spline", linetype = "Spline"), 
-              method = 'gam', formula = y~s(x, bs="cs")) +
+              method = 'gam', formula = y~s(x, bs="ts")) +
   scale_colour_manual(name="Line of fit",
     values = c("Identity" = "black", "OLS" = "blue", "Spline" = "red")) +
   scale_linetype_manual(name="Line of fit",
@@ -288,18 +288,35 @@ dplyr::select(ats, gfmeanweekly, ewac_qfv) %>%
   ylab("EWAC (UK units/week)") +
   xlab("Graduated-Frequency schedule (UK units/week)") +
   coord_equal() +
-  scale_x_continuous(breaks = seq(0, 150, 10), limits = c(0, 150), minor_breaks = F)+
-  scale_y_continuous(breaks = seq(0, 150, 10), limits = c(0, 150), minor_breaks = F)+
   geom_hline(yintercept = 14, color = "grey50") + 
   geom_vline(xintercept = 14, color = "grey50") +
   theme_bw() 
 
 ```
 
+```{r warning=F}
+scatterplot_1 +
+ scale_x_continuous(breaks = seq(0, 150, 10), limits = c(0, 150), minor_breaks = F)+
+ scale_y_continuous(breaks = seq(0, 150, 10), limits = c(0, 150), minor_breaks = F)+
+  ggtitle("(a)")
+```
+
+```{r warning=F}
+scatterplot_1 +
+ scale_x_continuous(breaks = seq(0, 150, 2), limits = c(0, 30), minor_breaks = F)+
+ scale_y_continuous(breaks = seq(0, 150, 2), limits = c(0, 30), minor_breaks = F)+
+  ggtitle("(b)")
+```
+
 Figure 1: <a name="figure1"></a> Plot of EWAC against GF in ATS with ordinary least square regression line ($n$ = 22,373)
 
 
-### Consistency across demographics
+### Heterogeneous error
+
+Next, the MD and RMSE are regressed against respondents characteristics in order to identify subgroups with potentially stronger bias or error ([Table 3](#tab_ewac_validity_reg)). Models suggest that the factors account for a negligible proportion of both MD and RMSE (<2%). Despite this: 
+- MD is 4.8 units [2.1, 7.5] with in Black respondents and 5.9 units [1.6, 10.2] higher in respondents from Black and Other ethnic groups respectively, while RMSE not significantly different from the  similar. This suggests EWAC has a strong positive bias in Black respondents.
+- 
+
 
 
 `r table_nums('tab_ewac_validity_reg')`
@@ -315,10 +332,13 @@ lm_bias_stan <- lm((ewac_qfv-gfmeanweekly) ~ sex*ageg + ethgrp + favdrink +
 lm_rmse_stan <- lm(sqrt((ewac_qfv-gfmeanweekly)^2) ~ sex*ageg + ethgrp + favdrink + 
                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
 
-stargazer(lm_bias_mp, lm_rmse_mp, 
+stargazer(#lm_bias_mp, lm_rmse_mp, 
           lm_bias_stan, lm_rmse_stan, 
-          type = ifelse(knit_output_pdf, "latex", "html"), style = "ajs",
-          ci = rep(T, 4), digits = 2, single.row = T, intercept.bottom = F, align=TRUE)
+          type = ifelse(knit_output_pdf, "latex", "html"),
+          out = "truc.html", ci = rep(T, 2),
+          digits = 1, digits.extra	= 1, initial.zero = T, style = "ajs",
+          single.row = T, intercept.bottom = F, align=TRUE, no.space= T,
+          report = "vcs*")
 
 ```
 
