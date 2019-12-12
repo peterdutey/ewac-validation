@@ -1,0 +1,6 @@
+add \usepackage{dcolumn} 
+replace $\HAT{\MKERN6MU}$2 by $^2$
+replace \bibliography{bibliography.bib} by \bibliography{bibliography}
+\usepackage[numbers]{natbib}
+\bibliographystyle{vancouver}
+\citep[\citet{
