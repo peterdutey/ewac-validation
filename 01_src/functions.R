@@ -66,6 +66,14 @@ chisq.test.variance <- function(X, sigma = 4){
   )
 }
 
+t.test.MD <- function(X){
+  # One-side t-test 
+  # Null hypothesis: X is between -1 and 1
+  # Alternative hypothesis: |X| is greater than 1
+
+  t.test(X, alternative = "greater", mu = sign(mean(X, na.rm = T)))
+}
+
 keyABH <- list(space="right", cex = 1.5,
                lines=list(col=c("red", "red", "black", "orange"),
                           lty=c(1, 3, 1, 1), lwd=c( 1, 1, 2, 2)),
