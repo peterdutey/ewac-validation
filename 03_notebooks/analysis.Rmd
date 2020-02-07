@@ -1,22 +1,24 @@
 ---
 title: Concurrent validity of an Estimator of Weekly Alcohol Consumption (EWAC) based
   on the Extended AUDIT
+bibliography: bibliography.bib
 csl: elsevier-vancouver.csl
-link-citations: yes
-always_allow_html: yes
 output:
   html_document:
     df_print: paged
     number_sections: yes
     toc: yes
-  pdf_document: 
+  pdf_document:
     citation_package: natbib
     df_print: kable
     fig_caption: yes
     keep_tex: yes
     number_sections: yes
     toc: yes
-bibliography: bibliography.bib
+  word_document:
+    toc: yes
+link-citations: yes
+always_allow_html: yes
 ---
 
 <!--
@@ -71,7 +73,7 @@ library(kableExtra)
 library(pROC)
 # library("scales")
 # library("xtable")
-# library("stargazer")
+library(stargazer)
 
 auditx_labels <- c("audit1_label", "audit2_label", "audit3_label")
 
@@ -103,9 +105,9 @@ tab_comparison_schedules <- table_nums(
 tab_overview_datasets <- table_nums(
   name = "tab_overview_datasets",
   caption = "Description of data sources")
-tab_ewac_validity_reg <- table_nums(
-  name = "tab_ewac_validity_reg",
-  caption = "Coefficients of linear regression of the bias and error of EWAC compared with GF")
+tab_ats_rmsd_quantiles <- table_nums(
+  name = "tab_ats_rmsd_quantiles",
+  caption = "Percentiles of the absolute deviation between EWAC and GF schedule (n=22,373)")
 tab_study1_roc <- table_nums(
   name = "tab_study1_roc",
   caption = "Receiver operating characteristics of AUDIT-C score and EWAC for consumption >= 14 UK units/week")
@@ -115,12 +117,22 @@ tab_hosp_validity_reg <- table_nums(
 tab_aggregate_summary_stats <- table_nums(
   name = "tab_aggregate_summary_stats",
   caption = "Summary statistics on alcohol consumption in England in residents aged 18 years and over (excluding abstainers)")
+tab_ewac_validity_reg <- table_nums(
+  name = "tab_ewac_validity_reg",
+  caption = "Coefficients of linear regression of the bias and error of EWAC compared with GF")
+
 
 
 fig_nums <- captioner(prefix = "Figure")
 fig_scatter_ats <- fig_nums(
   name = 'fig_scatter_ats',
-  caption = 'Plots of EWAC against GF in (a) ATS participants and (b) low/increasing risk ATS participants')
+  caption = 'Plots of EWAC against GF in (a) low/increasing risk ATS respondents (n=21,338) and (b) all ATS respondents (n=22,373)')
+fig_ewac_MD_forest_plot <- fig_nums(
+  name = 'fig_ewac_MD_forest_plot',
+  caption = 'Forest plot of modelled MD for selected subgroups')
+fig_ewac_RMSD_forest_plot <- fig_nums(
+  name = 'fig_ewac_RMSD_forest_plot',
+  caption = 'Forest plot of RMSD ratio (selected subgroups to reference category)')
 fig_scatter_tlfb <- fig_nums(
   name = 'fig_scatter_tlfb',
   caption = 'Plot of EWAC estimates against TLFB estimates in hospital participants with lines of fit')
@@ -217,9 +229,9 @@ Study 1 evaluates the accuracy of the EWAC derived from a researcher-administere
 First, the discrepancy between the EWAC and the GF schedule is quantified, by treating GF as a gold standard. It enables the examination of two types of deviations across every participant $i$ in the ATS sample:
 
 - the mean deviation $\text{MD} = n^{-1} \sum_{i=1}^{n}{(\rm{EWAC_i} - \rm{GF_i} )}$ can be assimilated to a measure of bias under the assumption that GF is a gold standard. In this study, we test whether the MD is greater than 1 UK unit using a two-sided $t$-test. 
-- the root mean squared deviation $\text{RMSD} = \sqrt{n^{-1} \sum_{i=1}^{n}{( \rm{EWAC_i} - \rm{GF_i} )^2}}$ can be assimilated to a measure of total error: it capture both bias and random deviation from the assumed gold standard. In this study, we test the hypothesis that the RMSD is greater than 2 UK units using a one-sided $\chi^2$ homogeneity test.
+- the root mean squared deviation $\text{RMSD} = \sqrt{n^{-1} \sum_{i=1}^{n}{( \rm{EWAC_i} - \rm{GF_i} )^2}}$ can be assimilated to a measure of accuracy or total error: it capture both bias and random deviation from the assumed gold standard. For example, an RMSD of 2 signifies that the EWAC is on average with +/-2 UK units of the gold standard. In this study, we test the hypothesis that the RMSD is greater than 2 UK units using a one-sided $\chi^2$ homogeneity test.
 
-Second, we test the hypothesis that the EWAC's validity varies across population subgroups by regressing both (a) the simple deviation and (b) the root squared deviation in linear regression models, against the following predictors: sex by age group; ethnic group; favourite drink (wine, beer, etc.); highest educational qualification; religion; smoking status; general health; recent attempts at reducing or stopping drinking.
+Second, we test the hypothesis that the EWAC's validity varies across population subgroups by regressing both (a) the simple deviation in a linear model and (b) the root squared deviation in a log-transformed linear model. Both models include the following predictors: sex by age group; ethnic group; favourite drink (beer; wine; spirits alone; mixed spirits; cider; other); highest educational qualification; religion; smoking status; recent attempts at reducing or stopping drinking.
 
 Third, we test whether the EWAC has equivalent or better predictive value in predicting drinking in excess of 14 UK units per week compared to the traditional AUDIT-C score. In the UK, a score of 5 or more is categorised as 'increasing risk' or 'higher risk', and regarded as indicating consumption in excess of 14 units per week. The study tests the hypothesis that the EWAC's receiver operating characteristics' area under the curve (AUC) is greater that the AUDIT-C score using a nonparametric paired AUC test @Delong1988.
 
@@ -230,12 +242,14 @@ A pre-registered protocol for this study can be found in @Dutey2018.
 
 ## Study 2: Concurrent validity in hospital outpatients
 
-A second study aims to confirm the robustness of findings in (a) a patient population; (b) when the Extended AUDIT-C is self-administered; (c) using a different gold standard (TLFB).
+A second study aims to confirm the robustness of findings in (a) a patient population; (b) when the Extended AUDIT-C is self-administered; (c) using a different gold standard: the 28-day TLFB.
 
 Participants were recruited from a range of clinics at a large acute hospital in Southampton, UK: orthopaedics outpatient, endoscopy day cases, young adult outpatient, infusion ???. Participants were randomised to one of two groups: 
 
 (1) self-administered Extended AUDIT-C
 (2) researcher-administered Extended AUDIT-C using block randomisation.
+
+A total of `r nrow(qdata)` participants were recruited in hospital clinics, with data successfully collected on the Extended AUDIT-C for `r round(mean(!is.na(qdata$auditc_score))*100)`% of participants ($n$ = `r sum(!is.na(qdata$auditc_score))`) at baseline. The Extended AUDIT-C was administered first, with `r nrow(filter(qdata, !is.na(auditc_score) & q_admin_mode == "Self"))` participants randomised to self-administration using a pen and paper form, while the remaining `r nrow(filter(qdata, !is.na(auditc_score) & q_admin_mode == "Researcher"))` were administered by a researcher. 
 
 Once this first questionnaire completed, both groups were asked to complete a 28-day alcohol TFLB questionnaire administered by the researcher.
 
@@ -278,12 +292,18 @@ test_midpoint <- list(
   MD = mean(ats$ewac_mp - ats$gfmeanweekly, na.rm = T),
   MD.p = t.test.MD(ats$ewac_mp - ats$gfmeanweekly)$p.value,
   RMSD = sqrt(mean((ats$ewac_mp - ats$gfmeanweekly)^2, na.rm = T)),
+  MSD = (mean((ats$ewac_mp - ats$gfmeanweekly)^2, na.rm = T)),
+  MSD.ME = 1.96 * sqrt(var((ats$ewac_mp - ats$gfmeanweekly)^2, na.rm = T) / (
+    length(na.omit(ats$ewac_mp - ats$gfmeanweekly))) - 1 ),
   RMSD.p = t.test( (ats$ewac_mp - ats$gfmeanweekly)^2, mu = 4)$p.value
 )
 
 test_stan <- list(
   MD = mean(ats$ewac_qfv - ats$gfmeanweekly, na.rm = T),
   MD.p = t.test.MD(ats$ewac_qfv - ats$gfmeanweekly)$p.value,
+  MSD = (mean((ats$ewac_qfv - ats$gfmeanweekly)^2, na.rm = T)),
+  MSD.ME = 1.96 * sqrt(var((ats$ewac_qfv - ats$gfmeanweekly)^2, na.rm = T) / (
+  length(na.omit(ats$ewac_qfv - ats$gfmeanweekly))) - 1 ),
   RMSD = sqrt(mean((ats$ewac_qfv - ats$gfmeanweekly)^2, na.rm = T)),
   RMSD.p = chisq.test.variance( (ats$ewac_qfv - ats$gfmeanweekly)^2,
                                 sigma = 4)$p.value
@@ -316,13 +336,24 @@ stan_qfv_S_women <- ats %>%
 
 ## Study 1: EWAC estimation and validation
 
-### Overall accuracy
+### Overall bias and accuracy
 
-The first step involved choosing a set of coefficients to compute the EWAC. We compare using the midpoint of the AUDIT item intervals; and coefficients estimated using a statistical model (see supplementary materials 1). 
+The first step involved choosing a set of coefficients to compute the EWAC (see supplementary materials 1).
 
-The EWAC based on midpoint coefficients produces a mean deviation (MD) of `r tbrounding(test_midpoint$MD, 2)` alcohol units, indicating a bias inferior to +/- 1 UK unit (`r pvrounding(test_midpoint$MD.p)`). The root mean squared deviation (RMSD) is estimated at `r tbrounding(test_midpoint$RMSD, 2)`, significantly greater than 4 UK units (`r pvrounding(test_midpoint$RMSD.p)`), suggesting that the EWAC of any given individual would be on average 12 units from the truth (treating GF schedule can be used as a gold standard). 
+The EWAC computed with the midpoint of the AUDIT item intervals produces a mean deviation (MD) of `r tbrounding(test_midpoint$MD, 2)` UK alcohol units/week, indicating a bias inferior to the preregistered +/- 1-unit bias allowance (`r pvrounding(test_midpoint$MD.p)`). The root mean squared deviation (RMSD) estimate of `r tbrounding(test_midpoint$RMSD, 1)` units [95% CI: `r round(sqrt(test_midpoint$MSD - test_midpoint$MSD.ME), 1)`;`r round(sqrt(test_midpoint$MSD + test_midpoint$MSD.ME), 1)`] is significantly greater than the pre-registered 2-unit total error allowance (`r pvrounding(test_midpoint$RMSD.p)`), suggesting that the EWAC falls on average 12 units away from the GF gold standard.
 
-Coefficients estimated by the statistical model provide a small improvement with MD = `r tbrounding(test_stan$MD, 2)` (`r pvrounding(test_stan$MD.p)`). Error remains statistically significantly greater than 4 with  RMSD = `r tbrounding(test_stan$RMSD, 2)` (`r pvrounding(test_stan$RMSD.p)`). `r fig_nums("fig_scatter_ats", display = "cite")` compares individual EWAC and GF values. We note the departure of lines of best fit from the diagonal, whether estimated using ordinary least squares or using a thin plate regression spline. This discrepancy is more severe beyond 25 units per week.
+Coefficients estimated empirically (statistical model reported in supplementary materials 2) provide a small improvement: MD = `r tbrounding(test_stan$MD, 2)` (`r pvrounding(test_stan$MD.p)`). Error remains statistically significantly greater than 2 (`r pvrounding(test_stan$RMSD.p)`) with RMSD = `r tbrounding(test_stan$RMSD, 1)` [95% CI: `r round(sqrt(test_stan$MSD - test_stan$MSD.ME), 1)`;`r round(sqrt(test_stan$MSD + test_stan$MSD.ME), 1)`].
+
+The RMSD masks a dispersed and skewed error pattern. `r table_nums('tab_ats_rmsd_quantiles', display = "cite")` shows that, for 50% of participants, the EWAC falls within +/- 2 UK units of the GF weekly consumption estimate. In other terms, an interval estimate defined as the EWAC +/- 2 units (eg '10 to 14 units') would be accurate for half of individuals, while an interval estimate defined as the EWAC +/- 3 units (eg '9 to 15 units') would be accurate for 60% of individuals. 
+
+`r table_nums('tab_ats_rmsd_quantiles')`
+
+```{r ats_rmsd_quantiles}
+as_tibble(t(round(quantile(na.omit(abs(ats$ewac_qfv - ats$gfmeanweekly)), probs = c(seq(.1, .9, .1), .95, .99)), 1)))
+```
+
+
+`r fig_nums("fig_scatter_ats", display = "cite")` compares individual EWAC and GF values. We note the departure of lines of best fit from the diagonal, demonstrating the EWAC's small but consistent positive bias (MD > 0). This discrepancy is more severe beyond 25 units per week.
 
 
 ```{r ewac_benchmark}
@@ -356,18 +387,20 @@ scatterplot_1 <- dplyr::select(ats, gfmeanweekly, ewac_qfv) %>%
   geom_hline(yintercept = 14, color = "grey50") + 
   geom_vline(xintercept = 14, color = "grey50") +
   theme_bw()
-scatterplot_1a <- scatterplot_1 +
+
+scatterplot_1b <- scatterplot_1 +
   geom_rect(aes(xmin = 0, ymin = 0, xmax = 36, ymax = 36), fill = "#faf207") +
   geom_point(alpha = .1)+
   scale_x_continuous(breaks = seq(0, 150, 10), limits = c(0, 150), minor_breaks = F)+
   scale_y_continuous(breaks = seq(0, 150, 10), limits = c(0, 150), minor_breaks = F)+
-  ggtitle("(a)")
-scatterplot_1b <- scatterplot_1 +
+  ggtitle("(b)")
+
+scatterplot_1a <- scatterplot_1 +
   theme(panel.background = element_rect(fill = "#faf207"),
         panel.grid = element_line(colour = "white")) +
  scale_x_continuous(breaks = seq(0, 150, 2), limits = c(0, 35), minor_breaks = F)+
  scale_y_continuous(breaks = seq(0, 150, 2), limits = c(0, 35), minor_breaks = F)+
-  ggtitle("(b)")
+  ggtitle("(a)")
 
 ggpubr::ggarrange(scatterplot_1a, scatterplot_1b, ncol = 2, nrow = 1)
 ```
@@ -377,37 +410,99 @@ ggpubr::ggarrange(scatterplot_1a, scatterplot_1b, ncol = 2, nrow = 1)
 
 ### Subgroup accuracy
 
-Next, the MD and RMSD are regressed against respondents characteristics in order to identify subgroups with potentially stronger bias or error (`r table_nums("tab_ewac_validity_reg", display = "cite")`). $R^2$ statistics suggest that the factors account for a very modest proportion of both MD and RMSD (<2%). Despite this:
-
-- MD is 4.8 units [2.1, 7.5] with in Black respondents and 5.9 units [1.6, 10.2] higher in respondents from Black and Other ethnic groups respectively, while RMSD not significantly different from the rest of the population. This suggests EWAC has a strong positive bias in Black respondents.
-- RMSD is reduced by an average 2 units with an educational qualification compared to no qualifications, without effect on MD
-- MD is reduced by 1.1 units [0.4, 1.8], while RMSD is increased by 2.5 units [1.8, 3.1] in current smokers compared with never-smokers.
-
-There was no evidence of properties of the EWAC being different across gender and age groups. 
-
-
-`r table_nums('tab_ewac_validity_reg')`
-
-```{r, results='asis'}
-library(stargazer)
-lm_bias_mp <- lm((ewac_mp-gfmeanweekly) ~ sex*ageg + ethgrp + favdrink + 
+```{r ewac_subgroup_regressions}
+ats$f_ageg <- relevel(ats$ageg7, ref = "25-34 years")
+# lm_bias_mp <- lm((ewac_mp-gfmeanweekly) ~ sex*f_ageg + ethgrp + favdrink + 
+#                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
+# lm_rmsd_mp <- lm(sqrt((ewac_mp-gfmeanweekly)^2) ~ sex*f_ageg + ethgrp + favdrink + 
+#                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
+lm_bias_stan <- lm((ewac_qfv-gfmeanweekly) ~ sex*f_ageg + ethgrp + favdrink + 
                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
-lm_rmsd_mp <- lm(sqrt((ewac_mp-gfmeanweekly)^2) ~ sex*ageg + ethgrp + favdrink + 
-                   tryalclyc2 + religion + highqual  + smokstat, data = ats)
-lm_bias_stan <- lm((ewac_qfv-gfmeanweekly) ~ sex*ageg + ethgrp + favdrink + 
-                   tryalclyc2 + religion + highqual  + smokstat, data = ats)
-lm_rmsd_stan <- lm(sqrt((ewac_qfv-gfmeanweekly)^2) ~ sex*ageg + ethgrp + favdrink + 
-                   tryalclyc2 + religion + highqual  + smokstat, data = ats)
-
-stargazer(#lm_bias_mp, lm_rmsd_mp, 
-          lm_bias_stan, lm_rmsd_stan, 
-          type = ifelse(knit_output_pdf, "latex", "html"),
-          ci = rep(T, 2),
-          digits = 1, digits.extra	= 1, initial.zero = T, style = "ajs",
-          single.row = T, intercept.bottom = F, align=TRUE, no.space= T,
-          report = "vcs*")
+lm_rmsd_stan <- lm(log((ewac_qfv-gfmeanweekly)^2) ~ sex*f_ageg + ethgrp + favdrink + 
+                   tryalclyc2 + religion + highqual + smokstat, data = ats)
 
 ```
+
+Next, the MD and RMSD are regressed against respondents characteristics in order to identify subgroups with pronounced bias or total error (see supplementary materials 3, `r table_nums("tab_ewac_validity_reg", display = "cite")`). The model predictors explain a very modest proportion of both MD and RMSD ($R^2$ statistics < 2%). Nevertheless, specific subgroups do exhibit very different MD and RMSD.
+
+`r fig_nums('fig_ewac_RD_forest_plot', display = "cite")` summarises the MD for a selection of subgroups whose predicted MD was either over 1 or under -1; and whose coefficients had a $p$-value under 0.05. The reference category's key characteristics are: females aged between 25 and 34 years of White ethnicity without educational qualifications, whose reported favourite drink was beer. Respondents of Black; Other; and White Other ethnic groups had significantly overestimated EWACs: their MDs were respectively 4.8 units [95% CI: 2.1, 7.5]; 5.9 units [1.6, 10.1] and 1.6 [0.2, 3.0] in excess of the reference MD. Respondents aged between 55 and 64 years or 75 years or more respectively had MDs 2.2 units [0.5; 3.9] and 4.2 units [0.9; 7.6] in excess of the reference MD. Evidence of milder--this time negative--bias was also found in respondents reporting any religion other than a Christian or Muslim faith.
+
+```{r ewac_subgroup_bias, fig.width=7, fig.height=3}
+ewac_bias_plot <- as_tibble(summary(lm_bias_stan)$coefficients)
+ewac_bias_plot <- ewac_bias_plot %>% 
+  mutate(Variable = names(lm_bias_stan$coefficients),
+         MD = lm_bias_stan$coefficients[1] + Estimate) %>% 
+  filter(abs(MD)>=1 & `Pr(>|t|)` < 0.05) %>% 
+  arrange(-Estimate) %>% 
+  mutate(x = rank(Estimate))
+  
+labs <- ewac_bias_plot$Variable
+names(labs) <- as.character(length(labs):1)
+
+ggplot(ewac_bias_plot, aes(x = factor(x), y = MD)) +
+  scale_x_discrete(breaks = names(labs), 
+                   labels = labs, name = NULL)+
+  scale_y_continuous(breaks = -10:16, name = "Predicted MD (UK units/week)")+
+  coord_flip() +
+  geom_linerange(aes(ymin = MD - 1.96*`Std. Error`, ymax = MD + 1.96*`Std. Error`), 
+                 colour = "purple") +
+  geom_point() +
+  geom_text(aes(label = round(MD, 1)), vjust = 1.2) +
+  geom_hline(aes(yintercept = 0)) +
+  geom_segment(aes(x = "0", xend = "0", y =0, yend = 3.5), 
+               lwd = 1, arrow = arrow(length = unit(0.03, "npc"))) +
+  geom_label(aes(x = "0", y = 3.8, label = "EWAC overestimates consumption"),
+             hjust = "outward", colour = "purple") +
+  theme_minimal() 
+
+```
+
+`r fig_nums(fig_ewac_MD_forest_plot)` 
+
+Similarly, we sought to identify subgroups in which agreement between the EWAC and the GF gold standard was substantially different. `r fig_nums('fig_ewac_RMSD_forest_plot', display = "cite")` shows those subgroups with an RMSD found to be significantly different from the rest of the population ($p < 0.05$); and estimated to be 20% greater or smaller than the RMSD of the reference category. 
+
+Error is significantly greater in mean (those reporting any religion other than Christian or Muslim; and in current smoker compared to never-smokers. In addition, respondents who attempted to reduce their alcohol consumption in the last year also had a higher RMSD. On the contrary, educational qualifications seem to significantly improve the agreement between EWAC and the gold standard. The RMSD is reduced by an average 2 units with an educational qualification compared to no qualifications (and without effect on MD), suggesting that respondents may have better recall and clarity over alcohol beverage content.
+
+
+
+```{r ewac_subgroup_error, fig.width=7, fig.height=3}
+ewac_error_plot <- as_tibble(summary(lm_rmsd_stan)$coefficients)
+ewac_error_plot <- ewac_error_plot %>% 
+  mutate(Variable = names(lm_rmsd_stan$coefficients),
+         MSD_ratio = exp(Estimate)) %>% 
+  mutate(MSD_ratio_LB = exp(Estimate - (1.96*`Std. Error`)),
+         MSD_ratio_UB = exp(Estimate + (1.96*`Std. Error`))) %>% 
+  filter(abs(Estimate)>=log(1.2^2) & `Pr(>|t|)` < 0.05 & Variable != "(Intercept)") %>% 
+  arrange(-MSD_ratio) %>% 
+  mutate(x = formatC(rank(MSD_ratio)+1, width = 2, format = "d", flag = "0"))
+  
+labs2 <- ewac_error_plot$Variable
+names(labs2) <- as.character(ewac_error_plot$x)
+
+ggplot(ewac_error_plot, aes(x = factor(x), y = MSD_ratio)) +
+  scale_x_discrete(breaks = names(labs2), 
+                   labels = labs2, name = NULL)+
+  scale_y_continuous(breaks = seq(0, 4, .5),
+                     "Relative MSD")+
+  coord_flip() +
+  geom_text(aes(label = round(MSD_ratio, 1)), vjust = 1.2) +
+  geom_linerange(aes(ymin = MSD_ratio_LB, ymax = MSD_ratio_UB), colour = "purple") +
+    geom_point() +
+  geom_hline(aes(yintercept = 1)) +
+  geom_segment(aes(x = "00", xend = "00", y =1, yend =1.6), 
+               lwd = 1, arrow = arrow(length = unit(0.03, "npc"))) +
+  geom_label(aes(x = "00", y = 1.1, label = "Worse agreement of EWAC\n with gold standard"),
+             hjust = "inward", vjust= -0.2, colour = "purple") +
+  theme_minimal() 
+```
+
+Ratio of subgroup RMSD to reference category RMSD
+
+`r fig_nums(fig_ewac_RMSD_forest_plot)`
+
+
+
+
 
 ### Receiver Operating Characteristics
 
@@ -461,9 +556,6 @@ roc_results
 
 ## Study 2: Concurrent validity in hospital patients
 
-A total of `r nrow(qdata)` participants were recruited in hospital clinics, with data successfully collected on the Extended AUDIT-C for `r round(mean(!is.na(qdata$auditc_score))*100)`% of participants ($n$ = `r sum(!is.na(qdata$auditc_score))`) at baseline. The Extended AUDIT-C was administered first, with `r nrow(filter(qdata, !is.na(auditc_score) & q_admin_mode == "Self"))` participants randomised to self-administration using a pen and paper form, while the remaining `r nrow(filter(qdata, !is.na(auditc_score) & q_admin_mode == "Researcher"))` were administered by a researcher.
-
-
 
 
 The MD of 
@@ -503,15 +595,17 @@ tlfb_descriptives <- list(
   MD = mean(tlfb_person$ewac_stan - tlfb_person$tlfb_units),
   MD.p = t.test(tlfb_person$ewac_stan - tlfb_person$tlfb_units)$p.value,
   RMSD = sqrt(mean((tlfb_person$ewac_stan - tlfb_person$tlfb_units)^2, na.rm = T)),
+  MSD = mean((tlfb_person$ewac_stan - tlfb_person$tlfb_units)^2, na.rm = T),
+  MSD.ME = 1.96 * sqrt(var((tlfb_person$ewac_stan - tlfb_person$tlfb_units)^2) / (nrow(tlfb_person) - 1)),
   RMSD.p = chisq.test.variance( (tlfb_person$ewac_stan - tlfb_person$tlfb_units)^2,
                                 sigma = 4)$p.value
 )
 ```
 
-To estimate comparable measures of deviaiton as in previous sections, the model is used to impute the `r nrow(tlfb_imputed)` out of `r formatbm(nrow(tlfb_person))` daily consumption figures that were missing in total for `r length(unique(tlfb_imputed$pid))` participants. In this small pilot dataset, MD = `r tbrounding(tlfb_descriptives$MD)` unit is measured (`r pvrounding(tlfb_descriptives$MD.p)`) while RMSD = `r tbrounding(tlfb_descriptives$RMSD)` and is statistically significantly greater than 2 units (`r pvrounding(tlfb_descriptives$RMSD.p)`) 
+To estimate comparable measures of deviation as in previous sections, the model is used to impute the `r nrow(tlfb_imputed)` out of `r formatbm(nrow(tlfb_person))` daily consumption figures that were missing in total for `r length(unique(tlfb_imputed$pid))` participants. In this small pilot dataset, MD = `r tbrounding(tlfb_descriptives$MD)` unit is measured (`r pvrounding(tlfb_descriptives$MD.p)`) while RMSD = `r tbrounding(tlfb_descriptives$RMSD)` and is statistically significantly greater than 2 units (`r pvrounding(tlfb_descriptives$RMSD.p)`) 
 
 
-```{r warning=F}
+```{r warning=F, message = F, fig.height=5, fig.width=7}
 
 ggplot(tlfb_person, aes(y = ewac_stan, x = tlfb_units)) +
   geom_point() +
@@ -594,7 +688,7 @@ EWAC <- ecdfplot(na.omit(ats_dk18$agg_qfv),
                   panel.abline(v = 14)
                 },
                 xlim = xlims, col = alpha("orange", .7), lwd = 3, lty = 1,
-                scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
+                scales=list(cex=1.0), xlab = ecdfxlab, ylab = ecdfylab)
 
 GF <- ecdfplot(na.omit(ats_dk18$gfmeanweekly),
                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
@@ -605,7 +699,7 @@ GF <- ecdfplot(na.omit(ats_dk18$gfmeanweekly),
                   panel.abline(v = 14)
                 },
                 xlim = xlims, col = alpha("black", .7), lwd = 3, lty = 1,
-               scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
+               scales=list(cex=1.0), xlab = ecdfxlab, ylab = ecdfylab)
 
 HSE <- ecdfplot(na.omit(hse_dk18$totalwu),
                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
@@ -616,7 +710,7 @@ HSE <- ecdfplot(na.omit(hse_dk18$totalwu),
                   panel.abline(v = 14)
                 },
                 xlim = xlims, col = alpha("red", .7), lwd = 1, lty = 1,
-                scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
+                scales=list(cex=1.0), xlab = ecdfxlab, ylab = ecdfylab)
 
 HSEdiary <- ecdfplot(na.omit(hse_dk18$weektot),
                 key= keyABH, panel = function(x, f.value = NULL, type = "s",
@@ -627,7 +721,7 @@ HSEdiary <- ecdfplot(na.omit(hse_dk18$weektot),
                   panel.abline(v = 14)
                 },
                 xlim = xlims, col = alpha("red", .7), lwd = 2, lty = 2,
-                scales=list(cex=1.5), xlab = ecdfxlab, ylab = ecdfylab)
+                scales=list(cex=1.0), xlab = ecdfxlab, ylab = ecdfylab)
 
 HSEdiary + HSE +EWAC + GF
 
@@ -643,6 +737,18 @@ HSEdiary + HSE +EWAC + GF
 
 
 ## Main findings
+
+This paper examined the predictive capabilities of the Extended AUDIT in England. The Extended AUDIT is a variant of the AUDIT-C containing a choice of 6 response items to quantify drinking frequency, and 8 reponse items to quantify the average quantity consumed during any drinking day. The resulting EWAC estimates usual alcohol consumption with a mean precision of +/- 11 units/week when compared to the GF alcohol schedule, or +/- 5 units/week when compared to a 28-day TLFB. Precision is consistent across age and gender. However, some groups deviate from this presci
+
+but some current smokers
+
+More 
+
+## Strengths and limitations 
+
+
+While retaining the AUDIT’s strengths such as speed, accuracy and international standardisation, the Extended AUDIT improves the granularity of the information collected on alcohol consumption. It follows the same schedule as the AUDIT, but provides a greater range of response options in the quantity and frequency items (questions 1 and 2). The Extended AUDIT has been used in UK research as part of the SIPS trial [10] and the Alcohol Toolkit Study [11] to capture greater information on the higher risk drinkers, based on the observation that consumption items are right-truncated.
+
 
 To the best of our knowledge, this is the first paper to develop an EWAC using a well-accepted and fast alcohol questionnaire such as the AUDIT. We used the Extended AUDIT-C to address the AUDIT-C's right-truncation and estimate consumption even for heavy consumers.
 
@@ -701,6 +807,22 @@ Supportive of their argument, we propose that the EWAC could be employed in rout
 ## Supplementary materials 1: EWAC coefficients (CSV file)
 
 ## Supplementary materials 2: Bayesian model report (PDF file)
+
+## Supplementary materials 3: Subgroup analyses
+
+
+`r table_nums('tab_ewac_validity_reg')`
+
+```{r, results='asis'}
+stargazer::stargazer(#lm_bias_mp, lm_rmsd_mp, 
+          lm_bias_stan, lm_rmsd_stan, 
+          type = ifelse(knit_output_pdf, "latex", "html"),
+          ci = rep(T, 2),
+          digits = 1, digits.extra	= 1, initial.zero = T, style = "ajs",
+          single.row = T, intercept.bottom = F, align=TRUE, no.space= T,
+          report = "vcs*")
+
+```
 
 ## Supplementary materials 3: ROC curves
 
