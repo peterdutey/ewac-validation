@@ -68,6 +68,7 @@ library(tidyverse)
 library(knitr)
 library(captioner)
 library(kableExtra)
+library(pROC)
 # library("scales")
 # library("xtable")
 # library("stargazer")
@@ -105,6 +106,9 @@ tab_overview_datasets <- table_nums(
 tab_ewac_validity_reg <- table_nums(
   name = "tab_ewac_validity_reg",
   caption = "Coefficients of linear regression of the bias and error of EWAC compared with GF")
+tab_study1_roc <- table_nums(
+  name = "tab_study1_roc",
+  caption = "Receiver operating characteristics of AUDIT-C score and EWAC for consumption >= 14 UK units/week")
 tab_hosp_validity_reg <- table_nums(
   name = "tab_hosp_validity_reg",
   caption = "Coefficients of regression of TLFB daily consumption against EWAC, administration of the week, week day and time")
@@ -182,7 +186,7 @@ where $b$ denotes the average number of units of alcohol consumed in an intense 
 
 ## Data sources
 
-A longstanding obstacle in alcohol research and care is the absence of a diagnostic gold standard, which is not addressed even by the development of new biomarkers. Instead, a number of instruments exist which measure self-reported alcohol consumption with varying validity and reliability. A state-of-the art review from @Greenfield2000 is summarised in [Table 1](#table1) below.
+A longstanding obstacle in alcohol research and care is the absence of a diagnostic gold standard, which is not addressed even by the development of new biomarkers. Instead, a number of instruments exist which measure self-reported alcohol consumption with varying validity and reliability. A state-of-the art review from @Greenfield2000 is summarised in `r table_nums("tab_comparison_schedules", display = "cite")` below.
 
 `r table_nums("tab_comparison_schedules")`
 
@@ -194,7 +198,7 @@ readr::read_csv("table_overview_schedules.csv")  %>%
 
 Prospective diaries tend to record higher alcohol consumption by minimising recall bias, followed by GF, while lower levels seem to be recorded with QF measures [@Heeb2005, @Rehm1998]. 
 
-The present paper employs four sources of data. An overview is available in [Table 2](#table2) below, together with references to publicly available methodological descriptions. Analysis of HSE and ATS microdata was approved by the University of Southampton's Faculty of Medicine Ethics Committee (ERGO 44682). The hospital questionnaire (Study 3) collection and analysis was approved by the Health Research Authority National Research Ethics Service (IRAS 247458;  REC 18/SC/0564). All results are reported in UK alcohol units (8g or 10mL of pure alcohol). Analyses are conducted in `R` [@RCoreTeam2017] using packages `tidyverse`, `survey`, `rstan` [@package-tidyverse; @package-rstan; @package-survey; @Lumley2004]. Computer programmes for all analyses are available on an online repository.
+The present paper employs four sources of data. An overview is available in `r table_nums("tab_overview_datasets", display = "cite")` below, together with references to publicly available methodological descriptions. Analysis of HSE and ATS microdata was approved by the University of Southampton's Faculty of Medicine Ethics Committee (ERGO 44682). The hospital questionnaire (Study 3) collection and analysis was approved by the Health Research Authority National Research Ethics Service (IRAS 247458;  REC 18/SC/0564). All results are reported in UK alcohol units (8g or 10mL of pure alcohol). Analyses are conducted in `R` [@RCoreTeam2017] using packages `tidyverse`, `survey`, `rstan` [@package-tidyverse; @package-rstan; @package-survey; @Lumley2004]. Computer programmes for all analyses are available on an online repository.
 
 `r table_nums("tab_overview_datasets")`
 
@@ -312,16 +316,24 @@ stan_qfv_S_women <- ats %>%
 
 ## Study 1: EWAC estimation and validation
 
-### EWAC coefficients
+### Overall accuracy
 
 The first step involved choosing a set of coefficients to compute the EWAC. We compare using the midpoint of the AUDIT item intervals; and coefficients estimated using a statistical model (see supplementary materials 1). 
 
 The EWAC based on midpoint coefficients produces a mean deviation (MD) of `r tbrounding(test_midpoint$MD, 2)` alcohol units, indicating a bias inferior to +/- 1 UK unit (`r pvrounding(test_midpoint$MD.p)`). The root mean squared deviation (RMSD) is estimated at `r tbrounding(test_midpoint$RMSD, 2)`, significantly greater than 4 UK units (`r pvrounding(test_midpoint$RMSD.p)`), suggesting that the EWAC of any given individual would be on average 12 units from the truth (treating GF schedule can be used as a gold standard). 
 
-Coefficients estimated by the statistical model provide a small improvement with MD = `r tbrounding(test_stan$MD, 2)` (`r pvrounding(test_stan$MD.p)`). Error remains statistically significantly greater than 4 with  RMSD = `r tbrounding(test_stan$RMSD, 2)` (`r pvrounding(test_stan$RMSD.p)`). [Figure 1](#figure1) compares individual EWAC and GF values. We note the departure of lines of best fit from the diagonal, whether estimated using ordinary least squares or using a thin plate regression spline. This discrepancy is more severe beyond 25 units per week.
+Coefficients estimated by the statistical model provide a small improvement with MD = `r tbrounding(test_stan$MD, 2)` (`r pvrounding(test_stan$MD.p)`). Error remains statistically significantly greater than 4 with  RMSD = `r tbrounding(test_stan$RMSD, 2)` (`r pvrounding(test_stan$RMSD.p)`). `r fig_nums("fig_scatter_ats", display = "cite")` compares individual EWAC and GF values. We note the departure of lines of best fit from the diagonal, whether estimated using ordinary least squares or using a thin plate regression spline. This discrepancy is more severe beyond 25 units per week.
 
 
-<!-- With early signs that validity was strongly dependent on gender, we estimated coefficients independently for each gender to test for the use of gender-specific coefficients. This analysis was not planned in the pre-registered protocol but appeared to be justified by differences in alcohol consumption between women and men. Using gender-specific coefficients, we found HIGHER BIAS... -->
+```{r ewac_benchmark}
+ats$ewac_qfv_bench <- ats$ewac_qfv * 0.8997 + 0.8344
+
+stan_qfv_bench <- ats %>% 
+  summarise(MD = mean(ewac_qfv_bench - gfmeanweekly, na.rm = T),
+            RMSD = sqrt(mean((ewac_qfv_bench - gfmeanweekly)^2, na.rm = T)),
+            RMSD.p = chisq.test.variance((ewac_qfv_bench - gfmeanweekly)^2,
+                                         sigma = 4)$p.value)
+```
 
 
 
@@ -363,9 +375,9 @@ ggpubr::ggarrange(scatterplot_1a, scatterplot_1b, ncol = 2, nrow = 1)
  `r fig_nums('fig_scatter_ats')`
 
 
-### Heterogeneous error
+### Subgroup accuracy
 
-Next, the MD and RMSD are regressed against respondents characteristics in order to identify subgroups with potentially stronger bias or error ([Table 3](#tab_ewac_validity_reg)). $R^2$ statistics suggest that the factors account for a very modest proportion of both MD and RMSD (<2%). Despite this:
+Next, the MD and RMSD are regressed against respondents characteristics in order to identify subgroups with potentially stronger bias or error (`r table_nums("tab_ewac_validity_reg", display = "cite")`). $R^2$ statistics suggest that the factors account for a very modest proportion of both MD and RMSD (<2%). Despite this:
 
 - MD is 4.8 units [2.1, 7.5] with in Black respondents and 5.9 units [1.6, 10.2] higher in respondents from Black and Other ethnic groups respectively, while RMSD not significantly different from the rest of the population. This suggests EWAC has a strong positive bias in Black respondents.
 - RMSD is reduced by an average 2 units with an educational qualification compared to no qualifications, without effect on MD
@@ -398,6 +410,52 @@ stargazer(#lm_bias_mp, lm_rmsd_mp,
 ```
 
 ### Receiver Operating Characteristics
+
+```{r, roc_compute, message=F}
+
+roc_auditc <- roc(gfmeanweekly>=14 ~ auditc, data = ats)  
+roc_ewac <- roc(gfmeanweekly>=14 ~ ewac_qfv, data = ats)
+
+roc_results <- list()
+roc_results$auditc <- as_tibble(list(
+  Metric = "AUDIT-C score",
+  AUC = as.numeric(auc(roc_auditc)),
+  `95% CI` = paste0("[", round(as.numeric(ci(auc(roc_auditc)))[1], 3), "; ",
+                    round(as.numeric(ci(auc(roc_auditc))), 3)[3], "]"),
+  `Best threshold` = coords(roc_auditc, "b", transpose = F)$threshold,
+  Sensitivity = coords(roc_auditc, "b", transpose = F)$sensitivity,
+  Specificity = coords(roc_auditc, "b", transpose = F)$specificity
+))
+roc_results$ewac <- as_tibble(list(
+  Metric = "EWAC",
+  AUC = as.numeric(auc(roc_ewac)),
+  `95% CI` = paste0("[", round(as.numeric(ci(auc(roc_ewac)))[1], 3), "; ",
+                    round(as.numeric(ci(auc(roc_ewac))), 3)[3], "]"),
+  `Best threshold` = coords(roc_ewac, "b", transpose = F)$threshold,
+  Sensitivity = coords(roc_ewac, "b", transpose = F)$sensitivity,
+  Specificity = coords(roc_ewac, "b", transpose = F)$specificity
+))
+roc_results <- bind_rows(roc_results) %>% 
+  mutate(AUC = round(AUC, 3),
+         `Best threshold` = round(`Best threshold`, 3),
+         Sensitivity = round(Sensitivity, 3),
+         Specificity = round(Specificity, 3))
+roc_ewac_nominal14 <- coords(roc_ewac, 14, transpose = F)
+```
+
+*Note*: The best threshold refers the cut-off value that maximises the sum of sensitivity and specificity.
+
+The last step of this analysis was to examine the EWAC's ability to classify participants' consumption as being equal or in excess of 14 UK units/week. In comparison with the AUDIT-C score, EWAC increases the area under the curve by 5 percentage points (`r table_nums("tab_study1_roc", display = "cite")`), a statistically significant improvement (`r pvrounding(roc.test(roc_auditc, roc_ewac, method = "delong")$p.value)`). ROC curve are available from Supplementary Material 3. The cut-off that maximises the sum of specificity and sensitivity is 9.95 units/week. In constrast, using the nominal cut-off of 14 units/week yields a sensitivity of `r round(roc_ewac_nominal14$sensitivity, 3)` and a specificity of `r round(roc_ewac_nominal14$specificity, 3)`.
+
+In summary, using an EWAC threshold of 10 units or more over an AUDIT-C score of 5 or more provides equivalent sensitivity, but with an a steep gain in specificity of 13 percentage points.
+
+
+`r table_nums('tab_study1_roc')`
+
+```{r tab_roc}
+roc_results
+```
+
 
 
 
@@ -475,6 +533,7 @@ ggplot(tlfb_person, aes(y = ewac_stan, x = tlfb_units)) +
   geom_vline(xintercept = 14, color = "grey50")
 
 ```
+
 `r fig_nums('fig_scatter_tlfb')`
 
 
@@ -573,6 +632,7 @@ HSEdiary <- ecdfplot(na.omit(hse_dk18$weektot),
 HSEdiary + HSE +EWAC + GF
 
 ```
+
 `r fig_nums('fig_ECDF')`
 
 
@@ -635,6 +695,45 @@ Supportive of their argument, we propose that the EWAC could be employed in rout
 
 
 # Ethics
+
+# Supplementary materials
+
+## Supplementary materials 1: EWAC coefficients (CSV file)
+
+## Supplementary materials 2: Bayesian model report (PDF file)
+
+## Supplementary materials 3: ROC curves
+
+```{r, fig.height=5, fig.width=7}
+# roc_auditc$linetype <- "solid"
+# roc_auditc$colour <- "#70ee9c"
+# roc_ewac$linetype <- "longdash"
+# roc_ewac$colour <- "#434371"
+
+thresholds_auditc <- coords(roc_auditc, x = seq(2.5, 10.5, 1), 
+                          input = "threshold", transpose = F)
+thresholds_auditc$name <- "AUDIT-C score"
+thresholds_auditc$`Cut-off` <- if_else(thresholds_auditc$threshold == 4.5, 
+                                  "Max sens. & spec.", "Other")
+thresholds_ewac <- coords(roc_ewac, x = c(8, 10, 12), 
+                          input = "threshold", transpose = F) 
+thresholds_ewac$name <- "EWAC"
+thresholds_ewac$`Cut-off` <- if_else(thresholds_ewac$threshold == 10, 
+                                  "Max sens. & spec.", "Other")
+ggroc(list("AUDIT-C score" = roc_auditc, "EWAC" = roc_ewac), 
+      aes=c("linetype", "colour")) + 
+  geom_point(mapping = aes(x = specificity, y = sensitivity, shape = `Cut-off`),
+             data = bind_rows(thresholds_auditc, thresholds_ewac),
+             size = 2.5, stroke = 1.2, col = "black") +
+  scale_shape_manual(values = c(4, 1) ) +
+  geom_text(data = bind_rows(thresholds_auditc, thresholds_ewac),
+            aes(x = specificity, y = sensitivity, label = threshold),
+            hjust= -0.2, vjust = -0.2)
+  
+  
+ 
+```
+
 
 
 # Appendix hospital study
