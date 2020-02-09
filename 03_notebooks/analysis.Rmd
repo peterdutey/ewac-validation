@@ -96,7 +96,16 @@ alcohol_pcapita_adults_2014_units <-  16.3 # per capita for all population
 alcohol_pcapita_drinker_2014_units <- 19.3 # per capita for drinkers only
 MYPE_2014 <- 42724917 # population aged 18+
 
-
+# Sample sizes
+n_ats <- nrow(ats)
+valid_n_study1a <-  nrow(na.omit(ats[, c("gfmeanweekly", "audit1", "audit2", "audit3")]))
+valid_n_study1b <- nrow(na.omit(select(ats, audit1_label, audit2_label, audit3_label, gfmeanweekly,
+                                      sex, ageg7, ethgrp, religion, highqual, smokstat)))
+valid_n_study1c <- nrow(na.omit(select(
+    filter(ats, auditc >= 5 | fullaudit >=8), 
+    audit1_label, audit2_label, audit3_label, gfmeanweekly,
+         sex, ageg7, ethgrp, favdrink, tryalclyc2, 
+         religion, highqual, smokstat)))
 
 table_nums <- captioner::captioner(prefix = "Table")
 tab_comparison_schedules <- table_nums(
@@ -107,10 +116,10 @@ tab_overview_datasets <- table_nums(
   caption = "Description of data sources")
 tab_ats_rmsd_quantiles <- table_nums(
   name = "tab_ats_rmsd_quantiles",
-  caption = "Percentiles of the absolute deviation between EWAC and GF schedule (n=22,373)")
+  caption = paste0("Percentiles of the absolute deviation between EWAC and GF schedule (n = ", valid_n_study1a, ")"))
 tab_study1_roc <- table_nums(
   name = "tab_study1_roc",
-  caption = "Receiver operating characteristics of AUDIT-C score and EWAC for consumption >= 14 UK units/week")
+  caption = paste0("Receiver operating characteristics of AUDIT-C score and EWAC for consumption >= 14 UK units/week (n = ", formatbm(valid_n_study1a), ")"))
 tab_hosp_validity_reg <- table_nums(
   name = "tab_hosp_validity_reg",
   caption = "Coefficients of regression of TLFB daily consumption against EWAC, administration of the week, week day and time")
@@ -119,8 +128,10 @@ tab_aggregate_summary_stats <- table_nums(
   caption = "Summary statistics on alcohol consumption in England in residents aged 18 years and over (excluding abstainers)")
 tab_ewac_validity_reg <- table_nums(
   name = "tab_ewac_validity_reg",
-  caption = "Coefficients of linear regression of the bias and error of EWAC compared with GF")
-
+  caption = paste0("Coefficients of linear regression of the bias and error of EWAC compared with GF in all respondents (n = ", formatbm(valid_n_study1b), ")"))
+tab_ewac_validity_reg <- table_nums(
+  name = "tab_ewac_validity_reg_increasedrisk",
+  caption = paste0("Coefficients of linear regression of the bias and error of EWAC compared with GF in respondents with a hazardous/harmful alcohol use (AUDIT-C>=5 or AUDIT>=8; (n = ", formatbm(valid_n_study1c), ")"))
 
 
 fig_nums <- captioner(prefix = "Figure")
@@ -160,8 +171,15 @@ qdata$ewac_stan <- proc_EWAC(qdata[,vname_audit_baseline],
                             audit_weights_STAN, method = "qfv" )
 tdata_b <- records$tlfb %>%
   filter(encounter == "Baseline" &
-           pid %in% unique(qdata$pid))
-tdata_b <- merge(tdata_b, qdata, by = "pid")
+           pid %in% unique(qdata$pid) &
+           days_since <= 28)
+tdata_b <- merge(tdata_b, qdata, by = "pid", all.x = T) %>% 
+  filter(!is.na(ewac_stan))
+
+hosp_miss <- tdata_b %>% 
+  group_by(pid) %>% 
+  summarise(n_missing = sum(is.na(alcunits)))
+
 
 ```
 
@@ -195,6 +213,7 @@ where $b$ denotes the average number of units of alcohol consumed in an intense 
 - using the AUDIT response item interval midpoint: for example, 2.5 for '2 to 3 times per week' in AUDIT item 2
 - using a statistical model to estimate the coefficients directly from gold standard data.
 
+All results are reported in UK alcohol units (8g or 10mL of pure alcohol).  Analyses are conducted in `R` [@RCoreTeam2017] using packages `tidyverse`, `survey`, `rstan` [@package-tidyverse; @package-rstan; @package-survey; @Lumley2004]. Computer scripts for all analyses are available on an online repository @Dutey2020.
 
 ## Data sources
 
@@ -210,7 +229,7 @@ readr::read_csv("table_overview_schedules.csv")  %>%
 
 Prospective diaries tend to record higher alcohol consumption by minimising recall bias, followed by GF, while lower levels seem to be recorded with QF measures [@Heeb2005, @Rehm1998]. 
 
-The present paper employs four sources of data. An overview is available in `r table_nums("tab_overview_datasets", display = "cite")` below, together with references to publicly available methodological descriptions. Analysis of HSE and ATS microdata was approved by the University of Southampton's Faculty of Medicine Ethics Committee (ERGO 44682). The hospital questionnaire (Study 3) collection and analysis was approved by the Health Research Authority National Research Ethics Service (IRAS 247458;  REC 18/SC/0564). All results are reported in UK alcohol units (8g or 10mL of pure alcohol). Analyses are conducted in `R` [@RCoreTeam2017] using packages `tidyverse`, `survey`, `rstan` [@package-tidyverse; @package-rstan; @package-survey; @Lumley2004]. Computer programmes for all analyses are available on an online repository.
+The present paper employs four sources of data. An overview is available in `r table_nums("tab_overview_datasets", display = "cite")` below, together with references to publicly available methodological descriptions.
 
 `r table_nums("tab_overview_datasets")`
 
@@ -224,18 +243,22 @@ The present paper employs four sources of data. An overview is available in `r t
 
 ## Study 1: EWAC estimation and concurrent validity
 
+
 Study 1 evaluates the accuracy of the EWAC derived from a researcher-administered Extended AUDIT-C in general household population. The gold standard is the GF schedule from the ATS data source. We compare two sets of coefficients: AUDIT response item interval midpoint; and coefficients estimated using a statistical model (detail reported in supplementary material).
 
 First, the discrepancy between the EWAC and the GF schedule is quantified, by treating GF as a gold standard. It enables the examination of two types of deviations across every participant $i$ in the ATS sample:
 
-- the mean deviation $\text{MD} = n^{-1} \sum_{i=1}^{n}{(\rm{EWAC_i} - \rm{GF_i} )}$ can be assimilated to a measure of bias under the assumption that GF is a gold standard. In this study, we test whether the MD is greater than 1 UK unit using a two-sided $t$-test. 
-- the root mean squared deviation $\text{RMSD} = \sqrt{n^{-1} \sum_{i=1}^{n}{( \rm{EWAC_i} - \rm{GF_i} )^2}}$ can be assimilated to a measure of accuracy or total error: it capture both bias and random deviation from the assumed gold standard. For example, an RMSD of 2 signifies that the EWAC is on average with +/-2 UK units of the gold standard. In this study, we test the hypothesis that the RMSD is greater than 2 UK units using a one-sided $\chi^2$ homogeneity test.
+- the mean deviation $\text{MD} = n^{-1} \sum_{i=1}^{n}{(\rm{EWAC}_i - \rm{GF}_i )}$ can be assimilated to a measure of bias under the assumption that GF is a gold standard. In this study, we test whether the MD is greater than 1 UK unit using a two-sided $t$-test. 
+- the root mean squared deviation $\text{RMSD} = \sqrt{n^{-1} \sum_{i=1}^{n}{( \rm{EWAC}_i - \rm{GF}_i )^2}}$ can be assimilated to a measure of accuracy or total error: it capture both bias and random deviation from the assumed gold standard. For example, an RMSD of 2 signifies that the EWAC is on average with +/-2 UK units of the gold standard. In this study, we test the hypothesis that the RMSD is greater than 2 UK units using a one-sided $\chi^2$ homogeneity test.
 
-Second, we test the hypothesis that the EWAC's validity varies across population subgroups by regressing both (a) the simple deviation in a linear model and (b) the root squared deviation in a log-transformed linear model. Both models include the following predictors: sex by age group; ethnic group; favourite drink (beer; wine; spirits alone; mixed spirits; cider; other); highest educational qualification; religion; smoking status; recent attempts at reducing or stopping drinking.
+Second, we examine whether the EWAC's validity varies across population subgroups.
+
+- the simple deviation $(\text{EWAC}-\text{GF})$ is regressed in a linear model to test for subgroup differences in MD
+- the squared deviation $(\rm{EWAC}-\rm{GF})^2$ is regressed in a log-transformed linear model to test subgroup differences in MSD. Model coefficients are transformed (exponential then square root transformations) in order to obtain the relative RMSD, that is, the ratio of RMSDs of the subgroup to the reference category. Both models include the following predictors: sex by age group; ethnic group; highest educational qualification; religion; smoking status. Additional models are estimated for respondents with an AUDIT-C score of 5 or more or an AUDIT score of 8 or more (under the ICD terminology, hazardous and harmful alcohol use), who provided additional information during the interview: favourite drink (beer; wine; spirits alone; mixed spirits; cider; other); and whether the respondent attempt to restrict alcohol intake in the last 12 months (eg by drinking less, choosing lower strength alcohol or using smaller glasses).
 
 Third, we test whether the EWAC has equivalent or better predictive value in predicting drinking in excess of 14 UK units per week compared to the traditional AUDIT-C score. In the UK, a score of 5 or more is categorised as 'increasing risk' or 'higher risk', and regarded as indicating consumption in excess of 14 units per week. The study tests the hypothesis that the EWAC's receiver operating characteristics' area under the curve (AUC) is greater that the AUDIT-C score using a nonparametric paired AUC test @Delong1988.
 
-The ATS data is affected by missing data: `r round(mean(ats$audit1 == 1)*100)`% of respondents ($n=$ `r formatbm(sum(ats$audit1 == 1))`) reported never drinking alcohol in AUDIT item 1 and were not asked any further AUDIT or GF questions. These participants are excluded from the analysis. A further `r formatbm(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly)))` respondents (`r tbrounding(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly))/sum(ats$audit1 != 1))`% of those reporting drinking in AUDIT item 1 did not have a valid GF alcohol consumption record and were also excluded. Missing data in the ATS' GF schedule is assumed to be missing at random conditionally on the Extended AUDIT-C responses.
+The ATS data ($n=$ `r formatbm(n_ats)`) is affected by missing data: `r round(mean(ats$audit1 == 1)*100)`% of respondents ($n=$ `r formatbm(sum(ats$audit1 == 1))`) reported never drinking alcohol in AUDIT item 1 and were not asked any further AUDIT or GF questions. These participants are excluded from the analysis. A further `r formatbm(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly)))` respondents (`r tbrounding(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly))/sum(ats$audit1 != 1))`% of those reporting drinking in AUDIT item 1) did not have a valid GF alcohol consumption record and were also excluded. In total, `r formatbm(valid_n_study1a)` valid observations remain for the diagnostic analysis, in which missing GF data is assumed to be missing at random conditionally on the Extended AUDIT-C responses. In the subgroup analysis, a further `r tbrounding(valid_n_study1b/n_ats)`% (`r formatbm(valid_n_study1a-valid_n_study1b)`) repondents were assumed to have data missing at random and were excluded.
  
 A pre-registered protocol for this study can be found in @Dutey2018. 
 
@@ -249,7 +272,7 @@ Participants were recruited from a range of clinics at a large acute hospital in
 (1) self-administered Extended AUDIT-C
 (2) researcher-administered Extended AUDIT-C using block randomisation.
 
-A total of `r nrow(qdata)` participants were recruited in hospital clinics, with data successfully collected on the Extended AUDIT-C for `r round(mean(!is.na(qdata$auditc_score))*100)`% of participants ($n$ = `r sum(!is.na(qdata$auditc_score))`) at baseline. The Extended AUDIT-C was administered first, with `r nrow(filter(qdata, !is.na(auditc_score) & q_admin_mode == "Self"))` participants randomised to self-administration using a pen and paper form, while the remaining `r nrow(filter(qdata, !is.na(auditc_score) & q_admin_mode == "Researcher"))` were administered by a researcher. 
+A total of `r nrow(qdata)` participants were recruited in hospital clinics, with data successfully collected on the Extended AUDIT-C for `r round(mean(!is.na(qdata$auditc_score))*100)`% of participants ($n$ = `r sum(!is.na(qdata$auditc_score))`). The Extended AUDIT-C was administered first, with `r nrow(filter(qdata, !is.na(auditc_score) & q_admin_mode == "Self"))` participants randomised to self-administration using a pen and paper form, while the remaining `r nrow(filter(qdata, !is.na(auditc_score) & q_admin_mode == "Researcher"))` were administered by a researcher. 
 
 Once this first questionnaire completed, both groups were asked to complete a 28-day alcohol TFLB questionnaire administered by the researcher.
 
@@ -411,15 +434,12 @@ ggpubr::ggarrange(scatterplot_1a, scatterplot_1b, ncol = 2, nrow = 1)
 ### Subgroup accuracy
 
 ```{r ewac_subgroup_regressions}
-ats$f_ageg <- relevel(ats$ageg7, ref = "25-34 years")
-# lm_bias_mp <- lm((ewac_mp-gfmeanweekly) ~ sex*f_ageg + ethgrp + favdrink + 
-#                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
-# lm_rmsd_mp <- lm(sqrt((ewac_mp-gfmeanweekly)^2) ~ sex*f_ageg + ethgrp + favdrink + 
-#                    tryalclyc2 + religion + highqual  + smokstat, data = ats)
-lm_bias_stan <- lm((ewac_qfv-gfmeanweekly) ~ sex*f_ageg + ethgrp + favdrink + 
-                   tryalclyc2 + religion + highqual  + smokstat, data = ats)
-lm_rmsd_stan <- lm(log((ewac_qfv-gfmeanweekly)^2) ~ sex*f_ageg + ethgrp + favdrink + 
-                   tryalclyc2 + religion + highqual + smokstat, data = ats)
+ats <- mutate(ats, f_ageg = relevel(ageg7, ref = "25-34 years"))
+
+lm_bias_stan <- lm((ewac_qfv-gfmeanweekly) ~ sex*f_ageg + ethgrp +  
+                    religion + highqual  + smokstat, data = ats)
+lm_rmsd_stan <- lm(log((ewac_qfv-gfmeanweekly)^2) ~ sex*f_ageg + ethgrp +  
+                    religion + highqual + smokstat, data = ats)
 
 ```
 
@@ -449,23 +469,22 @@ ggplot(ewac_bias_plot, aes(x = factor(x), y = MD)) +
   geom_point() +
   geom_text(aes(label = round(MD, 1)), vjust = 1.2) +
   geom_hline(aes(yintercept = 0)) +
-  geom_segment(aes(x = "0", xend = "0", y =0, yend = 3.5), 
+  geom_segment(aes(x = "0", xend = "0", y =0, yend = 2), 
                lwd = 1, arrow = arrow(length = unit(0.03, "npc"))) +
-  geom_label(aes(x = "0", y = 3.8, label = "EWAC overestimates consumption"),
-             hjust = "outward", colour = "purple") +
+  geom_label(aes(x = "0", y = 2.1, label = "EWAC overestimates consumption"),
+             hjust = "inward", colour = "purple") +
   theme_minimal() 
 
 ```
 
-`r fig_nums(fig_ewac_MD_forest_plot)` 
+`r fig_nums('fig_ewac_MD_forest_plot')` 
 
 Similarly, we sought to identify subgroups in which agreement between the EWAC and the GF gold standard was substantially different. `r fig_nums('fig_ewac_RMSD_forest_plot', display = "cite")` shows those subgroups with an RMSD found to be significantly different from the rest of the population ($p < 0.05$); and estimated to be 20% greater or smaller than the RMSD of the reference category. 
 
-Error is significantly greater in mean (those reporting any religion other than Christian or Muslim; and in current smoker compared to never-smokers. In addition, respondents who attempted to reduce their alcohol consumption in the last year also had a higher RMSD. On the contrary, educational qualifications seem to significantly improve the agreement between EWAC and the gold standard. The RMSD is reduced by an average 2 units with an educational qualification compared to no qualifications (and without effect on MD), suggesting that respondents may have better recall and clarity over alcohol beverage content.
+Error is significantly greater in mean (those reporting any religion other than Christian or Muslim; and in current smoker compared to never-smokers. 
 
 
-
-```{r ewac_subgroup_error, fig.width=7, fig.height=3}
+```{r ewac_subgroup_error, fig.width=9, fig.height=3}
 ewac_error_plot <- as_tibble(summary(lm_rmsd_stan)$coefficients)
 ewac_error_plot <- ewac_error_plot %>% 
   mutate(Variable = names(lm_rmsd_stan$coefficients),
@@ -479,28 +498,38 @@ ewac_error_plot <- ewac_error_plot %>%
 labs2 <- ewac_error_plot$Variable
 names(labs2) <- as.character(ewac_error_plot$x)
 
-ggplot(ewac_error_plot, aes(x = factor(x), y = MSD_ratio)) +
+ggplot(ewac_error_plot, aes(x = factor(x), y = sqrt(MSD_ratio))) +
   scale_x_discrete(breaks = names(labs2), 
                    labels = labs2, name = NULL)+
-  scale_y_continuous(breaks = seq(0, 4, .5),
-                     "Relative MSD")+
+  scale_y_continuous(breaks = seq(0, 4, .1),
+                     "Relative RMSD (1.0 = reference category)")+
   coord_flip() +
-  geom_text(aes(label = round(MSD_ratio, 1)), vjust = 1.2) +
-  geom_linerange(aes(ymin = MSD_ratio_LB, ymax = MSD_ratio_UB), colour = "purple") +
+  geom_text(aes(label = round(sqrt(MSD_ratio), 1)), vjust = 1.2) +
+  geom_linerange(aes(ymin = sqrt(MSD_ratio_LB), ymax = sqrt(MSD_ratio_UB)), colour = "purple") +
     geom_point() +
   geom_hline(aes(yintercept = 1)) +
-  geom_segment(aes(x = "00", xend = "00", y =1, yend =1.6), 
+  geom_segment(aes(x = "00", xend = "00", y =1, yend =1.25), 
                lwd = 1, arrow = arrow(length = unit(0.03, "npc"))) +
-  geom_label(aes(x = "00", y = 1.1, label = "Worse agreement of EWAC\n with gold standard"),
+  geom_label(aes(x = "00", y = 1.01, label = "Worse agreement of EWAC\n with gold standard"),
              hjust = "inward", vjust= -0.2, colour = "purple") +
   theme_minimal() 
 ```
 
-Ratio of subgroup RMSD to reference category RMSD
+`r fig_nums('fig_ewac_RMSD_forest_plot')`
 
-`r fig_nums(fig_ewac_RMSD_forest_plot)`
+In addition, respondents who attempted to reduce their alcohol consumption in the last year also had a higher RMSD. On the contrary, educational qualifications seem to significantly improve the agreement between EWAC and the gold standard. The RMSD is reduced by an average 2 units with an educational qualification compared to no qualifications (and without effect on MD), suggesting that respondents may have better recall and clarity over alcohol beverage content.
 
 
+
+```{r}
+lm_bias_increasingrisk <- lm((ewac_qfv-gfmeanweekly) ~ sex*f_ageg + ethgrp + favdrink + 
+                   tryalclyc2 + religion + highqual  + smokstat, 
+                   data = filter(ats, auditc >= 5 | fullaudit >=8))
+lm_rmsd_increasingrisk <- lm(log((ewac_qfv-gfmeanweekly)^2) ~ sex*f_ageg + ethgrp + favdrink + 
+                   tryalclyc2 + religion + highqual + smokstat, 
+                   data = filter(ats, auditc >= 5 | fullaudit >=8))
+
+```
 
 
 
@@ -556,28 +585,18 @@ roc_results
 
 ## Study 2: Concurrent validity in hospital patients
 
+This study collected TLFB daily alcohol consumption from a total of `r sum(!is.na(qdata$auditc_score))` participants, of whom 63 were classified as low-risk drinkers, 25 as increasing risk alcohol users (AUDIT-C score of 5 to 8), and 17 as high-risk alcohol users (AUDIT-C score>=8). A total of `r as.numeric(summarise(filter(tdata_b, is.na(alcunits)), n_distinct(pid)))` participants did not provide TLFB information for at least one day missing out of 28, resulting in `r round(mean(is.na(tdata_b$alcunits))*100, 0)`% (`r sum(is.na(tdata_b$alcunits))`/`r nrow(tdata_b)`) of TLFB days were missing.
 
+To impute those, as well as study the association with the EWAC and the Extended AUDIT-C's mode of administration, a Poisson model is estimated (`r table_nums("tab_hosp_validity_reg", display="cite")`). This model suggests that the EWAC underestimates alcohol consumption, with  1.18*** (1.11, 1.25)
+[95% CI: 3.05; 3.49]. Self-administration of the Extended AUDIT-C may be associated with some underreporting: coefficients suggest that reports of daily alcohol consumed are 15% [5; 26%] higher than the self-administered EWAC, compared to the researcher-administered EWAC.
 
-The MD of 
-
-`r table_nums("tab_hosp_validity_reg")`
-
-```{r results='asis'}
-tdata_b <- filter(tdata_b, days_since <= 28)
+```{r }
 tdata_b$ewac_stan_log <- log(tdata_b$ewac_stan/7)
 tdata_b$ewac_mp_log <- log(tdata_b$ewac_mp/7)
 
-mhosp <- glm(
-  round(alcunits) ~ ewac_stan_log + q_admin_mode+
+mhosp <- glm(round(alcunits) ~ ewac_stan_log*q_admin_mode +
   week_since + tlfb_weekday, family = poisson, data = tdata_b)
 
-stargazer(mhosp, type = ifelse(knit_output_pdf, "latex", "html"), ci = rep(T, 2),
-          digits = 1, digits.extra	= 1, initial.zero = T, style = "ajs",
-          single.row = T, intercept.bottom = F, align=TRUE, no.space= T,
-          report = "vcs*")
-```
-
-```{r}
 tlfb_measured <- tdata_b %>% 
   filter(days_since <= 28 & !is.na(alcunits) & !is.na(ewac_stan)) %>% 
   dplyr::select(pid, q_admin_mode, ewac_stan, alcunits)
@@ -600,10 +619,17 @@ tlfb_descriptives <- list(
   RMSD.p = chisq.test.variance( (tlfb_person$ewac_stan - tlfb_person$tlfb_units)^2,
                                 sigma = 4)$p.value
 )
+```  
+
+A Poisson model is estimated both to impute individual To estimate comparable measures of deviation as in previous sections, the model is used to impute the `r nrow(tlfb_imputed)` out of `r formatbm(nrow(tlfb_person))` daily consumption figures that were missing in total for `r length(unique(tlfb_imputed$pid))` participants. In this small pilot dataset, MD = `r tbrounding(tlfb_descriptives$MD)` unit is measured (`r pvrounding(tlfb_descriptives$MD.p)`) while RMSD = `r tbrounding(tlfb_descriptives$RMSD)` [95%CI: `r tbrounding(sqrt(tlfb_descriptives$MSD + tlfb_descriptives$MSD.ME))`; `r tbrounding(sqrt(tlfb_descriptives$MSD - tlfb_descriptives$MSD.ME))`] and is statistically significantly greater than 2 units (`r pvrounding(tlfb_descriptives$RMSD.p)`). A potential reason for RMSD is 
+
+`r table_nums("tab_hosp_validity_reg")`
+
+```{r results='asis'}
+stargazer(mhosp, type = ifelse(knit_output_pdf, "latex", "html"),ci = rep(T, 2),
+          digits = 2, digits.extra	= 2, initial.zero = T, style = "qje",
+          single.row = T, intercept.bottom = F, align=TRUE, no.space= T)
 ```
-
-To estimate comparable measures of deviation as in previous sections, the model is used to impute the `r nrow(tlfb_imputed)` out of `r formatbm(nrow(tlfb_person))` daily consumption figures that were missing in total for `r length(unique(tlfb_imputed$pid))` participants. In this small pilot dataset, MD = `r tbrounding(tlfb_descriptives$MD)` unit is measured (`r pvrounding(tlfb_descriptives$MD.p)`) while RMSD = `r tbrounding(tlfb_descriptives$RMSD)` and is statistically significantly greater than 2 units (`r pvrounding(tlfb_descriptives$RMSD.p)`) 
-
 
 ```{r warning=F, message = F, fig.height=5, fig.width=7}
 
@@ -738,7 +764,7 @@ HSEdiary + HSE +EWAC + GF
 
 ## Main findings
 
-This paper examined the predictive capabilities of the Extended AUDIT in England. The Extended AUDIT is a variant of the AUDIT-C containing a choice of 6 response items to quantify drinking frequency, and 8 reponse items to quantify the average quantity consumed during any drinking day. The resulting EWAC estimates usual alcohol consumption with a mean precision of +/- 11 units/week when compared to the GF alcohol schedule, or +/- 5 units/week when compared to a 28-day TLFB. Precision is consistent across age and gender. However, some groups deviate from this presci
+This paper examined the predictive capabilities of the Extended AUDIT in England. The Extended AUDIT is a variant of the AUDIT-C containing a choice of 6 response items to quantify drinking frequency, and 7 reponse items to quantify the average quantity consumed during any drinking day. The resulting EWAC estimates usual alcohol consumption with a mean precision of +/- 11 units/week when compared to the GF alcohol schedule, or +/- 5 units/week when compared to a 28-day TLFB in a sample of lower-risk alcohol users. Precision is consistent across age and gender. However, some groups deviate from this presci
 
 but some current smokers
 
@@ -802,6 +828,8 @@ Supportive of their argument, we propose that the EWAC could be employed in rout
 
 # Ethics
 
+Analysis of HSE and ATS microdata was approved by the University of Southampton's Faculty of Medicine Ethics Committee (ERGO 44682). The hospital questionnaire (Study 3) collection and analysis was approved by the Health Research Authority National Research Ethics Service (IRAS 247458; REC 18/SC/0564). 
+ 
 # Supplementary materials
 
 ## Supplementary materials 1: EWAC coefficients (CSV file)
@@ -824,6 +852,18 @@ stargazer::stargazer(#lm_bias_mp, lm_rmsd_mp,
 
 ```
 
+`r table_nums('tab_ewac_validity_reg_increasedrisk')`
+
+```{r, results='asis'}
+stargazer::stargazer(#lm_bias_mp, lm_rmsd_mp, 
+          lm_bias_increasingrisk, lm_bias_increasingrisk, 
+          type = ifelse(knit_output_pdf, "latex", "html"),
+          ci = rep(T, 2),
+          digits = 1, digits.extra	= 1, initial.zero = T, style = "ajs",
+          single.row = T, intercept.bottom = F, align=TRUE, no.space= T,
+          report = "vcs*")
+
+```
 ## Supplementary materials 3: ROC curves
 
 ```{r, fig.height=5, fig.width=7}
