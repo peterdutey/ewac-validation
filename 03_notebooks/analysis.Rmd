@@ -4,10 +4,6 @@ title: Concurrent validity of an Estimator of Weekly Alcohol Consumption (EWAC) 
 bibliography: bibliography.bib
 csl: elsevier-vancouver.csl
 output:
-  html_document:
-    df_print: paged
-    number_sections: yes
-    toc: yes
   pdf_document:
     citation_package: natbib
     df_print: kable
@@ -16,6 +12,11 @@ output:
     number_sections: yes
     toc: yes
   word_document:
+    toc: yes
+    reference_docx: template.docx
+  html_document:
+    df_print: paged
+    number_sections: yes
     toc: yes
 link-citations: yes
 always_allow_html: yes
@@ -52,6 +53,7 @@ total	1664
 
 ```{r loading data, include=F}
 knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+
 # Loading data
 source("../01_src/functions.R")
 # source("../01_src/filepaths.R")
@@ -71,6 +73,7 @@ library(knitr)
 library(captioner)
 library(kableExtra)
 library(pROC)
+library(MASS)
 # library("scales")
 # library("xtable")
 library(stargazer)
@@ -99,9 +102,9 @@ MYPE_2014 <- 42724917 # population aged 18+
 # Sample sizes
 n_ats <- nrow(ats)
 valid_n_study1a <-  nrow(na.omit(ats[, c("gfmeanweekly", "audit1", "audit2", "audit3")]))
-valid_n_study1b <- nrow(na.omit(select(ats, audit1_label, audit2_label, audit3_label, gfmeanweekly,
-                                      sex, ageg7, ethgrp, religion, highqual, smokstat)))
-valid_n_study1c <- nrow(na.omit(select(
+valid_n_study1b <-  nrow(na.omit(dplyr::select(ats, audit1_label, audit2_label, audit3_label, gfmeanweekly,
+                           sex, ageg7, ethgrp, religion, highqual, smokstat)))
+valid_n_study1c <- nrow(na.omit(dplyr::select(
     filter(ats, auditc >= 5 | fullaudit >=8), 
     audit1_label, audit2_label, audit3_label, gfmeanweekly,
          sex, ageg7, ethgrp, favdrink, tryalclyc2, 
@@ -276,7 +279,7 @@ A total of `r nrow(qdata)` participants were recruited in hospital clinics, with
 
 Once this first questionnaire completed, both groups were asked to complete a 28-day alcohol TFLB questionnaire administered by the researcher.
 
-To model the relationship between the EWAC and the TLFB, the number of units consumed on any day was assumed to follow a Poisson distribution, the rate of which is determined by the latent usual alcohol consumption as well as the following variables: AUDIT mode of administration (self-administered; researcher-administered), week day, number of days elapsed since (1-7; 8-14; 15-21; 22-28). TLFB daily number of units consumed were rounded to the nearest integer and regressed in a Poisson regression model against the aforementioned predictor, as well as the EWAC divided by 7 to obtain its daily equivalent. The corresponding regression coefficient measures the ratio of TLFB to EWAC.
+To model the relationship between the EWAC and the TLFB, the number of units consumed on any day was assumed to follow a negative binomial distribution, the rate of which is determined by the latent usual alcohol consumption as well as the following variables: AUDIT mode of administration (self-administered; researcher-administered), week day, number of days elapsed since (1-7; 8-14; 15-21; 22-28). TLFB daily number of units consumed were rounded to the nearest integer and regressed in a negative binomial regression model against the aforementioned predictor, as well as the EWAC divided by 7 to obtain its daily equivalent. The corresponding regression coefficient measures the ratio of TLFB to EWAC.
 
 
 ## Study 3: Aggregate concurrent validity
@@ -577,7 +580,7 @@ In summary, using an EWAC threshold of 10 units or more over an AUDIT-C score of
 `r table_nums('tab_study1_roc')`
 
 ```{r tab_roc}
-roc_results
+roc_results %>% kable
 ```
 
 
@@ -585,55 +588,37 @@ roc_results
 
 ## Study 2: Concurrent validity in hospital patients
 
-This study collected TLFB daily alcohol consumption from a total of `r sum(!is.na(qdata$auditc_score))` participants, of whom 63 were classified as low-risk drinkers, 25 as increasing risk alcohol users (AUDIT-C score of 5 to 8), and 17 as high-risk alcohol users (AUDIT-C score>=8). A total of `r as.numeric(summarise(filter(tdata_b, is.na(alcunits)), n_distinct(pid)))` participants did not provide TLFB information for at least one day missing out of 28, resulting in `r round(mean(is.na(tdata_b$alcunits))*100, 0)`% (`r sum(is.na(tdata_b$alcunits))`/`r nrow(tdata_b)`) of TLFB days were missing.
+This study collected TLFB daily alcohol consumption from a total of `r sum(!is.na(qdata$auditc_score))` participants, of whom 63 were classified as low-risk drinkers, 25 as increasing-risk alcohol users (AUDIT-C score of 5 to 7), and 17 as high-risk alcohol users (AUDIT-C score of 8 or more). A total of `r as.numeric(summarise(filter(tdata_b, is.na(alcunits)), n_distinct(pid)))` participants did not provide TLFB information for at least one day missing out of 28, resulting in `r round(mean(is.na(tdata_b$alcunits))*100, 0)`% (`r sum(is.na(tdata_b$alcunits))`/`r nrow(tdata_b)`) of TLFB days were missing.
 
-To impute those, as well as study the association with the EWAC and the Extended AUDIT-C's mode of administration, a Poisson model is estimated (`r table_nums("tab_hosp_validity_reg", display="cite")`). This model suggests that the EWAC underestimates alcohol consumption, with  1.18*** (1.11, 1.25)
-[95% CI: 3.05; 3.49]. Self-administration of the Extended AUDIT-C may be associated with some underreporting: coefficients suggest that reports of daily alcohol consumed are 15% [5; 26%] higher than the self-administered EWAC, compared to the researcher-administered EWAC.
 
 ```{r }
-tdata_b$ewac_stan_log <- log(tdata_b$ewac_stan/7)
-tdata_b$ewac_mp_log <- log(tdata_b$ewac_mp/7)
-
-mhosp <- glm(round(alcunits) ~ ewac_stan_log*q_admin_mode +
-  week_since + tlfb_weekday, family = poisson, data = tdata_b)
-
 tlfb_measured <- tdata_b %>% 
-  filter(days_since <= 28 & !is.na(alcunits) & !is.na(ewac_stan)) %>% 
-  dplyr::select(pid, q_admin_mode, ewac_stan, alcunits)
-
-tlfb_imputed <- tdata_b %>% 
-  filter(days_since <= 28 & is.na(alcunits) & !is.na(ewac_stan)) 
-tlfb_imputed$alcunits <-  predict(mhosp, tlfb_imputed, type = "response")
-
-tlfb_person <- dplyr::select(tlfb_imputed, pid, q_admin_mode, ewac_stan, alcunits) %>% 
-  bind_rows(., tlfb_measured) %>% 
-  group_by(pid, q_admin_mode, ewac_stan) %>% 
-  summarise(tlfb_units = sum(alcunits)/4)
+  group_by(pid) %>% 
+  mutate(num_days = sum(!is.na(alcunits))) %>% 
+  ungroup() %>% 
+  filter(!is.na(alcunits) & !is.na(ewac_stan) & num_days >= 7) %>% 
+  dplyr::select(pid, q_admin_mode, ewac_stan, alcunits) %>% 
+  group_by(pid, ewac_stan) %>% 
+  summarise(tlfb_units = mean(alcunits, na.rm = T)*7)
   
 tlfb_descriptives <- list(
-  MD = mean(tlfb_person$ewac_stan - tlfb_person$tlfb_units),
-  MD.p = t.test(tlfb_person$ewac_stan - tlfb_person$tlfb_units)$p.value,
-  RMSD = sqrt(mean((tlfb_person$ewac_stan - tlfb_person$tlfb_units)^2, na.rm = T)),
-  MSD = mean((tlfb_person$ewac_stan - tlfb_person$tlfb_units)^2, na.rm = T),
-  MSD.ME = 1.96 * sqrt(var((tlfb_person$ewac_stan - tlfb_person$tlfb_units)^2) / (nrow(tlfb_person) - 1)),
-  RMSD.p = chisq.test.variance( (tlfb_person$ewac_stan - tlfb_person$tlfb_units)^2,
+  MD = mean(tlfb_measured$ewac_stan - tlfb_measured$tlfb_units),
+  MD.p = t.test(tlfb_measured$ewac_stan - tlfb_measured$tlfb_units)$p.value,
+  RMSD = sqrt(mean((tlfb_measured$ewac_stan - tlfb_measured$tlfb_units)^2, na.rm = T)),
+  MSD = mean((tlfb_measured$ewac_stan - tlfb_measured$tlfb_units)^2, na.rm = T),
+  MSD.ME = 1.96 * sqrt(var((tlfb_measured$ewac_stan - tlfb_measured$tlfb_units)^2) / 
+                         (nrow(tlfb_measured) - 1)),
+  RMSD.p = chisq.test.variance( (tlfb_measured$ewac_stan - tlfb_measured$tlfb_units)^2,
                                 sigma = 4)$p.value
-)
+)  
 ```  
 
-A Poisson model is estimated both to impute individual To estimate comparable measures of deviation as in previous sections, the model is used to impute the `r nrow(tlfb_imputed)` out of `r formatbm(nrow(tlfb_person))` daily consumption figures that were missing in total for `r length(unique(tlfb_imputed$pid))` participants. In this small pilot dataset, MD = `r tbrounding(tlfb_descriptives$MD)` unit is measured (`r pvrounding(tlfb_descriptives$MD.p)`) while RMSD = `r tbrounding(tlfb_descriptives$RMSD)` [95%CI: `r tbrounding(sqrt(tlfb_descriptives$MSD + tlfb_descriptives$MSD.ME))`; `r tbrounding(sqrt(tlfb_descriptives$MSD - tlfb_descriptives$MSD.ME))`] and is statistically significantly greater than 2 units (`r pvrounding(tlfb_descriptives$RMSD.p)`). A potential reason for RMSD is 
+Using only 103 participants with a minimum of 7 days recorded on the TLFB, MD is estimated at `r tbrounding(tlfb_descriptives$MD)` unit/week, which does not provide any evidence of bias greater than 1 unit/week (`r pvrounding(tlfb_descriptives$MD.p)`). As for error, RMSD is estimated at `r tbrounding(tlfb_descriptives$RMSD)` [95%CI: `r tbrounding(sqrt(tlfb_descriptives$MSD - tlfb_descriptives$MSD.ME))`; `r tbrounding(sqrt(tlfb_descriptives$MSD + tlfb_descriptives$MSD.ME))`] and is statistically significantly greater than 2 units (`r pvrounding(tlfb_descriptives$RMSD.p)`). A potential reason for RMSD being considerably smaller than in Study 1 is the distribution of alcohol consumption of this small pilot dataset. Respondents' alcohol intake as estimated by TLFB was low, with a mean of 7 units/week; a median of 2 units/week, and a 90th percentile of 23 units/week. Consequently, the probability of observing the strong deviations that can be observed in presence of high alcohol consumption data was low.
 
-`r table_nums("tab_hosp_validity_reg")`
-
-```{r results='asis'}
-stargazer(mhosp, type = ifelse(knit_output_pdf, "latex", "html"),ci = rep(T, 2),
-          digits = 2, digits.extra	= 2, initial.zero = T, style = "qje",
-          single.row = T, intercept.bottom = F, align=TRUE, no.space= T)
-```
 
 ```{r warning=F, message = F, fig.height=5, fig.width=7}
 
-ggplot(tlfb_person, aes(y = ewac_stan, x = tlfb_units)) +
+ggplot(tlfb_measured, aes(y = ewac_stan, x = tlfb_units)) +
   geom_point() +
   geom_abline(aes(intercept = 0, slope = 1, col = "Identity", linetype = "Identity")) +
   geom_smooth(aes(col="OLS", linetype = "OLS"), method ='lm', formula=y~x) +
@@ -667,9 +652,9 @@ ats_dk18 <- filter(ats, actage >= 18 & audit1 > 1) %>%  # not 'never' drinkers
 ```
 
 
-`r table_nums("tab_aggregate_summary_stats", display = "cite")` provides estimates of total alcohol consumption in adult resident of private households in England using four different estimators, and compares them with alcohol retail sales. The HSE schedules provide the highest estimates of alcohol consumption and coverage of sale statistics. The proposed EWAC estimates of total consumption are just `r trunc(mean(ats_dk18$agg_qfv, na.rm =T)/mean(hse_dk18$weektot, na.rm =T)*100)`% of a very reliable estimate, the HSE prospective diary. **ADD YESTERDAY METHOD!**
+`r table_nums("tab_aggregate_summary_stats", display = "cite")` provides estimates of total alcohol consumption in adult resident of private households in England using four different estimators, and compares them with alcohol retail sales. The HSE schedules provide the highest estimates of alcohol consumption and coverage of sale statistics. The proposed EWAC estimates of total consumption are just `r trunc(mean(ats_dk18$agg_qfv, na.rm =T)/mean(hse_dk18$weektot, na.rm =T)*100)`% of a very reliable estimate, the HSE prospective diary.
 
-`r fig_nums('fig_ECDF', display = "cite")` suggests that the EWAC, like the ATS GF it was estimated against, estimates a higher prevalence of low risk consumption (<= 14 units/week) and increased risk consumption than HSE. In constrast very high alcohol consumption (>= 50 units/week) is higher in HSE. This may be due to a combination of difference in sampling coverage, nonresponse bias, or measurement error in the alcohol schedules.
+`r fig_nums('fig_ECDF', display = "cite")` suggests that the EWAC, like the ATS GF it was estimated against, estimates a higher prevalence of low risk consumption (<= 14 units/week) and increased risk consumption than HSE. In contrast very high alcohol consumption (>= 50 units/week) is higher in HSE. This may be due to a combination of difference in sampling coverage, nonresponse bias, or measurement error in the alcohol schedules.
 
 `r table_nums('tab_aggregate_summary_stats')`
 
