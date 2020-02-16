@@ -27,7 +27,7 @@ hse$dnoft <- factor(hse$dnoft, labels = names(attributes(hse)$label.table$DNOFT[
 hse$dnnow[hse$dnnow < 0] <- NA
 
 hse <- hse[,c("hserial", "pserial", "hhsize", "psu", "wt_int", "age", "ageg", "wt_drink",
-              "totalwu", "alcbase", "totalwug", "diaryrec", "ddunitwk", "ddunitwd",
+              "dnany", "totalwu", "alcbase", "totalwug", "diaryrec", "ddunitwk", "ddunitwd",
               "weektot", "ddalclim", "sex", "tenureb", "gor1", "dnoft", "dnnow")]
 
 save(hse, file = file.path("02_data", "HSE.rda"))
