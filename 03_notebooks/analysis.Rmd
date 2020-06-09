@@ -117,12 +117,13 @@ tab_study1_roc112 <- table_nums(
 tab_study1_roc280 <- table_nums(
   name = "tab_study1_roc280",
   caption = paste0("Receiver operating characteristics of AUDIT-C score and EWAC for consumption >= 35 UK units or 280g/week (n = ", formatbm(valid_n_study1a), ")"))
-tab_hosp_validity_reg <- table_nums(
-  name = "tab_hosp_validity_reg",
-  caption = "Coefficients of regression of TLFB daily consumption against EWAC, administration of the week, week day and time")
 tab_aggregate_summary_stats <- table_nums(
   name = "tab_aggregate_summary_stats",
   caption = "Summary statistics on alcohol consumption in England in residents aged 18 years and over (excluding abstainers)")
+
+tab_hosp_validity_reg <- table_nums(
+  name = "tab_hosp_validity_reg",
+  caption = "Coefficients of regression of TLFB daily consumption against EWAC, administration of the week, week day and time")
 tab_ewac_validity_reg <- table_nums(
   name = "tab_ewac_validity_reg",
   caption = paste0("Coefficients of linear regression of the bias and error of EWAC compared with GF in all respondents (n = ", formatbm(valid_n_study1b), ")"))
@@ -216,6 +217,9 @@ The EWAC predicts alcohol consumption in excess of 112g/week with a significantl
 
 **Conclusions:** The EWAC <URL TBC> provides greater screening specificity than the AUDIT-C or the full AUDIT. In addition, it can provide additional personalised information to patients in a more understandable and potentially less stigmatising way than AUDIT scores or risk categorisations. The EWAC has potential to generate personalised feedback within digital alcohol interventions.  
 
+# Keywords
+
+alcohol consumption; self report; alcohol use disorder; screening programs, diagnostic; preventive health services
 
 # Introduction
 
@@ -223,7 +227,7 @@ Alcohol consumption is responsible for 5.3% of all deaths and 5.0% of disability
 
 Clinical guidelines aim to prevent [@NICE-PH24], treat and reduce [@NICE-CG115] harm from alcohol consumption. Most recommend systematic screening for alcohol use disorders using a validated diagnostic tool. Recent clinical research has advocated a greater focus on monitoring  alcohol consumption in the same way as other health risk factors (eg body mass index, blood pressure or cholesterol), keeping individuals regularly informed of their current intake and the associated risks [@Nutt2014; @Rehm2016]. This approach is intended to facilitate timely lifestyle interventions to prevent the escalation to serious levels of alcohol-related harm. Simultaneously, public health recommendations [@AU.alcoguidelines2009; @AlcoholCMO2016b] now promote the overall reduction of alcohol consumption, since there is absolute 'safe level' at which alcohol does not increase general health risk [@Wood2018].
 
-Assessment of alcohol consumption is not well embedded in clinical practice. Reasons include: difficulty in the self-assessment of alcohol consumption, lack of a single biological marker, time pressures, and stigma. This creates a gap in the range of resources to empowerindividuals to understand, monitor and control their alcohol consumption with--or without--the involvement of healthcare professionals.
+Assessment of alcohol consumption is not well embedded in clinical practice. Reasons include: difficulty in the self-assessment of alcohol consumption, lack of a single biological marker, time pressures, and stigma. This creates a gap in the range of resources to empower individuals to understand, monitor and control their alcohol consumption with--or without--the involvement of healthcare professionals.
 
 The objective of this paper is to develop and validate a fast and easy-to-complete Estimator of Weekly Alcohol Consumption (EWAC) by repurposing an existing screening tool. In many countries, the most widely used screening tool is the Alcohol Use Disorders Identification Test (AUDIT) [@Babor2001], a 10-item questionnaire schedule employed in clinical practice and research as a diagnostic screening tool. The short, 3-item consumption questions known as AUDIT-C has good accuracy for both: (a) interview-based clinical diagnoses; and (b) consumption in excess of maximum recommended intakes (eg 140g/week in Australia, 112 g/week in UK) in a variety of populations [@DeMeneses-Gaya2009].
 
@@ -289,7 +293,7 @@ Second, we examine whether the EWAC's validity varies across population subgroup
 
 Both models include the following predictors: sex by age group; ethnic group; highest educational qualification; religion; smoking status. Additional models are fitted solely in respondents with an AUDIT-C score of 5 or more or an AUDIT score of 8 or more (under the ICD terminology, hazardous and harmful alcohol use), using extra variables measures during interview: favourite drink (beer; wine; spirits alone; mixed spirits; cider; other); and whether the respondent had attempted to restrict alcohol intake in the last 12 months (eg by drinking less, choosing lower strength alcohol or using smaller glasses).
 
-Third, we test whether the EWAC is superior to the traditional AUDIT-C score at predicting drinking in excess of 14 UK units per week. In the UK, a score of 5 or more is categorised as 'increasing risk' or 'higher risk' drinking, and regarded as indicating consumption in excess of 14 units per week. The study tests the hypothesis that the EWAC's receiver operating characteristics' area under the curve (AUC) is greater that the AUDIT-C score using a nonparametric paired AUC test [@Delong1988].
+Third, we test whether the EWAC is superior to the traditional AUDIT and AUDIT-C scores at predicting drinking in excess of 14 or 35 UK units per week. In the UK, an AUDIT-C score of 5-7 is often categorised as 'increasing risk', and scores of 8 or more are categorised as 'higher risk' drinking [@Lavoie2010]. The study tests the hypothesis that the EWAC's receiver operating characteristics' full area under the curve (AUC) is greater that the comparators using nonparametric paired AUC tests [@Delong1988].
 
 The ATS data ($n=$ `r formatbm(n_ats)`) is affected by missing data: `r round(mean(ats$audit1 == 1)*100)`% of respondents ($n=$ `r formatbm(sum(ats$audit1 == 1))`) reported never drinking alcohol in AUDIT item 1 and were not asked any further AUDIT or GF questions. These participants are excluded from the analysis. A further `r formatbm(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly)))` respondents (`r tbrounding(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly))/sum(ats$audit1 != 1))`% of those reporting drinking in AUDIT item 1) did not have a valid GF alcohol consumption record and were also excluded. In total, `r formatbm(valid_n_study1a)` valid observations remain for the diagnostic analysis, in which missing GF data is assumed to be missing at random conditionally on the Extended AUDIT-C responses. In the subgroup analysis (Study 2 below), a further `r formatbm(valid_n_study1a-valid_n_study1b)` repondents (`r tbrounding(valid_n_study1b/n_ats)`%) were assumed to have data missing at random and were excluded.
 
@@ -595,7 +599,7 @@ roc_audit <- pROC::roc(gfmeanweekly>=14 ~ fullaudit, data = ats)
 
 roc_results <- list()
 roc_results$auditc <- as_tibble(list(
-  Metric = "AUDIT-C score",
+  `Index test` = "AUDIT-C score",
   AUC = as.numeric(pROC::auc(roc_auditc)),
   `95% CI` = paste0("[", round(as.numeric(ci(pROC::auc(roc_auditc)))[1], 3), ", ",
                     round(as.numeric(ci(pROC::auc(roc_auditc))), 3)[3], "]"),
@@ -604,7 +608,7 @@ roc_results$auditc <- as_tibble(list(
   Specificity = pROC::coords(roc_auditc, "b", transpose = F)$specificity
 ))
 roc_results$audit <- as_tibble(list(
-  Metric = "Full AUDIT score",
+  `Index test` = "Full AUDIT score",
   AUC = as.numeric(pROC::auc(roc_audit)),
   `95% CI` = paste0("[", round(as.numeric(ci(pROC::auc(roc_audit)))[1], 3), ", ",
                     round(as.numeric(ci(pROC::auc(roc_audit))), 3)[3], "]"),
@@ -613,7 +617,7 @@ roc_results$audit <- as_tibble(list(
   Specificity = pROC::coords(roc_audit, "b", transpose = F)$specificity
 ))
 roc_results$ewac <- as_tibble(list(
-  Metric = "EWAC",
+  `Index test` = "EWAC",
   AUC = as.numeric(pROC::auc(roc_ewac)),
   `95% CI` = paste0("[", round(as.numeric(ci(pROC::auc(roc_ewac)))[1], 3), ", ",
                     round(as.numeric(ci(pROC::auc(roc_ewac))), 3)[3], "]"),
@@ -639,7 +643,7 @@ roc280_audit <- pROC::roc(gfmeanweekly>=35 ~ fullaudit, data = ats)
 
 roc280_results <- list()
 roc280_results$auditc <- as_tibble(list(
-  Metric = "AUDIT-C score",
+  `Index test` = "AUDIT-C score",
   AUC = as.numeric(pROC::auc(roc280_auditc)),
   `95% CI` = paste0("[", round(as.numeric(ci(pROC::auc(roc280_auditc)))[1], 3), ", ",
                     round(as.numeric(ci(pROC::auc(roc280_auditc))), 3)[3], "]"),
@@ -648,7 +652,7 @@ roc280_results$auditc <- as_tibble(list(
   Specificity = pROC::coords(roc280_auditc, "b", transpose = F)$specificity
 ))
 roc280_results$audit <- as_tibble(list(
-  Metric = "Full AUDIT score",
+  `Index test` = "Full AUDIT score",
   AUC = as.numeric(pROC::auc(roc280_audit)),
   `95% CI` = paste0("[", round(as.numeric(ci(pROC::auc(roc280_audit)))[1], 3), ", ",
                     round(as.numeric(ci(pROC::auc(roc280_audit))), 3)[3], "]"),
@@ -657,7 +661,7 @@ roc280_results$audit <- as_tibble(list(
   Specificity = pROC::coords(roc280_audit, "b", transpose = F)$specificity
 ))
 roc280_results$ewac <- as_tibble(list(
-  Metric = "EWAC",
+  `Index test` = "EWAC",
   AUC = as.numeric(pROC::auc(roc280_ewac)),
   `95% CI` = paste0("[", round(as.numeric(ci(pROC::auc(roc280_ewac)))[1], 3), ", ",
                     round(as.numeric(ci(pROC::auc(roc280_ewac))), 3)[3], "]"),
@@ -673,12 +677,11 @@ roc280_results <- bind_rows(roc280_results) %>%
 roc280_ewac_nominal <- pROC::coords(roc280_ewac, 35, transpose = F)
 ```
 
- 
 
-The last step of this analysis was to examine the EWAC's ability to classify participants' consumption as being equal to or in excess of 14 UK units/week. In comparison with the AUDIT-C score (ranging 0-12), EWAC increased the area under the curve by 5 percentage points (`r table_nums("tab_study1_roc", display = "cite")`), a statistically significant improvement (`r pvrounding(roc.test(roc_auditc, roc_ewac, method = "delong")$p.value)`) on the AUDIT-C. ROC curves are available in Supplementary Material 4. The cut-off that maximises the sum of specificity and sensitivity is 9.95 units/week. In contrast, using the nominal cut-off of 14 units/week yields a sensitivity of `r round(roc_ewac_nominal14$sensitivity, 3)` and a specificity of `r round(roc_ewac_nominal14$specificity, 3)`.
+The last step of this analysis was to examine the EWAC's ability to predict that participants' consumption exceeds 14 or 35 UK units/week. Receiver operating characteristics curves (available in Supplementary Material 4) are summarised with respect to the full area under the curve as well as sensitivity/specificity for the best thresholds in `r table_nums("tab_study1_roc112", display = "cite")` and `r table_nums("tab_study1_roc280", display = "cite")`.
 
-In summary, using an EWAC threshold of 10 units or more over an AUDIT-C score of 5 or more provides equivalent sensitivity, but with a steep gain in specificity of 13 percentage points.
-
+**14 UK units/week**: EWAC increased the full area under the curve by 5 percentage points compared with the AUDIT-C score (`r pvrounding(roc.test(roc_auditc, roc_ewac, method = "delong")$p.value)`) and by 7 percentage points compared with the full AUDIT score (`r pvrounding(roc.test(roc_audit, roc_ewac, method = "delong")$p.value)`), 
+The cut-off maximising the sum of specificity and sensitivity on the EWAC is 10 units/week. The sensitivity at this threshold is identical to AUDIT-C, but specificity is increased by 13 percentage points. Using the nominal cut-off of 14 units/week on the EWAC increases specificity to `r round(roc_ewac_nominal14$specificity, 3)`, at the cost of a smaller sensitivity of `r round(roc_ewac_nominal14$sensitivity, 3)`.
 
 `r table_nums('tab_study1_roc112')`
 
@@ -686,12 +689,15 @@ In summary, using an EWAC threshold of 10 units or more over an AUDIT-C score of
 roc_results %>% kable
 ```
 
+
+**35 UK units/week**: EWAC provides a small increase in the full area under compared with the AUDIT-C score (`r pvrounding(roc.test(roc280_auditc, roc280_ewac, method = "delong")$p.value)`) and the full AUDIT score (`r pvrounding(roc.test(roc280_audit, roc280_ewac, method = "delong")$p.value)`).
+
+
 `r table_nums('tab_study1_roc280')`
 
 ```{r tab_roc280}
 roc280_results %>% kable
 ```
-
 
 *Note*: The best threshold refers the cut-off value that maximises the sum of sensitivity and specificity.
 
@@ -849,10 +855,22 @@ The proposed EWAC can fulfil the same alcohol use disorder screening functions a
 This dimensional rather than categorical approach to communication an estimate of alcohol consumption may help to motivate increasing-risk drinkers to monitor and reduce their consumption, while at the same time encouraging low-risk drinkers to maintain this lifestyle. The EWAC appears particularly suitable to generate personalised feedback and monitoring as part of digital interventions.
 
 
-# Ethics
+# Declarations 
+
+## Ethics
 
 Study 1 and 3 were approved by the University of Southampton's Faculty of Medicine Ethics Committee (ERGO 44682). Study 2 was approved by the Health Research Authority National Research Ethics Service (IRAS 247458; REC 18/SC/0564).
  
+## Consent for publication
+
+Not applicable.
+
+## Competing interests
+
+None to declare.
+
+
+
 # Supplementary materials
 
 ## Supplementary materials 1: EWAC coefficients (CSV file)
@@ -939,7 +957,7 @@ stargazer::stargazer(#lm_bias_mp, lm_rmsd_mp,
           report = "vcs*")
 
 ```
-## Supplementary materials 4: ROC curves
+## Supplementary materials 4: Receiver operating characteristics curves curves
 
 ```{r roc_curves_112, fig.height=5, fig.width=7}
 # roc_auditc$linetype <- "solid"
