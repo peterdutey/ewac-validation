@@ -191,11 +191,11 @@ The first limitation has been addressed by a recently-introduced variation to th
  
 The present study proposes to address the second limitation, by developing and validating a fast and easy-to-complete Estimator of Weekly Alcohol Consumption (EWAC) computed from the Extended AUDIT-C. The intention of EWAC is to warrant equivalent diagnostic capability in relation to alcohol use disorders (being based on the AUDIT-C), while providing a continuous and more directly interpretable metric through alcohol consumption. This should facilitate the delivery of brief interventions, since measuring alcohol consumption is a crucial part of some the most common behaviour change techniques (self-monitoring, feedback on behaviour, social comparison) in both self-administered [@Kaner2017] and clinician-administered [@Michie2012] interventions. The EWAC helps overcome the concern that alcohol use disorders constitute a wide spectrum of levels of consumption and harms to health which cannot be reduced to a dichotomy [@Vinson1997]. It has instead been argued [@Rehm2013a; @Nutt2014] that focusing attention on monitoring and reducing alcohol consumption across the spectrum of use can facilitate alcohol prevention throughout the population.
 
-This paper reports the development of  the EWAC based on the product of quantity (AUDIT-1) by frequency (AUDIT-2) with adjustment for occasional intense drinking (AUDIT-3) using a hierarchical Bayesian item response model calibrated on Extended AUDIT-C and Graduated-Frequency (GF) questionnaire data collected as part of the Alcohol Toolkit Study [@Beard2015a], a large panel survey of community households in England. It then tests the mean deviation and the root mean squared deviation between EWAC and GF in the same sample. Finally, it tests the equivalence of the full Receiver Operating Characteristics Area Under the Curve of EWAC compared with AUDIT-C and the full AUDIT in predicting alcohol consumption in excess 112g/week (14 UK units) and 280g/week (35 UK units) respectively.
+This structure of the paper is as follows. The EWAC is developed as the product of quantity (AUDIT-1) by frequency (AUDIT-2) with adjustment for occasional intense drinking (AUDIT-3). Coefficients are estimated in a hierarchical Bayesian item response model using Extended AUDIT-C and Graduated-Frequency (GF) data from the Alcohol Toolkit Study [@Beard2015a], a large panel survey of community households in England. It then tests metrics of bias and error in the same sample, namely the mean deviation and the root mean squared deviation between EWAC and GF. Multivariate regression models of the same metrics are used to detect potential subgroup variations in bias and error in the EWAC. Finally, tests of the equivalence of the full Receiver Operating Characteristics Area Under the Curve of EWAC compared with AUDIT-C and the full AUDIT in predicting alcohol consumption in excess 112g/week (14 UK units) and 280g/week (35 UK units) respectively are reported.
 
 # Methods
 
-## Approach 
+## Design 
 
 This paper develops and validates an Estimator of usual Weekly Alcohol Consumption in units (EWAC) based on the Extended AUDIT-C. Neither the AUDIT-C nor the Extended AUDIT-C provide a direct measure of alcohol consumption. However, the product of frequency of drinking (AUDIT item 1) and quantity of drinking (AUDIT item 2) can be used to estimate usual alcohol consumption, with adjustment for occasional heavy use (AUDIT item 3), following methods developed for quantity-frequency-variability instruments [@Lemmens1992].
 
@@ -206,48 +206,53 @@ $$\text{EWAC}_i = F_i Q_i + V_ib$$
 where $b$ denotes the average number of units of alcohol consumed in an intense drinking day. Coefficients $F, Q, V$ and $b$ are unknown. In this study, two sets of potential coefficients are evaluated using:
 
 - the AUDIT response item interval midpoint: for example, 2.5 for '2 to 3 times per week' in AUDIT item 2
-- a statistical model to estimate the coefficients empirically from alcohol consumption data
+- coefficients estimated empirically from a sample of measurements of Extended AUDIT-C and GF in the same individuals, using a hierarchical Bayesian response model with the estimating equation $\text{GF}_i = F_i Q_i + V_ib + e_i$, where $e$ is a vector of independently normally distributed errors. Parabola-shaped starting informative priors were set on coefficients $F, Q, V$ and $b$ in the form of $Beta(2, 2)$ distributions bounded by the response item interval and centred on its midpoint. Details on model fitting, convergence evaluation and prior tuning is reported in supplementary information S1.
 
-All results are reported in UK alcohol units (8g or 10mL of pure alcohol).  Analyses are conducted in `R` [@RCoreTeam2017] using packages `tidyverse` and `rstan` [@package-tidyverse; @package-rstan]. Computer scripts for all analyses are available online [@Dutey2020]. <SUBMIT ZENODO BEFORE SUBMISSION>
+## Participants
 
-## Data sources
+The main data were obtained from waves 110--133 of the Alcohol Toolkit Study (ATS), a computer-assisted personal interview survey of residents of private English households aged 16 years and over [@Beard2015a]. Data collection took place between November 2015 and October 2017. Participants were included in the analysis if they completed both the Extended AUDIT and the Graduated Frequency (GF) alcohol consumption questionnaire. Out of a total `r formatbm(n_ats)` participants, `r formatbm(sum(ats$audit1 == 1))` (`r round(mean(ats$audit1 == 1)*100)`%) reported 'never' consuming alcohol in the AUDIT-1 question and were not asked any further AUDIT or GF questions. They were thus excluded. Although the ATS included a shorter follow-up six months after the initial interview, corresponding data were not used as they did not include the GF questionnaire.
 
-A longstanding obstacle in alcohol research and treatment is that there is no undisputed 'gold standard' or biomarker for assessing the level and duration of alcohol consumption. Instead, a number of instruments exist which measure self-reported alcohol consumption with varying validity and reliability over different time periods. Comprehensive reviews [@Heeb2005; @Rehm1998] indicate that prospective diaries tend to record higher alcohol consumption by minimising recall bias, followed by GF, while lower levels seem to be recorded with QF measures.
+## Measures
 
-`r table_nums("tab_overview_datasets", display = "cite")` summarises the four data sources used in this paper alongside references to methodological descriptions.
+Index measures underpinning the EWAC were the three questions making up the Extended AUDIT-C (supplementary information S2), in which participants are prompted to describe their drinking *during the last 6 months*.
 
-`r table_nums("tab_overview_datasets")`
+The reference standard used is the ATS' Graduated-Frequency (GF) schedule (supplementary information S3), in which participants are asked to described how many times they consumed given quantities of alcohol *during the last 4 weeks*. A longstanding obstacle in alcohol research and treatment is that there is no undisputed 'gold standard' or biomarker for assessing the level and duration of alcohol consumption. Instead, a number of instruments exist which measure self-reported alcohol consumption with varying validity and reliability over different time periods. Comprehensive reviews [@Heeb2005; @Rehm1998; @Stockwell2004; @Stockwell2014; @Stockwell2020] indicate that yesterday recall and prospective diaries tend to record higher alcohol consumption by minimising recall bias, followed by GF, while lower levels seem to be recorded with quantity-frequency measures. The GF schedule has the advantage of measuring occasional heavy consumption, which can constitute an important proportion of all alcohol consumed. It is commonly used in population surveys, but is not amongst the most widely recommended approaches in clinical practice.
 
-|	Source	|	Time	|	Study population |	Measurements |	Validation	|	Sample size	|	Design	|
-|	-------------	|	-------------	|	-------------	|	-------------	|	-------------	|	------:	|	-------------	|
-|	Alcohol Toolkit Study (ATS) [@Beard2015a]	|	November 2015--October 2017 (waves 110--133)	|	Residents of private English households aged 16 years and over	|	Interviewer-led Extended AUDIT-C and GF	|	@Heeb2005, @Greenfield2009	|	40,832	|	Cross-sectional sample survey	|
-|	Health Survey for England (HSE) [@NatCenSocialResearch2013]	|	2011	|	Residents of private English households aged 16 years and over	|	Interviewer-led beverage-specific QF	|	Consistent with a prospective diary [@Boniface2014] and yesterday recall [@Stockwell2016].	|	8,610	|	Cross-sectional sample survey	|
-|	Alcohol retail sales [@PHE2017]	|	2014	|	English population aged 18 years and over	|	--	|	@PHE2017	|	-- |	Ratio of all alcohol produced or processed in the UK, as well as alcohol imported into the UK for sale and consumption, over the mid-year population estimate	|
+Other reference data were used to cross-examine the EWAC's coverage of retail sales data and population-wide cumulative distribution in England. Per-capita alcohol retail sales for 2014 [@PHE2017] were used, which measured the ratio of all alcohol produced or processed in the UK, as well as alcohol imported into the UK for sale and consumption, to the mid-year population estimate of the resident population aged 18 years and over. Alternative data on the alcohol consumption mean, median and cumulative distribution in England were obtained from 8,610 residents of private English households aged 16 years and over participating in the 2011 Health Survey for England (HSE) [@NatCenSocialResearch2013]. This survey included (a) a computer-assisted interviewer led beverage-specific quantity-frequency questionnaire; (b) a yesterday recall question [@Stockwell2016]; and (c) a prospective 7-day diary [@Boniface2014]. 
 
+## Missing data
 
-## Study 1: EWAC estimation and concurrent validity
+Out of `r formatbm(sum(ats$audit1 != 1))` participants, `r formatbm(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly)))` (`r tbrounding(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly))/sum(ats$audit1 != 1))`%) did not have a valid GF alcohol consumption record and were excluded. In total, `r formatbm(valid_n_study1a)` valid observations remain for the diagnostic analysis, in which missing GF data is assumed to be missing at random conditionally on the Extended AUDIT-C responses. In the subgroup analysis, a further `r formatbm(valid_n_study1a-valid_n_study1b)` repondents (`r tbrounding(valid_n_study1b/n_ats)`%) were assumed to have data missing at random and were excluded.
 
-Study 1 evaluates the accuracy of the EWAC derived from a researcher-administered Extended AUDIT-C in community households. A pre-registered protocol for this study is available online [@Dutey2018]. It uses the GF schedule from the ATS as the reference standard. Two sets of coefficients are compared: AUDIT response item interval midpoint; and coefficients estimated using a statistical model (supplementary material 1-2).
+## Analyses
 
-First, the agreement between the EWAC and the GF is quantified by studying two types of deviations:
+A pre-registered protocol for this study is available online [@Dutey2018]. All results are reported in UK alcohol units (8g or 10mL of pure alcohol).  Analyses are conducted in `R` [@RCoreTeam2017] using packages `tidyverse` and `rstan` [@package-tidyverse; @package-rstan]. Computer scripts for all analyses are available online [@Dutey2020]. <SUBMIT ZENODO BEFORE SUBMISSION>
+
+### Overall bias and error
+
+The agreement between the EWAC and the GF is quantified by studying two types of deviations:
 
 - bias is estimated using the **mean deviation** to the reference standard $\text{MD} = n^{-1} \sum_{i=1}^{n}{(\rm{EWAC}_i - \rm{GF}_i )}$. We test the hypothesis that the MD is greater than 1 UK unit using a two-sided $t$-test. 
 - precision is estimated using the **root mean squared deviation** $\text{RMSD} = \sqrt{n^{-1} \sum_{i=1}^{n}{( \rm{EWAC}_i - \rm{GF}_i )^2}}$, a measure of total error: it captures both bias and random deviation from the reference standard. For example, an RMSD of 2 signifies that the EWAC is on average with $\pm$ 2 UK units of the gold standard. We test the hypothesis that the RMSD is greater than 2 UK units using a one-sided $\chi^2$ homogeneity test.
 
-Second, we examine whether the EWAC's validity varies across population subgroups.
+Two sets of coefficients were compared: AUDIT response item interval midpoint; and coefficients estimated using a statistical model (supplementary information S1). The best set of coefficients was retained for the remainder of the analysis.
 
-- the simple deviation $(\text{EWAC}-\text{GF})$ is regressed in a linear model to test for subgroup differences in MD
-- the squared deviation $(\rm{EWAC}-\rm{GF})^2$ is regressed in a log-transformed linear model to test subgroup differences in the geometric mean squared deviation. Model coefficients are then transformed (square root of the exponential) into relative RMSD estimates interpreted as the ratio of the subgroup RMSD to the reference category RMSD, a ratio >1 indicating worse precision than in the reference category. 
+### Subgroup bias and error
 
-Both models include the following predictors: sex by age group; ethnic group; highest educational qualification; religion; smoking status. Additional models are fitted solely in respondents with an AUDIT-C score of 5 or more or an AUDIT score of 8 or more (under the ICD terminology, hazardous and harmful alcohol use), using extra variables measures during interview: favourite drink (beer; wine; spirits alone; mixed spirits; cider; other); and whether the respondent had attempted to restrict alcohol intake in the last 12 months (eg by drinking less, choosing lower strength alcohol or using smaller glasses).
+Multivariate regression models tested whether the EWAC's validity varies across population subgroups:
 
-Third, we test whether the EWAC is superior to the traditional AUDIT and AUDIT-C scores at predicting drinking in excess of 14 or 35 UK units per week. In the UK, an AUDIT-C score of 5-7 is often categorised as 'increasing risk', and scores of 8 or more are categorised as 'higher risk' drinking [@Lavoie2010]. The study tests the hypothesis that the EWAC's receiver operating characteristics' full area under the curve (AUC) is greater that the comparators using nonparametric paired AUC tests [@Delong1988].
+- the simple deviation $(\text{EWAC}-\text{GF})$ was regressed in a linear model to test for subgroup differences in MD
+- the squared deviation $(\rm{EWAC}-\rm{GF})^2$ was regressed in a log-transformed linear model to test subgroup differences in the geometric mean squared deviation. Model coefficients were then back-transformed (square root of the exponential) into relative RMSD estimates interpreted as the ratio of the subgroup RMSD to the reference category RMSD, a ratio >1 indicating worse precision than in the reference category. 
 
-The ATS data ($n=$ `r formatbm(n_ats)`) is affected by missing data: `r round(mean(ats$audit1 == 1)*100)`% of respondents ($n=$ `r formatbm(sum(ats$audit1 == 1))`) reported never drinking alcohol in AUDIT item 1 and were not asked any further AUDIT or GF questions. These participants are excluded from the analysis. A further `r formatbm(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly)))` respondents (`r tbrounding(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly))/sum(ats$audit1 != 1))`% of those reporting drinking in AUDIT item 1) did not have a valid GF alcohol consumption record and were also excluded. In total, `r formatbm(valid_n_study1a)` valid observations remain for the diagnostic analysis, in which missing GF data is assumed to be missing at random conditionally on the Extended AUDIT-C responses. In the subgroup analysis (Study 2 below), a further `r formatbm(valid_n_study1a-valid_n_study1b)` repondents (`r tbrounding(valid_n_study1b/n_ats)`%) were assumed to have data missing at random and were excluded.
- 
-## Study 3: Aggregate concurrent validity
+Both models included the following predictors: sex by age group; ethnic group; highest educational qualification; religion; smoking status. Additional models were fitted solely in respondents with an AUDIT-C score of 5 or more or an AUDIT score of 8 or more, for whom additional characteristics were recorded during interview: favourite drink (beer; wine; spirits alone; mixed spirits; cider; other); and whether the respondent had attempted to restrict alcohol intake in the last 12 months (eg by drinking less, choosing lower strength alcohol or using smaller glasses).
 
-Study 3 examines the consistency in aggregate alcohol consumption estimates across England in residents aged 18 years and over. We plot the empirical cumulative distributions of alcohol consumption given by (1) the EWAC estimated from the ATS; (2) the quantity-frequency estimated in the ATS; (3) the beverage-specific estimators in HSE in 2011; (4) the prospective diary estimator in HSE 2011. In this analysis, survey weights are used: in (1-3), poststratification weights estimated using calibration and age-sex mid-year population estimates; in (4), similar poststratification weights adjusted for self-selection into participation to the prospective diary data collection. We report the percentage of total alcohol sales for England accounted for by each method, using both on-trade and off-trade 2014 sales estimates for England from @PHE2017.
+### Receiver Operating Characteristics
+
+We tested whether the EWAC is superior to the traditional AUDIT and AUDIT-C scores at predicting drinking in excess of 14 or 35 UK units per week. These correspond to UK thresholds for characterising alcohol use as 'increasing risk' (predicted by an AUDIT-C score of 5-7), and 'higher risk' (AUDIT-C score $\geq$ 8) [@Lavoie2010]. We tested the hypothesis that the EWAC's receiver operating characteristics' full area under the curve (AUC) is greater than that of the AUDIT-C and the full AUDIT scores using nonparametric paired AUC tests [@Delong1988]. AUDIT-C and AUDIT scores were calculated from the Extended AUDIT by capping the contribution of each response item to 4.
+
+### Aggregate concurrent validity
+
+We compared the EWAC with other population-level alcohol consumption estimates in England in residents aged 18 years and over. We computed the empirical cumulative distributions of alcohol consumption given by (1) the EWAC computed in the ATS; (2) the GF estimator in the ATS; (3) the beverage-specific estimator in HSE in 2011; (4) the prospective diary estimator in HSE 2011. In this analysis, survey weights are used: in (1-3), poststratification weights estimated using calibration and age-sex mid-year population estimates; in (4), similar poststratification weights adjusted for self-selection into participation to the prospective diary data collection. We report the percentage of total alcohol sales for England accounted for by each method, using both on-trade and off-trade 2014 sales estimates for England from Public Health England @PHE2017.
 
 # Results
 
@@ -326,9 +331,7 @@ stan_qfv_S_women <- ats %>%
 
 ```
 
-## Study 1: EWAC estimation and validation
-
-### Overall bias and accuracy
+## Overall bias and accuracy
 
 The first step involved choosing a set of coefficients to compute the EWAC (supplementary materials 1--2).
 
@@ -400,7 +403,7 @@ ggpubr::ggarrange(scatterplot_1a, scatterplot_1b, ncol = 2, nrow = 1)
  `r fig_nums('fig_scatter_ats')`
 
 
-### Subgroup accuracy
+## Subgroup accuracy
 
 ```{r ewac_subgroup_regressions}
 ats <- mutate(ats, f_ageg = relevel(ageg7, ref = "25-34 years"))
@@ -524,7 +527,7 @@ ggplot(ewac_error_plot, aes(x = factor(x), y = RMSD_ratio)) +
 `r fig_nums('fig_ewac_RMSD_increasedrisk_forest_plot')`
 
 
-### Receiver Operating Characteristics
+## Receiver Operating Characteristics
 
 ```{r, roc112_compute, message=F}
 roc_auditc <- pROC::roc(gfmeanweekly>=14 ~ auditc, data = ats)  
@@ -638,7 +641,7 @@ roc280_results %>% kable
 
 
 
-## Study 3: Empirical distribution functions
+## Empirical distribution functions
 ```{r exclude_under18}
 # From this point onwards, only drinkers aged 18 years and over
 hse_dk18 <- filter(hse, age >= 18 & dnnow == 1) # only those drinking 'at all these days'
@@ -732,9 +735,13 @@ This dimensional rather than categorical approach to communication an estimate o
 
 # Declarations 
 
+## Acknowledgements
+
+This research was supported by the Medical Research Council [grant reference MR/P016960/1]. The ATS data collection was funded primarily by the National Institute for Health Research (NIHR) School for Public Health Research [grant reference SPHR‐SWP‐ALC‐WP5]. and Public Health Research Programme [grant reference 15/63/01]. The views expressed are those of the author(s) and not necessarily those of the NHS, the NIHR or the Department of Health. 
+
 ## Ethics
 
-Study 1 and 3 were approved by the University of Southampton's Faculty of Medicine Ethics Committee (ERGO 44682). Study 2 was approved by the Health Research Authority National Research Ethics Service (IRAS 247458; REC 18/SC/0564).
+This study was approved by the University of Southampton's Faculty of Medicine Ethics Committee (ERGO 44682).
  
 ## Consent for publication
 
@@ -745,14 +752,17 @@ Not applicable.
 None to declare.
 
 
+# Supplementary information
 
-# Supplementary materials
+## Supplementary information S1: Bayesian model report (PDF file)
 
-## Supplementary materials 1: EWAC coefficients (CSV file)
+## Supplementary information S2: ATS Extended AUDIT questionnaire schedule
 
-## Supplementary materials 2: Bayesian model report (PDF file)
+## Supplementary information S3: ATS Graduated-Frequency questionnaire schedule
 
-## Supplementary materials 3: Subgroup analyses
+## Supplementary information S4: EWAC coefficients (CSV file)
+
+## Supplementary information S5: Subgroup analyses
 
 
 `r table_nums('tab_ewac_validity_reg')`
@@ -832,7 +842,8 @@ stargazer::stargazer(#lm_bias_mp, lm_rmsd_mp,
           report = "vcs*")
 
 ```
-## Supplementary materials 4: Receiver operating characteristics curves curves
+
+## Supplementary information S6: Receiver operating characteristics curves curves
 
 ```{r roc_curves_112, fig.height=5, fig.width=7}
 # roc_auditc$linetype <- "solid"
@@ -930,46 +941,6 @@ write.csv(pROC::coords(roc280_ewac, transpose = F),
           file = "ROC/roc_280g_ewac.csv", row.names = F)
 
 ```
-
-# Tables
-
-
-Table 1:  <a name="table_questionnaires"></a>Overview of alcohol schedule used in this paper.
-
-<table style="width:100%;">
-<colgroup>
-<col width="20%">
-<col width="80%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Survey module</th>
-<th>Schedule</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><em>ATS QF module</em></td>
-<td><ul>
-<li>On how many days, if any, did you personally drink a drink containing alcohol in the last four weeks?</li>
-<li>What was the maximum number of units you personally consumed on any one day when drinking an alcoholic drink or drinks in the last four weeks?</li>
-<li>On how many days, if any, in the last four weeks did you personally drink… [prompting in turn &#39;51-60 units?&#39;, &#39;41-50 units?&#39;, …, &#39;1-2 units?</li>
-</ul>
-</tr>
-<tr class="even">
-<td align="center"><em>Health Survey for England</em></td>
-<td><ul>
-<li>Thinking now about all kinds of drinks, how often have you had an alcoholic drink of any kind during the last 12 months? <em>[8 items from &#39;Almost every day&#39; to &#39;Not at all in the last 12 months&#39;]</em></li>
-<li>Did you have an alcoholic drink in the seven days ending yesterday?</li>
-<li>On how many days out of the last seven did you have an alcoholic drink?</li>
-<li>Which day last week did you last have an alcoholic drink/have the most to drink?</li>
-<li>Thinking about last [answer to previous question], what types of drink did you have that day? [list of 8 types of alcohol beverages]</li>
-<li>[running through each type of beverage and recording number of units drunk]</li>
-</ul></td>
-
-</tr>
-</tbody>
-</table>
 
 
 # References
