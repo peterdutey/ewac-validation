@@ -4,10 +4,9 @@ title: Concurrent validity of an Estimator of Weekly Alcohol Consumption (EWAC) 
 bibliography: bibliography.bib
 csl: elsevier-vancouver.csl
 output:
-  html_document:
-    df_print: paged
-    number_sections: yes
+  word_document:
     toc: yes
+    reference_docx: template.docx
   pdf_document:
     citation_package: natbib
     df_print: kable
@@ -15,9 +14,10 @@ output:
     keep_tex: yes
     number_sections: yes
     toc: yes
-  word_document:
+  html_document:
+    df_print: paged
+    number_sections: yes
     toc: yes
-    reference_docx: template.docx
 link-citations: yes
 always_allow_html: yes
 ---
@@ -100,16 +100,6 @@ table_nums <- captioner::captioner(prefix = "Table")
 tab_audit_tools_overview <- table_nums(
   name = "tab_audit_tools_comparison",
   caption = "Comparison of AUDIT-C and Extended AUDIT-C (items 1 and 2)")
-
-
-
-
-tab_comparison_schedules <- table_nums(
-  name = "tab_comparison_schedules",
-  caption = "Alcohol schedules: selective comparison")
-tab_overview_datasets <- table_nums(
-  name = "tab_overview_datasets",
-  caption = "Description of data sources")
 tab_ats_rmsd_quantiles <- table_nums(
   name = "tab_ats_rmsd_quantiles",
   caption = paste0("Percentiles of the absolute deviation between EWAC and GF schedule (n = ", formatbm(valid_n_study1a), ")"))
@@ -197,7 +187,7 @@ This structure of the paper is as follows. The EWAC is developed as the product 
 
 ## Design 
 
-This paper develops and validates an Estimator of usual Weekly Alcohol Consumption in units (EWAC) based on the Extended AUDIT-C. Neither the AUDIT-C nor the Extended AUDIT-C provide a direct measure of alcohol consumption. However, the product of frequency of drinking (AUDIT item 1) and quantity of drinking (AUDIT item 2) can be used to estimate usual alcohol consumption, with adjustment for occasional heavy use (AUDIT item 3), following methods developed for quantity-frequency-variability instruments [@Lemmens1992].
+This paper develops and validates an Estimator of usual Weekly Alcohol Consumption in units (EWAC) based on the Extended AUDIT-C. Neither the AUDIT-C nor the Extended AUDIT-C provide a direct measure of alcohol consumption. However, the product of frequency of drinking (AUDIT item 1) and usual quantity of drinking per occasion (AUDIT item 2) can be used to estimate usual average weekly alcohol consumption, with adjustment for occasional heavy use (AUDIT item 3), following methods developed for quantity-frequency-variability instruments [@Lemmens1992].
 
 In practice, for every individual $i$, the EWAC is computed as the product of $F_i$ and $Q_i$ (AUDIT items 1 and 2 respectively) adjusted with the frequency of intense drinking $V_i$ (AUDIT item 3):
 
@@ -222,7 +212,7 @@ Other reference data were used to cross-examine the EWAC's coverage of retail sa
 
 ## Missing data
 
-Out of `r formatbm(sum(ats$audit1 != 1))` participants, `r formatbm(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly)))` (`r tbrounding(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly))/sum(ats$audit1 != 1))`%) did not have a valid GF alcohol consumption record and were excluded. In total, `r formatbm(valid_n_study1a)` valid observations remain for the diagnostic analysis, in which missing GF data is assumed to be missing at random conditionally on the Extended AUDIT-C responses. In the subgroup analysis, a further `r formatbm(valid_n_study1a-valid_n_study1b)` repondents (`r tbrounding(valid_n_study1b/n_ats)`%) were assumed to have data missing at random and were excluded.
+Out of `r formatbm(sum(ats$audit1 != 1))` participants, `r formatbm(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly)))` (`r tbrounding(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly))/sum(ats$audit1 != 1))`%) did not have a valid GF alcohol consumption record and were excluded. In total, `r formatbm(valid_n_study1a)` valid observations remain for the diagnostic analysis, in which missing GF data is assumed to be missing at random conditionally on the Extended AUDIT-C responses. In the subgroup analysis, a further `r formatbm(valid_n_study1a-valid_n_study1b)` respondents (`r tbrounding(valid_n_study1b/n_ats)`%) were assumed to have data missing at random and were excluded.
 
 ## Analyses
 
@@ -691,7 +681,7 @@ ats_dk18 <- filter(ats, actage >= 18 & audit1 > 1) %>%  # not 'never' drinkers
 | ATS EWAC    | `r tbrounding(sum(ats_dk18$agg_qfv * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T))`   | `r tbrounding(median(ats_dk18$agg_qfv, na.rm =T))`   | `r tbrounding(var(ats_dk18$agg_qfv, na.rm =T))` |  `r formatbm(sum(!is.na(ats_dk18$agg_qfv)))` |`r tbrounding(sum(ats_dk18$agg_qfv * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)` |
 | Retail sales | `r tbrounding(alcohol_pcapita_drinker_2014_units)` | -- | -- | -- | -- |
 
-`r fig_nums('fig_ECDF', display = "cite")` suggests that the EWAC, like the ATS GF, estimates a higher prevalence of low-risk ($\leq$ 14 units/week) and increased-risk alcohol use than HSE. In contrast, HSE measures a higher prevalence of alcohol consumption in excess of 50 units/week. This difference may be due to a combination of factors, including differences in sampling coverage, nonresponse bias, or measurement error in the alcohol schedules.
+`r fig_nums('fig_ECDF', display = "cite")` suggests that the EWAC, like the ATS GF, estimates a higher prevalence of low-risk ($\leq$ 14 units/week) and increased-risk alcohol use than HSE. In contrast, HSE measures a higher prevalence of alcohol consumption in excess of 50 units/week. This difference may be due to a combination of factors, including differences in sampling coverage, non-response bias, or measurement error in the alcohol schedules.
 
 ```{r ggplot_ECDF, warning=F, message=F, fig.height=5, fig.width=7}
 plotfig_ECDF <- ggplot() + 
@@ -745,7 +735,7 @@ To the best of our knowledge, this paper is the first to (a) develop an EWAC usi
 
 Repurposing a well-known tool such as the AUDIT-C has several advantages. It is already translated in many languages and adapted to the varying standard drink sizes adopted internationally [@Babor2001]. The Extended AUDIT scores can be converted into traditional AUDIT scores by capping items to 4, thereby offering a point of comparison with existing evidence. The AUDIT's properties are also well understood in diverse contexts and modes of administration as it has been the subject of intense research internationally over the last 30 years. For instance, it is possible to extrapolate from past studies showing the AUDIT-C's responsiveness to change by 70g/week [@Bradley1998]. In this case EWAC should be at least as responsive, given that it contains a wider range response items than the AUDIT-C.
 
-We note some limitations. Findings reported in this paper may not apply to other countries, or to small subpopulations with an atypical alcohol consumption, such as patients seeking care for conditions such as addiction or alcohol-related liver disease. Despite its large sample size, the ATS exhibits limitations of its own. Like the HSE, ATS does not cover populations excluded from most sampling frames, such as residents of communal and carceral institutions, homeless people, or migrant populations. Independent of coverage, evidence suggests that survey nonrespondents may have higher levels of alcohol consumption and harm [@Gorman2014; @Christensen2015; @Boniface2017]. Furthermore, the ATS potentially misses some (mostly low-risk) drinkers, even among respondents: the proportion of respondents classified as non-drinkers (based on AUDIT item 1) in ATS is 10% higher than in HSE data, in which respondents are asked to confirm whether they never drink alcohol, or only drink 'very occasionally' [@DeVocht2016]. All these factors are likely to affect MD and RMSD estimates, and explain some of the discrepancy found in `r table_nums('tab_aggregate_summary_stats', display="cite")`. 
+We note some limitations. Findings reported in this paper may not apply to other countries, or to small subpopulations with an atypical alcohol consumption, such as patients seeking care for conditions such as addiction or alcohol-related liver disease. Despite its large sample size, the ATS exhibits limitations of its own. Like the HSE, ATS does not cover populations excluded from most sampling frames, such as residents of communal and carceral institutions, homeless people, or migrant populations. Independent of coverage, evidence suggests that survey non-respondents may have higher levels of alcohol consumption and harm [@Gorman2014; @Christensen2015; @Boniface2017]. Furthermore, the ATS potentially misses some (mostly low-risk) drinkers, even among respondents: the proportion of respondents classified as non-drinkers (based on AUDIT item 1) in ATS is 10% higher than in HSE data, in which respondents are asked to confirm whether they never drink alcohol, or only drink 'very occasionally' [@DeVocht2016]. All these factors are likely to affect MD and RMSD estimates, and explain some of the discrepancy found in `r table_nums('tab_aggregate_summary_stats', display="cite")`. 
 
 We also note that the selected reference standard has a strong influence on estimates of precision (RMSD). By construct, the reference standard's own error will inflate the RMSD. This means some of the RMSD is likely to be attributable to error in the reference standard rather than the EWAC. Previous research offers reassurance that the EWAC's error is comparable to that of other self-reported alcohol questionnaires. A previous US telephone interview study [@Greenfield2009] measured a Pearson’s correlation coefficient of $r$ = 0.86 and 0.87 between drinking frequencies and volumes as measured by a 12-month GF interview and a subsequent 28 day prospective diary. Similarly, Hilton [@Hilton1989] measured a correlation $r$ = 0.89 between a 30-day GF and a prospective diary (identical reference periods). Heeb et al. @Heeb2005 measured a Kendall's rank correlation $\tau$ = 0.41 between a 7-day GF and a 7-day prospective diary. For reference, our study measured a correlation coefficient $r$ = 0.71 and $\tau$ = 0.63 between a 6-month EWAC and a 4-week GF, that is, a similar level of agreement as GF with diaries.
 
