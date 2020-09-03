@@ -666,6 +666,27 @@ roc280_results %>% kable
 hse_dk18 <- filter(hse, age >= 18 & dnnow == 1) # only those drinking 'at all these days'
 ats_dk18 <- filter(ats, actage >= 18 & audit1 > 1) %>%  # not 'never' drinkers
   mutate(agg_qfv = ewac_qfv)
+
+ats_dk18_female <- dplyr::filter(ats_dk18, sex == "Women") %>% 
+  dplyr::select(agg_qfv, weighttns13) %>% 
+  na.omit()
+ats_dk18_male <- dplyr::filter(ats_dk18, sex == "Men") %>% 
+  dplyr::select(agg_qfv, weighttns13) %>% 
+  na.omit()
+
+ewac_ecdf_female <- spatstat::ewcdf(ats_dk18_female$agg_qfv,
+                                    ats_dk18_female$weighttns13)
+ewac_ecdf_male <- spatstat::ewcdf(ats_dk18_male$agg_qfv,
+                                  ats_dk18_male$weighttns13)
+
+write.csv(as.data.frame(quantile(ewac_ecdf_female, 
+                                 probs = c(seq(0, 0.9, 0.02), 
+                                           seq(0.91, 1, 0.005)))),
+          file = "../04_suppmat/EWAC_percentiles_females.csv")
+write.csv(as.data.frame(quantile(ewac_ecdf_male, 
+                                 probs = c(seq(0, 0.9, 0.02), 
+                                           seq(0.91, 1, 0.005)))),
+          file = "../04_suppmat/EWAC_percentiles_males.csv")
 ```
 
 
