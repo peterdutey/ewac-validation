@@ -1,0 +1,11 @@
+person_id,audit1,audit2,audit3
+A,Monthly or less,3 to 4,Never
+B,2 to 3 times a week,1 to 2,Less than monthly
+C,2 to 3 times a week,3 to 4,Weekly
+D,6 or more times a week,1 to 2,Never
+E,4 to 5 times a week,1 to 2,Never
+F,6 or more times a week,5 to 6,Never
+G,2 to 3 times a week,3 to 4,Never
+H,Monthly or less,1 to 2,Never
+I,4 to 5 times a week,3 to 4,Never
+J,6 or more times a week,5 to 6,Daily or almost daily
