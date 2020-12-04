@@ -887,7 +887,7 @@ stargazer::stargazer(#lm_bias_mp, lm_rmsd_mp,
 
 ```
 
-## Supplementary information S6: Receiver operating characteristics curves curves
+## Supplementary information S6: Receiver operating characteristics curves
 
 ```{r roc_curves_112, fig.height=5, fig.width=7}
 # roc_auditc$linetype <- "solid"
@@ -994,5 +994,38 @@ pdf("figures/fig_ROC_280g.pdf", 7, 5)
 plotfig_ROC_280g
 dev.off()
 ```
+
+## Supplementary information S7: Receiver operating characteristics estimates
+
+## Supplementary information S8: STARD Checklist
+
+## Supplementary information S9: Demographic characteristics and alcohol consumption descriptives
+
+```{r}
+arsenal::tableby(
+  `Alcohol consumption (units/week, GF estimate)` ~ Gender + Age + `Ethnic group` + 
+    `Highest qualification`+ `AUDIT-C score` + `Full AUDIT score`, 
+  control = arsenal::tableby.control(
+    test = FALSE, 
+    numeric.stats = c("Nmiss", "meansd"),
+    digits = 1L),
+  data = dplyr::mutate(
+    dplyr::filter(ats, sexz %in% c(1,2)),
+    `Alcohol consumption (units/week, GF estimate)` = dplyr::case_when(
+      audit1 == 1 ~ "Never drinks (AUDIT-1 = 0)",
+      gfmeanweekly < 14 ~ "<14",
+      gfmeanweekly >= 14 & gfmeanweekly < 35 ~ "14-34",
+      gfmeanweekly >= 35 & gfmeanweekly < 50 ~ "35-50",
+      gfmeanweekly >= 50 ~ "50-400",
+      TRUE ~ "Missing"),
+    Gender = sex,
+    Age = ageg7,
+    `Ethnic group` = ethgrp,
+    `Highest qualification` = highqual,
+    `AUDIT-C score` = cut(auditc, breaks = c(0, 1, 5, 8, 12), include.lowest = T, right = F),
+    `Full AUDIT score` = cut(fullaudit, breaks = c(0, 1, 8, 16, 20, 40), include.lowest = T, right = F))
+  ) %>% summary()
+```
+
 
 # References
