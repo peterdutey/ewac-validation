@@ -22,17 +22,6 @@ link-citations: yes
 always_allow_html: yes
 ---
 
-<!-- 
-abstract	250
-intro	539
-methods	1334
-results	1233
-discussion	858
-conclu	100
-total	4214
-
--->
-
 
 ```{r loading data, include=F}
 knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
@@ -930,11 +919,11 @@ plotfig_ROC_112g <- ggroc(list("EWAC" = roc_ewac,
 
 plotfig_ROC_112g
 write.csv(pROC::coords(roc_auditc, transpose = F),
-          file = "ROC/roc_112g_auditc.csv", row.names = F)
+          file = "../04_suppmat/ROC/roc_112g_auditc.csv", row.names = F)
 write.csv(pROC::coords(roc_audit, transpose = F),
-          file = "ROC/roc_112g_full_audit.csv", row.names = F)
+          file = "../04_suppmat/ROC/roc_112g_full_audit.csv", row.names = F)
 write.csv(pROC::coords(roc_ewac, transpose = F),
-          file = "ROC/roc_112g_ewac.csv", row.names = F)
+          file = "../04_suppmat/ROC/roc_112g_ewac.csv", row.names = F)
 ```
 
 
@@ -978,11 +967,11 @@ plotfig_ROC_280g <- ggroc(list("EWAC" = roc280_ewac,
 
 plotfig_ROC_280g
 write.csv(pROC::coords(roc280_auditc, transpose = F),
-          file = "ROC/roc_280g_auditc.csv", row.names = F)
+          file = "../04_suppmat/ROC/roc_280g_auditc.csv", row.names = F)
 write.csv(pROC::coords(roc280_audit, transpose = F),
-          file = "ROC/roc_280g_full_audit.csv", row.names = F)
+          file = "../04_suppmat/ROC/roc_280g_full_audit.csv", row.names = F)
 write.csv(pROC::coords(roc280_ewac, transpose = F),
-          file = "ROC/roc_280g_ewac.csv", row.names = F)
+          file = "../04_suppmat/ROC/roc_280g_ewac.csv", row.names = F)
 
 ```
 
