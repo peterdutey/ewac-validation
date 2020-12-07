@@ -2,8 +2,8 @@
 # Concurrent validity of an Estimator of Weekly Alcohol Consumption (EWAC) based on the Extended AUDIT
 
 
-[![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-sa/4.0/)
-[![Generic badge](https://img.shields.io/badge/EWAC calculator-online-green.svg)](https://shields.io/)
+[![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-sa/4.0/) 
+[![Generic badge](https://img.shields.io/badge/EWAC calculator-online-green.svg)](https://ewac.netlify.app/)
 
 Software repository for: 
 
