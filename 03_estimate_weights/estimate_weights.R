@@ -11,7 +11,32 @@ library(tidyverse)
 library(rstan)
 
 load(file.path("02_data", "ATS.rda"))
+load(file.path("02_data", "ATS_training_sample_30pct.rda"))
+
+# ats_sampling <- ats %>%
+#   mutate(p_id = 1:n()) %>%
+#   filter(audit1 > 1 & audit1 < 7) %>%
+#   filter(sexz %in% 1:2) %>%
+#   mutate(
+#     ethn_strat = case_when(
+#       ethgrp == "White British" ~ 1,
+#       ethgrp == "White Other" ~ 2,
+#       TRUE ~ 3)
+#   ) %>%
+#   mutate(strata = paste0(sex,
+#                          ethn_strat,
+#                          if_else(is.na(lstage), 1L, as.integer(lstage)),
+#                          auditc_risk_level)) %>%
+#   group_by(strata) %>%
+#   slice_sample(prop = .3) %>%
+#   ungroup() %>%
+#   select(p_id)
+# save(ats_sampling, file = file.path("02_data", "ATS_training_sample_30pct.rda"))
+
+
 ats <- ats %>% 
+  mutate(p_id = 1:n()) %>% 
+  # filter(p_id %in% ats_sampling$p_id) %>%
   # filter(actage >= 18) %>%
   # filter(sex == "Women") %>%
   # filter(sex == "Men") %>%
@@ -85,7 +110,7 @@ mod1_fit <- stan(
 
 # Extract results ---------------------------------------------------------
 
-new_results_dir <- file.path("03_estimate_weights", "results_5000_2019-10-12")
+new_results_dir <- file.path("03_estimate_weights", "results_5000_2021-04-22_100pct")
 if (!dir.exists(new_results_dir)) { 
   dir.create(new_results_dir)
 }
@@ -109,6 +134,174 @@ save_trace_plots(d1, file.path(new_results_dir, "traces_AUDIT1.pdf"))
 save_trace_plots(d2, file.path(new_results_dir, "traces_AUDIT2.pdf"))
 save_trace_plots(d3, file.path(new_results_dir, "traces_AUDIT3.pdf"))
 
+d1 <- plot(mod1_fit, show_density = TRUE, pars = c('F2', 'F3', 'F4', 'F5', 'F6'))
+d2 <- plot(mod1_fit, show_density = TRUE, pars = c('Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7'))
+d3 <- plot(mod1_fit, show_density = TRUE, pars = c('V1', 'V2', 'V3', 'V4', 'binge'))
+save_trace_plots(d1, file.path(new_results_dir, "post_AUDIT1.pdf"))
+save_trace_plots(d2, file.path(new_results_dir, "post_AUDIT2.pdf"))
+save_trace_plots(d3, file.path(new_results_dir, "post_AUDIT3.pdf"))
+
+rstan::plot
 #rm(list= ls())
 
+posteriors <- extract(mod1_fit, inc_warmup = F)
+library(ggplot2)
 
+F_post_data <- tibble(var = paste0("F", 2:6),
+                 label_label = c("Monthly or less",
+                            "2-4 times per month",
+                            "2-3 times per week",
+                            "4-5 times per week",
+                            "6+ times per week"),
+                 label_Y = c(5, 9, 7, 4, 3.5),
+                 post = posteriors[paste0("F", 2:6)]) %>% 
+  mutate(label_X = sapply(post, mean)) 
+
+F_post <- F_post_data %>% 
+  tidyr::unnest(col = "post") %>% 
+  ggplot(aes(x = post, colour = var, linetype = "Posterior")) +
+  geom_density() +
+  stat_function(aes(colour = 'F2', linetype = 'Prior'), fun = function(x) { dbeta( (x - 0.1)/0.4, 2, 2) }) +
+  stat_function(aes(colour = 'F3', linetype = 'Prior'), fun = function(x) { dbeta( (x - 0.5)/1, 2, 2) }) +
+  stat_function(aes(colour = 'F4', linetype = 'Prior'), fun = function(x) { dbeta( (x - 1.5)/1.5, 2, 2) }) +
+  stat_function(aes(colour = 'F5', linetype = 'Prior'), fun = function(x) { dbeta( (x - 3)/2, 2, 2) }) +
+  stat_function(aes(colour = 'F6', linetype = 'Prior'), fun = function(x) { dbeta( (x - 5)/2, 2, 2) }) +
+  theme_bw() +
+  theme(panel.grid.major = element_line(size=0.1),
+        panel.grid.minor = element_line(size=0.1)) +
+  scale_y_sqrt() +
+  scale_linetype(name = "Distribution") +
+  scale_colour_discrete(name = "AUDIT-1") +
+  scale_x_continuous(name = "Frequency (per week)", breaks = 0:7, 
+                     limits = c(0, 7)) +
+  geom_label(data = F_post_data, 
+             mapping = aes(x = label_X, y = label_Y, label = label_label, colour = var), 
+             hjust = "left", nudge_x = 0.2, show.legend = FALSE)
+
+
+Q_post_data <- tibble(var = c(paste0("Q", 1:7)),
+                      label_label = c("0-2", "3-4", "5-6", "7-9",
+                                      "10-12", "13-15", "16+"),
+                      label_Y = c(3, 6, 2.5, 2.5, 3, 2, 2),
+                      post = posteriors[paste0("Q", 1:7)]) %>% 
+  mutate(label_X = sapply(post, mean)) 
+
+Q_post <- Q_post_data %>% 
+  tidyr::unnest(col = "post") %>% 
+  ggplot(aes(x = post, colour = var, linetype = "Posterior")) +
+  geom_density() +
+  stat_function(aes(colour = 'Q1', linetype = 'Prior'), fun = function(x) { dbeta( (x - 1)/1.5, 2, 2) }) +
+  stat_function(aes(colour = 'Q2', linetype = 'Prior'), fun = function(x) { dbeta( (x - 2.5)/2, 2, 2) }) +
+  stat_function(aes(colour = 'Q3', linetype = 'Prior'), fun = function(x) { dbeta( (x - 4.5)/2, 2, 2) }) +
+  stat_function(aes(colour = 'Q4', linetype = 'Prior'), fun = function(x) { dbeta( (x - 6.5)/3, 2, 2) }) +
+  stat_function(aes(colour = 'Q5', linetype = 'Prior'), fun = function(x) { dbeta( (x - 9.5)/2, 2, 2) }) +
+  stat_function(aes(colour = 'Q6', linetype = 'Prior'), fun = function(x) { dbeta( (x - 9.5)/6, 2, 2) }) +
+  stat_function(aes(colour = 'Q7', linetype = 'Prior'), fun = function(x) { dbeta( (x - 15.5)/9.5, 2, 2) }) +
+  theme_bw() +
+  theme(panel.grid.major = element_line(size=0.1),
+        panel.grid.minor = element_line(size=0.1)) +
+  scale_y_sqrt() +
+  scale_linetype(name = "Distribution") +
+  scale_colour_discrete(name = "AUDIT-2") +
+  scale_x_continuous(name = "UK alcohol units (8g)",  breaks = 0:25, 
+                     limits = c(1, 25)) +
+  geom_label(data = Q_post_data, 
+             mapping = aes(x = label_X, y = label_Y, label = label_label, colour = var), 
+             hjust = "left", show.legend = FALSE)
+
+
+V_post_data <- tibble(var = paste0("V", 1:5),
+                      label_label = c("Never", "Monthly or less", "Monthly", 
+                                      "Weekly", "Daily or almost daily"),
+                      label_Y = c(12.5, 9, 6, 4, 2.5),
+                      post = posteriors[paste0("V", 1:5)]) %>% 
+  mutate(label_X = sapply(post, mean)) 
+
+V_post <- V_post_data %>% 
+  tidyr::unnest(col = "post") %>% 
+  ggplot(aes(x = post, colour = var, linetype = "Posterior")) +
+  geom_density() +
+  stat_function(aes(colour = 'V1', linetype = 'Prior'), fun = function(x) { dbeta( (x - 0)/0.2, 2, 2) }) +
+  stat_function(aes(colour = 'V2', linetype = 'Prior'), fun = function(x) { dbeta( (x - 0.2)/0.3, 2, 2) }) +
+  stat_function(aes(colour = 'V3', linetype = 'Prior'), fun = function(x) { dbeta( (x - 0.5)/0.5, 2, 2) }) +
+  stat_function(aes(colour = 'V4', linetype = 'Prior'), fun = function(x) { dbeta( (x - 1)/2, 2, 2) }) +
+  stat_function(aes(colour = 'V5', linetype = 'Prior'), fun = function(x) { dbeta( (x - 3)/4, 2, 2) }) +
+  theme_bw() +
+  theme(panel.grid.major = element_line(size=0.1),
+        panel.grid.minor = element_line(size=0.1)) +
+  scale_y_sqrt() +
+  scale_linetype(name = "Distribution") +
+  scale_colour_discrete(name = "AUDIT-3") +
+  scale_x_continuous(name = "Frequency (per week)", breaks = 0:7, 
+                     limits = c(0, 7)) +
+  geom_label(data = V_post_data, 
+             mapping = aes(x = label_X, y = label_Y, label = label_label, colour = var), 
+             hjust = "left", nudge_x = 0.2, show.legend = FALSE)
+
+b_post <- tibble(var = "binge",
+                 post = posteriors["binge"]) %>% 
+  tidyr::unnest(col = "post") %>% 
+  ggplot(aes(x = post, colour = var, linetype = "Posterior")) +
+  geom_density() +
+  stat_function(aes(colour = 'binge', linetype = 'Prior'), 
+                fun = function(x) { dgamma(x - 5, shape = 4, rate = 1.5) }) +
+  theme_bw() +
+  theme(panel.grid.major = element_line(size=0.1),
+        panel.grid.minor = element_line(size=0.1)) +
+  scale_y_sqrt() +
+  scale_linetype(name = "Distribution") +
+  scale_colour_discrete(name = "Binge") +
+  scale_x_continuous(name = "UK alcohol units (8g)", 
+                     breaks = seq(0, 12, 1),
+                     limits = c(0, 12)) +
+  geom_label(data = data.frame(), 
+             mapping = aes(x = 7.5, y = 1, label = "6 or more units",
+                           colour = "binge"), show.legend = FALSE)
+
+sigma_post <- tibble(var = "sigma",
+                 post = posteriors["sigma"]) %>% 
+  tidyr::unnest(col = "post") %>% 
+  ggplot(aes(x = post, colour = var, linetype = "Posterior")) +
+  geom_density() +
+  stat_function(aes(colour = 'sigma', linetype = 'Prior'), 
+                fun = function(x) { dexp(x, rate = 0.1) }) +
+  theme_bw() +
+  theme(panel.grid.major = element_line(size=0.1),
+        panel.grid.minor = element_line(size=0.1)) +
+  scale_y_sqrt() +
+  scale_linetype(name = "Distribution") +
+  scale_colour_discrete(name = expression(sigma)) +
+  scale_x_continuous(name = "Standard deviation of residuals", limits = c(0, 20))
+
+
+pdf(file.path(new_results_dir, "prior_post_AUDIT1.pdf"), width = 8, height = 4)
+F_post
+dev.off()
+pdf(file.path(new_results_dir, "prior_post_AUDIT2.pdf"), width = 8, height = 4)
+Q_post
+dev.off()
+pdf(file.path(new_results_dir, "prior_post_AUDIT3.pdf"), width = 8, height = 4)
+V_post
+dev.off()
+pdf(file.path(new_results_dir, "prior_post_binge.pdf"), width = 8, height = 4)
+b_post
+dev.off()
+pdf(file.path(new_results_dir, "prior_post_sigma.pdf"), width = 8, height = 4)
+sigma_post
+dev.off()
+
+win.metafile(file.path(new_results_dir, "prior_post_AUDIT1.wmf"), width = 9.5, height = 3.5)
+F_post
+dev.off()
+win.metafile(file.path(new_results_dir, "prior_post_AUDIT2.wmf"), width = 9.5, height = 3.5)
+Q_post
+dev.off()
+win.metafile(file.path(new_results_dir, "prior_post_AUDIT3.wmf"), width = 9.5, height = 3.5)
+V_post
+dev.off()
+win.metafile(file.path(new_results_dir, "prior_post_binge.wmf"), width = 7, height = 2.3)
+b_post
+dev.off()
+win.metafile(file.path(new_results_dir, "prior_post_sigma.wmf"), width = 7, height = 2.3)
+sigma_post
+dev.off()

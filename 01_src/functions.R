@@ -126,34 +126,34 @@ proc_EWAC <- function(X, audit_coef, method = "qfv"){
   if (method == "qf"){
     
     ( X$audit1_value * ifelse(X$audit1_value==0, NA, 
-                              X$audit2_value) ) /52.1 
+                              X$audit2_value) )
     
   } else if (method == "qv"){
     
-    ( X$audit2_value * X$audit3_value ) / 52.1 
+    ( X$audit2_value * X$audit3_value )
     
   } else if (method == "qfv") {
 
     ( (X$audit1_value * X$audit2_value ) + 
-       (X$audit3_value * binge.val ) ) / 52.1
+       (X$audit3_value * binge.val ) )
     
   } else if (method == "qb") {
     
-    ( X$audit3_value * binge.val ) / 52.1
+    ( X$audit3_value * binge.val )
     
   } else if (method == "ewac") {
     
     ifelse(X$audit2_value >= binge.val,
            ifelse(X$audit1_value >= X$audit3_value,
                   #QF:
-                  X$audit1_value * X$audit2_value  / 52.1,
+                  X$audit1_value * X$audit2_value,
                   #QV:
-                  X$audit3_value * X$audit2_value  / 52.1),
+                  X$audit3_value * X$audit2_value),
            ifelse(X$audit1_value >= X$audit3_value,
                   #binge x F
-                  X$audit1_value * binge.val / 52.1, 
+                  X$audit1_value * binge.val, 
                   #QF + binge x V
-                  ((X$audit1_value * X$audit2_value ) + (X$audit3_value * binge.val ) ) /52.1))
+                  ((X$audit1_value * X$audit2_value ) + (X$audit3_value * binge.val ) ) ))
     
     
   } else {

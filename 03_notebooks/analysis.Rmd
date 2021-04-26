@@ -4,12 +4,12 @@ title: Concurrent validity of an Estimator of Weekly Alcohol Consumption (EWAC) 
 bibliography: bibliography.bib
 csl: elsevier-vancouver.csl
 output:
+  word_document:
+    reference_docx: template.docx
   html_document:
     df_print: paged
     number_sections: yes
     toc: yes
-  word_document:
-    reference_docx: template.docx
 link-citations: yes
 always_allow_html: yes
 ---
@@ -49,16 +49,55 @@ auditx_labels <- c("audit1_label", "audit2_label", "audit3_label")
 
 load(file.path("..", "02_data", "HSE.rda"))
 load(file.path("..", "02_data", "ATS.rda"))
-# Too small a sample size too manage
-ats$sex[ats$sex == "In another way"] <- NA
+load(file.path("..", "02_data", "ATS_training_sample_30pct.rda"))
+
 ats <- ats %>% 
-  mutate(., 
+  mutate(
+    # Too small a sample size too manage
+    sex = if_else(sex == "In another way", NA_character_, as.character(sex)),
+    p_id = 1:n(), 
     audit1_label = if_else(.$audit1_label %in% c("Refused", "Don't know"), 
                            NA_character_, audit1_label),
     audit2_label = if_else(.$audit2_label %in% c("Refused", "Don't know"), 
                            NA_character_, audit2_label),
     audit3_label = if_else(.$audit3_label %in% c("Refused", "Don't know"), 
-                           NA_character_, audit3_label))
+                           NA_character_, audit3_label)
+  ) %>% 
+  mutate(sex = factor(sex, levels = c("Women", "Men")))
+
+# Sample sizes
+n_ats <- nrow(ats)
+n_ats_audit1never <- nrow(filter(ats, audit1 == 1))
+n_ats_auditmissing <- nrow(filter(ats,
+                                  audit1 != 1 &
+                                  (is.na(audit1_label) | 
+                                    is.na(audit2_label) | 
+                                    is.na(audit3_label))))
+n_ats_validaudit <- nrow(filter(ats,
+                                audit1 != 1 &
+                                  !is.na(audit1_label) & 
+                                    !is.na(audit2_label) & 
+                                    !is.na(audit3_label)))
+valid_n_study1a <-  nrow(na.omit(ats[, c("gfmeanweekly", "audit1_label", "audit2_label", "audit3_label")]))
+valid_n_study1a_training <-  nrow(na.omit(ats[ats$p_id %in% ats_sampling$p_id, c("gfmeanweekly", "audit1_label", "audit2_label", "audit3_label")]))
+valid_n_study1a_validation <-  nrow(na.omit(ats[!ats$p_id %in% ats_sampling$p_id, c("gfmeanweekly", "audit1_label", "audit2_label", "audit3_label")]))
+
+valid_n_study1b <-  nrow(na.omit(
+  dplyr::select(filter(ats, !p_id %in% ats_sampling$p_id),
+                audit1_label, audit2_label, audit3_label, gfmeanweekly,
+                sex, ageg7, ethgrp, religion, highqual, smokstat)
+))
+valid_n_study1c <- nrow(na.omit(
+  dplyr::select(filter(ats, !p_id %in% ats_sampling$p_id & 
+                         (auditc >= 5 | fullaudit >=8)), 
+                audit1_label, audit2_label, audit3_label, gfmeanweekly,
+                sex, ageg7, ethgrp, favdrink, tryalclyc2, 
+                religion, highqual, smokstat)))
+
+# Removing ML training data
+ats_complete_data <- ats
+ats <- ats %>%
+  filter(!p_id %in% ats_sampling$p_id)
 
 # Alcohol retail data from PHE 2017
 alcohol_sales_2014_liters <- 361429387
@@ -66,30 +105,20 @@ alcohol_pcapita_adults_2014_units <-  16.3 # per capita for all population
 alcohol_pcapita_drinker_2014_units <- 19.3 # per capita for drinkers only
 MYPE_2014 <- 42724917 # population aged 18+
 
-# Sample sizes
-n_ats <- nrow(ats)
-valid_n_study1a <-  nrow(na.omit(ats[, c("gfmeanweekly", "audit1", "audit2", "audit3")]))
-valid_n_study1b <-  nrow(na.omit(dplyr::select(ats, audit1_label, audit2_label, audit3_label, gfmeanweekly,
-                           sex, ageg7, ethgrp, religion, highqual, smokstat)))
-valid_n_study1c <- nrow(na.omit(dplyr::select(
-    filter(ats, auditc >= 5 | fullaudit >=8), 
-    audit1_label, audit2_label, audit3_label, gfmeanweekly,
-         sex, ageg7, ethgrp, favdrink, tryalclyc2, 
-         religion, highqual, smokstat)))
-
+# Captions
 table_nums <- captioner::captioner(prefix = "Table")
 tab_audit_tools_overview <- table_nums(
   name = "tab_audit_tools_comparison",
   caption = "Comparison of AUDIT-C and Extended AUDIT-C (questions 1 and 2)")
 tab_ats_rmsd_quantiles <- table_nums(
   name = "tab_ats_rmsd_quantiles",
-  caption = paste0("Percentiles of the absolute deviation between EWAC and GF schedule (n = ", formatbm(valid_n_study1a), ")"))
+  caption = paste0("Percentiles of the absolute deviation between EWAC and GF schedule (n = ", formatbm(valid_n_study1a_validation), ")"))
 tab_study1_roc112 <- table_nums(
   name = "tab_study1_roc112",
-  caption = paste0("Receiver operating characteristics of AUDIT-C score and EWAC for consumption >= 14 UK units or 112g/week (n = ", formatbm(valid_n_study1a), ")"))
+  caption = paste0("Receiver operating characteristics of AUDIT-C score and EWAC for consumption >= 14 UK units or 112g/week (n = ", formatbm(valid_n_study1a_validation), ")"))
 tab_study1_roc280 <- table_nums(
   name = "tab_study1_roc280",
-  caption = paste0("Receiver operating characteristics of AUDIT-C score and EWAC for consumption >= 35 UK units or 280g/week (n = ", formatbm(valid_n_study1a), ")"))
+  caption = paste0("Receiver operating characteristics of AUDIT-C score and EWAC for consumption >= 35 UK units or 280g/week (n = ", formatbm(valid_n_study1a_validation), ")"))
 tab_aggregate_summary_stats <- table_nums(
   name = "tab_aggregate_summary_stats",
   caption = "Summary statistics on alcohol consumption in England in residents aged 18 years and over (excluding abstainers)")
@@ -98,16 +127,7 @@ tab_aggregate_summary_stats <- table_nums(
 fig_nums <- captioner(prefix = "Figure")
 fig_scatter_ats <- fig_nums(
   name = 'fig_scatter_ats',
-  caption = 'Plots of EWAC against GF in (a) low/increasing risk ATS respondents (n=21,338) and (b) all ATS respondents (n=22,373)')
-fig_ewac_MD_forest_plot <- fig_nums(
-  name = 'fig_ewac_MD_forest_plot',
-  caption = 'Forest plot of modelled MD for selected subgroups')
-fig_ewac_RMSD_forest_plot <- fig_nums(
-  name = 'fig_ewac_RMSD_forest_plot',
-  caption = 'Forest plot of RMSD ratio (selected subgroups to reference category)')
-fig_ewac_RMSD_increasedrisk_forest_plot <- fig_nums(
-  name = 'fig_ewac_RMSD_increasedrisk_forest_plot',
-  caption = 'Forest plot of RMSD ratio (selected subgroups to reference category) in respondents with a hazardous/harmful alcohol use (AUDIT-C>=5 or AUDIT>=8)')
+  caption = 'Plots of EWAC against GF in (a) low/increasing risk respondents (n=15,008) and (b) all respondents (n=15,731)')
 fig_ECDF<- fig_nums(
   name = 'fig_ECDF',
   caption = 'Empirical cumulative distribution function of weekly alcohol consumption in England according to four alcohol schedules in residents aged 18 years and over')
@@ -118,7 +138,7 @@ fig_ECDF<- fig_nums(
 
 # Abstract
 
-**Background and Aims:** The 3-question Alcohol Use Disorders Identification Test (AUDIT-C) is commonly employed in healthcare to screen for levels of alcohol consumption. AUDIT-C scores (0–12) have no direct interpretation and do not provide information on alcohol intake, an important variable for behaviour change. The study aimed to (a) develop a continuous metric from the Extended AUDIT-C, offering equivalent accuracy, and providing a direct estimator of weekly alcohol consumption (EWAC); (b) evaluate the EWAC's bias and error using the Graduated-Frequency (GF) questionnaire as a reference standard of alcohol consumption.
+**Background and Aims:** The 3-question Alcohol Use Disorders Identification Test (AUDIT-C) is commonly employed in healthcare to screen for levels of alcohol consumption. AUDIT-C scores (0–12) have no direct interpretation and do not provide information on alcohol intake, an important variable for behaviour change. The study aimed to (a) develop a continuous metric from the Extended AUDIT-C, offering equivalent accuracy, and providing a direct estimator of weekly alcohol consumption (EWAC); (b) evaluate the EWAC’s bias and error using the Graduated-Frequency (GF) questionnaire as a reference standard of alcohol consumption.
 
 **Design:** Cross-sectional diagnostic study based on a nationally-representative survey.
 
@@ -128,7 +148,7 @@ fig_ECDF<- fig_nums(
 
 **Measurements:** Computer-assisted personal interviews consisting of (a) Extended AUDIT and (b) GF. The primary outcomes were: mean deviation <1 UK unit (metric of bias); root mean squared deviation <2 UK units (metric of total error) between EWAC and GF. The secondary outcome was an equivalent receiver operating characteristic area under the curve for predicting alcohol consumption in excess of 14 and 35 UK units compared to AUDIT-C and AUDIT.
 
-**Findings:** EWAC had a positive bias of 0.2 UK units [95% confidence interval: 0.04, 0.3] compared to GF. Deviations were skewed: while the mean error was ±11 UK units/week [9.8, 12.0], in half of participants the deviation between EWAC and GF was between 0 and ±2.1 UK units/week. EWAC predicted consumption in excess of 14 UK units/week with a significantly greater area under the curve (0.921 [0.917, 0.925]) than AUDIT-C (0.871 [0.866, 0.876]) or the full AUDIT (0.854 [0.849, 0.860]).
+**Findings:** EWAC had a positive bias of 0.2 UK units [95% confidence interval: 0.08, 0.4] compared to GF. Deviations were skewed: while the mean error was ±11 UK units/week [9.5, 11.9], in half of participants the deviation between EWAC and GF was between 0 and ±2.1 UK units/week. EWAC predicted consumption in excess of 14 UK units/week with a significantly greater area under the curve (0.918 [0.914, 0.923]) than AUDIT-C (0.870 [0.864, 0.876]) or the full AUDIT (0.854 [0.847, 0.860]).
 
 **Conclusions:** The EWAC <https://ewac.netlify.app> is designed to estimate weekly alcohol consumption using answers to the Extended AUDIT-C questionnaire. Using the detailed GF as a reference standard, the EWAC met the targeted bias tolerance. Its accuracy was superior to that of both AUDIT-C and the full AUDIT in relation to consumption thresholds, making it a reliable complement to the Extended AUDIT-C for health promotion interventions.
 
@@ -171,25 +191,28 @@ where $b$ denotes the average units of alcohol consumed in an intense drinking d
 Coefficients $F, Q, V$ and $b$ are unknown. The present study considers two sets of candidate coefficients:
 
 - AUDIT response item interval midpoint (e.g. 2.5 for '2 to 3 times per week')
-- coefficients estimated empirically from a sample of individuals with measurements of Extended AUDIT-C and GF, using a hierarchical Bayesian response model with the estimating equation $\text{GF}_i = F_i Q_i + V_ib + e_i$, where $e$ denotes independently normally distributed errors. We set parabola-shaped informative priors on coefficients $F, Q, V$. Details on model fitting, convergence evaluation and prior tuning is reported in supplementary information S1.
+- coefficients estimated empirically from a sample of individuals with measurements of Extended AUDIT-C and GF, using a hierarchical Bayesian response model with the estimating equation $\text{GF}_i = F_i Q_i + V_ib + e_i$, where $e$ denotes independently normally distributed errors. We set parabola-shaped informative priors on coefficients $F, Q, V$. Details on model fitting, convergence evaluation and prior tuning are reported in supplementary information S1.
 
 ## Participants
 
-Data originate from baseline measures in waves 110--133 (November 2015–October 2017) of the Alcohol Toolkit Study (ATS), a computer-assisted personal interview of residents of private English households aged $\geq$ 16 years [@Beard2015a]. Participants were included in the analysis if they completed both the Extended AUDIT and the GF questionnaires. Out of `r formatbm(n_ats)` participants, `r formatbm(sum(ats$audit1 == 1))` (`r round(mean(ats$audit1 == 1)*100)`%) reported 'never' consuming alcohol in AUDIT question 1 and were not asked any further AUDIT or GF questions. They were thus excluded.
+Data originate from baseline measures in waves 110--133 (November 2015–October 2017) of the Alcohol Toolkit Study, a computer-assisted personal interview of residents of private English households aged $\geq$ 16 years [@Beard2015a].
+
+Participants were included in the analysis if they completed both the Extended AUDIT and the GF questionnaires. Out of `r formatbm(n_ats)` participants, `r formatbm(n_ats_audit1never)` (`r round(n_ats_audit1never/n_ats*100)`%) reported 'never' consuming alcohol in AUDIT question 1 and were not asked any further AUDIT or GF questions. A further `r formatbm(n_ats_auditmissing)` (`r round(n_ats_auditmissing/n_ats*100, 1)`%) did not have valid AUDIT-C answers. Finally, `r formatbm(n_ats_validaudit - valid_n_study1a)` participants (`r round((n_ats_validaudit - valid_n_study1a)/n_ats*100)`%) who did not have a valid GF alcohol consumption record were excluded. These GF data were assumed to be missing at random conditionally on the Extended AUDIT-C responses. 
+
+Valid observations (*N*=`r formatbm(valid_n_study1a)`) were separated into two datasets:
+
+* The training dataset (*N*=`r formatbm(valid_n_study1a_training)`) consisted of a 30 percent subset of participants drawn using stratified random sampling, ensuing a balanced representation by sex, age, ethnic group and AUDIT-C risk level. It was used to estimate coefficients underpinning the EWAC (supplementary information S1). 
+* The validation dataset consisted of the remaining participants (*N*=`r formatbm(valid_n_study1a_validation)`) and was used to evaluate the EWAC's bias and precision. In subgroup validation analyses utilising additional variables (eg education, smoking status), a further `r formatbm(valid_n_study1a_validation-valid_n_study1b)`/`r formatbm (valid_n_study1a_validation)` observations (`r tbrounding((valid_n_study1a_validation-valid_n_study1b)/valid_n_study1a_validation*100)`%) assumed to be missing at random were excluded.
 
 ## Measures
 
 Index measures underpinning the EWAC were the three questions making up the Extended AUDIT-C (supplementary information S2), in which participants described their drinking *during the last 6 months*.
 
-The reference standard used is the ATS GF schedule (supplementary information S3), in which participants described how many times they consumed given quantities of alcohol *during the last 4 weeks* [@Greenfield2000]. A longstanding obstacle in alcohol research and treatment lies in the absence of undisputed 'gold standard' or biomarker for objectively determining alcohol consumption. Instead, a number of instruments measure self-reported consumption with varying validity and reliability over different durations. Comprehensive reviews [@Heeb2005; @Livingston2015; @Rehm1998; @Stockwell2004; @Stockwell2014; @Stockwell2016] indicate that yesterday recall and prospective diaries tend to record higher (and more accurate) alcohol consumption by minimising recall bias, followed by GF measures. The GF schedule's main advantage lies in measuring occasional heavy consumption, which can constitute an important proportion of total consumption. Although widely employed in population surveys, the GF schedule is uncommon in clinical practice.
+The reference standard used is the Alcohol Toolkit Study GF schedule (supplementary information S3), in which participants described how many times they consumed given quantities of alcohol *during the last 4 weeks* [@Greenfield2000]. A longstanding obstacle in alcohol research and treatment lies in the absence of undisputed 'gold standard' or biomarker for objectively determining alcohol consumption. Instead, a number of instruments measure self-reported consumption with varying validity and reliability over different durations. Comprehensive reviews [@Heeb2005; @Livingston2015; @Rehm1998; @Stockwell2004; @Stockwell2014; @Stockwell2016] indicate that yesterday recall and prospective diaries tend to record higher (and more accurate) alcohol consumption by minimising recall bias, followed by GF measures. The GF schedule's main advantage lies in measuring occasional heavy consumption, which can constitute an important proportion of total consumption. Although widely employed in population surveys, the GF schedule is uncommon in clinical practice.
 
 We examined the EWAC's coverage of per-capita alcohol retail sales for England in 2014 [@PHE2017], which capture all alcohol produced/processed in or imported to England for sale or consumption.
 
-We also cross-examined the EWAC's distribution against other reference estimates obtained from 8,610 household residents aged $\geq$ 16 years participating in the 2011 Health Survey for England (HSE) [@NatCenSocialResearch2013]. On that particular year, the HSE included (a) a computer-assisted interviewer-led beverage-specific quantity-frequency questionnaire; (b) a yesterday recall question [@Stockwell2016]; and (c) a prospective 7-day diary [@Boniface2014].
-
-## Missing data
-
-We excluded `r formatbm(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly)))`/`r formatbm(sum(ats$audit1 != 1))` participants (`r tbrounding(sum(ats$audit1 != 1 & is.na(ats$gfmeanweekly))/sum(ats$audit1 != 1)*100)`%) who did not have a valid GF alcohol consumption record (Table S7). In the remaining `r formatbm(valid_n_study1a)` valid observations, GF data were assumed to be missing at random conditionally on the Extended AUDIT-C responses. In subgroup analyses, a further `r formatbm(valid_n_study1a-valid_n_study1b)` observations (`r tbrounding((valid_n_study1a-valid_n_study1b)/valid_n_study1a*100)`%) assumed to be missing at random were excluded.
+We also cross-examined the EWAC's distribution against other reference estimates obtained from 8,610 household residents aged $\geq$ 16 years participating in the 2011 Health Survey for England [@NatCenSocialResearch2013]. On that particular year, the Health Survey for England included (a) a computer-assisted interviewer-led beverage-specific quantity-frequency questionnaire; (b) a yesterday recall question [@Stockwell2016]; and (c) a prospective 7-day diary [@Boniface2014].
 
 ## Analyses
 
@@ -197,7 +220,7 @@ The protocol was pre-registered [@Dutey2018]. Results are reported in UK alcohol
 
 ### Overall bias and error
 
-The agreement between the EWAC and the GF was quantified as follows:
+The agreement between the EWAC and the GF was quantified in the validation dataset:
 
 - bias was estimated by the **mean deviation** to the reference standard $\text{MD} = n^{-1} \sum_{i=1}^{n}{(\rm{EWAC}_i - \rm{GF}_i )}$. We tested the hypothesis that the MD does not exceed 1 UK unit using a two-sided $t$-test. 
 - precision was estimated by the **root mean squared deviation** $\text{RMSD} = \sqrt{n^{-1} \sum_{i=1}^{n}{( \rm{EWAC}_i - \rm{GF}_i )^2}}$, a measure of total error capturing both bias and random deviation from the reference standard. For example, an RMSD of 2 signifies that the EWAC is on average with $\pm$ 2 UK units of the reference standard. We tested the hypothesis that the RMSD does not exceed 2 UK units using a one-sided $\chi^2$ homogeneity test.
@@ -206,12 +229,12 @@ Two sets of candidate coefficients were considered (section 2.1). We only report
 
 ### Subgroup bias and error
 
-Multivariate regression models tested whether the EWAC's validity varies across population subgroups:
+Multivariate regression models tested whether the EWAC's bias and precision varied across population subgroups:
 
 - the simple deviation $(\text{EWAC}-\text{GF})$ was regressed in a linear model to test subgroup differences in MD
 - the squared deviation $(\rm{EWAC}-\rm{GF})^2$ was regressed in a log-transformed linear model to test subgroup differences in the geometric mean squared deviation. Model coefficients were then back-transformed (square root of the exponential) into relative RMSD estimates; these are interpreted as the ratio of the subgroup RMSD to the reference RMSD, a ratio >1 indicating worse precision than in the reference category.
 
-Both models (supplementary Tables S5–S6) included the following predictors: sex by age group; ethnic group; highest educational qualification; religion; smoking status. Additional models (supplementary Table S6) were fitted solely in respondents with an AUDIT-C score $\geq$ 5 or an AUDIT score $\geq$ 8, for whom additional characteristics were recorded during interview: favourite drink (beer; wine; spirits alone; mixed spirits; cider; other); and whether the respondent had attempted to restrict alcohol intake in the last 12 months.
+Both models (supplementary table S5.1) included the following predictors: sex by age group; ethnic group; highest educational qualification; religion; smoking status. Additional models (supplementary table S5.2) were fitted solely in respondents with an AUDIT-C score $\geq$ 5 or an AUDIT score $\geq$ 8, for whom additional characteristics were recorded during interview: favourite drink (beer; wine; spirits alone; mixed spirits; cider; other); and whether the respondent had attempted to restrict alcohol intake in the last 12 months.
 
 ### Receiver Operating Characteristics
 
@@ -219,7 +242,7 @@ We tested the EWAC's superiority to the traditional AUDIT and AUDIT-C scores in 
 
 ### Aggregate concurrent validity
 
-We compared the empirical cumulative distributions of (1) the EWAC computed in the ATS; (2) the GF estimator in the ATS; (3) the beverage-specific estimator in the 2011 HSE; (4) the prospective diary estimator in the 2011 HSE in adults aged $\geq$ 18 years. We report the proportions of on-trade and off-trade alcohol sales [@PHE2017] accounted for by each method. Poststratification survey weights adjusted for nonresponse bias in sources (1-3), and self-selection into prospective diary data collection in source (4). 
+We compared the empirical cumulative distributions of (1) the EWAC computed in the Alcohol Toolkit Study; (2) the GF estimator in the Alcohol Toolkit Study; (3) the beverage-specific estimator in the 2011 Health Survey for England; (4) the prospective diary estimator in the 2011 Health Survey for England in adults aged $\geq$ 18 years. We report the proportions of on-trade and off-trade alcohol sales [@PHE2017] accounted for by each method. Poststratification survey weights adjusted for nonresponse bias in sources (1-3), and self-selection into prospective diary data collection in source (4). 
 
 # Results
 
@@ -298,22 +321,21 @@ stan_qfv_S_women <- ats %>%
 
 ```
 
-## Overall bias and accuracy
+## Bias and precision
 
-EWAC coefficients estimated empirically (supplementary information S4) had smaller bias and error and were used for the remainder of the analysis. With those, the EWAC's Pearson's correlation with GF was estimated at $r$ = `r tbrounding(cor.test(ats$gfmeanweekly, ats$ewac_qfv, use = "complete.obs")$estimate,2)` [`r paste(tbrounding(cor.test(ats$gfmeanweekly, ats$ewac_qfv, use = "complete.obs")$conf.int, 2), collapse = ", ")`] (Kendall's rank correlation $\tau$ = `r suppressWarnings(tbrounding(cor.test(ats$gfmeanweekly, ats$ewac_qfv, use = "complete.obs", method = "kendall")$estimate, 2))`).
+EWAC coefficients estimated empirically (supplementary information S1, S4) had smaller bias and error and were used for the remainder of the analysis. With those, the EWAC's Pearson's correlation with GF was estimated at $r$ = `r tbrounding(cor.test(ats$gfmeanweekly, ats$ewac_qfv, use = "complete.obs")$estimate,2)` [`r paste(tbrounding(cor.test(ats$gfmeanweekly, ats$ewac_qfv, use = "complete.obs")$conf.int, 2), collapse = ", ")`] (Kendall's rank correlation $\tau$ = `r suppressWarnings(tbrounding(cor.test(ats$gfmeanweekly, ats$ewac_qfv, use = "complete.obs", method = "kendall")$estimate, 2))`).
 
 The mean deviation (MD) was `r tbrounding(test_stan$MD, 1)` alcohol units/week [95% CI: `r round(test_stan$MD - test_stan$MD.ME, 2)`, `r round(test_stan$MD + test_stan$MD.ME, 1)`]. This bias is smaller than the preregistered $\pm$ 1-unit bias tolerance (`r pvrounding(test_stan$MD.p)`). 
 
 The root mean squared deviation (RMSD), at `r tbrounding(test_stan$RMSD, 1)` units/week [95% CI: `r tbrounding(sqrt(test_stan$MSD - test_stan$MSD.ME), 1)`, `r tbrounding(sqrt(test_stan$MSD + test_stan$MSD.ME), 1)`], was significantly greater than the pre-registered 2-unit total error tolerance (`r pvrounding(test_stan$RMSD.p)`), suggesting that the EWAC falls on average 11 units away from the GF reference standard.
 
-The RMSD masked a dispersed and skewed distribution of error (`r table_nums('tab_ats_rmsd_quantiles', display = "cite")`). In 50% of participants, the EWAC fell within $\pm$ 2 UK units of the GF weekly consumption estimate. Thus, an interval defined as the EWAC $\pm$ 2 units (e.g. '10 to 14 units') would contain the reference standard for half of individuals, while an interval ranging $\pm$ 3 units (e.g. '9 to 15 units') would contain the reference standard for 60% of individuals. 
+The RMSD masked a dispersed and skewed distribution of error (`r table_nums('tab_ats_rmsd_quantiles', display = "cite")`). In 50% of participants, the EWAC fell within $\pm$ 2.1 UK units of the GF weekly consumption estimate. Thus, an interval defined as the EWAC $\pm$ 2 units (e.g. '10 to 14 units') would contain the reference standard for half of individuals, while an interval ranging $\pm$ 3 units (e.g. '9 to 15 units') would contain the reference standard for 60% of individuals. 
 
 `r table_nums('tab_ats_rmsd_quantiles')`
 
 ```{r ats_rmsd_quantiles}
 t(tbrounding(quantile(na.omit(abs(ats$ewac_qfv - ats$gfmeanweekly)), probs = c(seq(.1, .9, .1), .95, .99)), 1)) %>% kable()
 ```
-
 
 Plots of EWAC against GF (`r fig_nums("fig_scatter_ats", display = "cite")`) indicate a slight positive bias for consumptions up to 10-14 units/week, and a slight negative bias beyond. The EWAC only starts losing granularity above 70 units/week (99th percentile of its distribution), where it provides just 6 possible values (82; 83; 92; 93; 100; 125 units/week; see `r fig_nums("fig_scatter_ats", display = "cite")`(b)).
 
@@ -379,150 +401,7 @@ dev.off()
 ```
 
 
-## Subgroup accuracy
-
-```{r ewac_subgroup_regressions}
-ats <- mutate(ats, f_ageg = relevel(ageg7, ref = "25-34 years"))
-
-lm_bias_stan <- lm((ewac_qfv-gfmeanweekly) ~ sex*f_ageg + ethgrp +  
-                    religion + highqual  + smokstat, data = ats)
-lm_rmsd_stan <- lm(log((ewac_qfv-gfmeanweekly)^2) ~ sex*f_ageg + ethgrp +  
-                    religion + highqual + smokstat, data = ats)
-lm_bias_increasingrisk <- lm((ewac_qfv-gfmeanweekly) ~ sex*f_ageg + ethgrp + 
-                   religion + highqual + smokstat + favdrink + tryalclyc2, 
-                   data = filter(ats, auditc >= 5 | fullaudit >=8))
-lm_rmsd_increasingrisk <- lm(log((ewac_qfv-gfmeanweekly)^2) ~ sex*f_ageg + ethgrp + 
-                   religion + highqual + smokstat + favdrink + tryalclyc2, 
-                   data = filter(ats, auditc >= 5 | fullaudit >=8))
-```
-
-MDs and RMSDs were regressed against respondent characteristics to identify potential subgroup differences in bias or precision from the reference category (White British females aged 25–34 years without educational qualifications, who never smoked). Model predictors accounted for <2% of the variance, indicating stability in MD and RMSD across subgroups (Table S5).
-
-`r fig_nums('fig_ewac_MD_forest_plot', display = "cite")` shows subgroups with a predicted MD exceeding $\pm$ 1 unit/week and a coefficient $p$-value<0.05. Respondents of Black/Other/White Other ethnic groups had an overestimated EWAC: their MDs exceeded the reference MD by 2.0 units [0.9, 3.1]; 2.7 units [0.8, 4.5]; and 1.1 units [0.5, 1.7] respectively. MDs of men aged 55–64 years, or $\geq$ 75 years exceeded the reference MD by 1.3 units [0.2, 2.4] and 1.5 units [0.3, 2.8] respectively. There was no evidence of an effect of favourite drink or attempts to reduce alcohol intake in increasing-risk drinkers (Table S6).
-
-```{r ewac_subgroup_bias, fig.width=7, fig.height=3}
-ewac_bias_plot <- as_tibble(summary(lm_bias_stan)$coefficients)
-ewac_bias_plot <- ewac_bias_plot %>% 
-  mutate(Variable = names(lm_bias_stan$coefficients),
-         MD = lm_bias_stan$coefficients[1] + Estimate) %>% 
-  filter(abs(MD)>=1 & `Pr(>|t|)` < 0.05) %>% 
-  arrange(-Estimate) %>% 
-  mutate(x = rank(Estimate))
-  
-labs <- ewac_bias_plot$Variable
-names(labs) <- as.character(length(labs):1)
-
-plotfig_ewac_MD_forest_plot <- ggplot(ewac_bias_plot, aes(x = factor(x), y = MD)) +
-  scale_x_discrete(breaks = names(labs), 
-                   labels = labs, name = NULL)+
-  scale_y_continuous(breaks = -10:16, name = "Predicted MD (UK units/week)")+
-  coord_flip() +
-  geom_linerange(aes(ymin = MD - 1.96*`Std. Error`, ymax = MD + 1.96*`Std. Error`), 
-                 colour = "purple") +
-  geom_point() +
-  geom_text(aes(label = round(MD, 1)), vjust = 1.2) +
-  geom_hline(aes(yintercept = 0)) +
-  geom_segment(aes(x = "0", xend = "0", y =0, yend = 2), 
-               lwd = 1, arrow = arrow(length = unit(0.03, "npc"))) +
-  geom_label(aes(x = "0", y = 2.1, label = "EWAC overestimates consumption"),
-             hjust = "inward", colour = "purple") +
-  theme_minimal() 
-
-plotfig_ewac_MD_forest_plot
-```
-```{r include=FALSE}
-pdf("figures/fig_ewac_MD_forest_plot.pdf", 7, 3)
-plotfig_ewac_MD_forest_plot
-dev.off()
-```
-
-`r fig_nums('fig_ewac_MD_forest_plot')` 
-
-`r fig_nums('fig_ewac_RMSD_forest_plot', display = "cite")` shows subgroups with an RMSD at least 25% smaller/greater than the reference. RMSD was 58% [50, 67%] greater in current smokers and 34% [14, 56%] greater in respondents who stopped smoking in the past year. It was also 44% [29, 60%] and 34% [19, 50%] greater respectively in men and respondents aged 16–24 years. In contrast, error was 35 to 70% smaller in Black/Other/White Other ethnic groups.
-
-```{r ewac_subgroup_error, fig.width=9, fig.height=3}
-ewac_error_plot <- as_tibble(summary(lm_rmsd_stan)$coefficients)
-ewac_error_plot <- ewac_error_plot %>% 
-  mutate(Variable = names(lm_rmsd_stan$coefficients),
-         RMSD_ratio = sqrt(exp(Estimate))) %>% 
-  mutate(RMSD_ratio_LB = sqrt(exp(Estimate - (1.96*`Std. Error`))),
-         RMSD_ratio_UB = sqrt(exp(Estimate + (1.96*`Std. Error`)))) %>% 
-  filter(abs(Estimate)>=log(1.25^2) & `Pr(>|t|)` < 0.05 & Variable != "(Intercept)") %>% 
-  arrange(-RMSD_ratio) %>% 
-  mutate(x = formatC(rank(RMSD_ratio)+1, width = 2, format = "d", flag = "0"))
-  
-labs2 <- ewac_error_plot$Variable
-names(labs2) <- as.character(ewac_error_plot$x)
-
-plotfig_ewac_RMSD_forest_plot <- ggplot(ewac_error_plot, 
-                                        aes(x = factor(x), y = RMSD_ratio)) +
-  scale_x_discrete(breaks = names(labs2), 
-                   labels = labs2, name = NULL)+
-  scale_y_continuous(breaks = seq(0, 4, .1),
-                     "Relative RMSD (1.0 = reference category)")+
-  coord_flip() +
-  geom_text(aes(label = round(RMSD_ratio, 1)), vjust = 1.2) +
-  geom_linerange(aes(ymin = RMSD_ratio_LB, ymax = RMSD_ratio_UB), colour = "purple") +
-    geom_point() +
-  geom_hline(aes(yintercept = 1)) +
-  geom_segment(aes(x = "00", xend = "00", y =1, yend =1.25), 
-               lwd = 1, arrow = arrow(length = unit(0.03, "npc"))) +
-  geom_label(aes(x = "00", y = 1.01, label = "Worse agreement of EWAC\n with reference standard"),
-             hjust = "inward", vjust= -0.2, colour = "purple") +
-  theme_minimal() 
-
-plotfig_ewac_RMSD_forest_plot
-```
-```{r include=FALSE}
-pdf("figures/fig_ewac_RMSD_forest_plot.pdf", 7, 3)
-plotfig_ewac_RMSD_forest_plot
-dev.off()
-```
-
-`r fig_nums('fig_ewac_RMSD_forest_plot')`
-
-`r fig_nums('fig_ewac_RMSD_increasedrisk_forest_plot', display = "cite")` presents the same metrics for increasing-/higher-risk drinkers (AUDIT-C $\geq$ 5 or AUDIT $\geq$ 8). Educational qualifications significantly improved the agreement between EWAC and the reference standard in this group (Table S7). School and degree-level qualifications reduced RMSD by 24% [12, 37%] and 37% [23, 52%] respectively, suggesting that respondents may have better recall and clarity over alcohol beverage content. Conversely, the RMSD of respondents who attempted to reduce alcohol use was 23% [16, 30%] larger than the reference RMSD.
-
-```{r ewac_subgroup_error_increasedrisk, fig.width=9, fig.height=3}
-ewac_error_plot <- as_tibble(summary(lm_rmsd_increasingrisk)$coefficients)
-ewac_error_plot <- ewac_error_plot %>% 
-  mutate(Variable = names(lm_rmsd_increasingrisk$coefficients),
-         RMSD_ratio = sqrt(exp(Estimate))) %>% 
-  mutate(RMSD_ratio_LB = sqrt(exp(Estimate - (1.96*`Std. Error`))),
-         RMSD_ratio_UB = sqrt(exp(Estimate + (1.96*`Std. Error`)))) %>% 
-  filter(abs(Estimate)>=log(1.25^2) & `Pr(>|t|)` < 0.05 & Variable != "(Intercept)") %>% 
-  arrange(-RMSD_ratio) %>% 
-  mutate(x = formatC(rank(RMSD_ratio)+1, width = 2, format = "d", flag = "0"))
-  
-labs2 <- ewac_error_plot$Variable
-names(labs2) <- as.character(ewac_error_plot$x)
-
-plotfig_ewac_RMSD_increasedrisk_forest_plot <- ggplot(ewac_error_plot, aes(x = factor(x), y = RMSD_ratio)) +
-  scale_x_discrete(breaks = names(labs2), 
-                   labels = labs2, name = NULL)+
-  scale_y_continuous(breaks = seq(0, 4, .1),
-                     "Relative RMSD (1.0 = reference category)")+
-  coord_flip() +
-  geom_text(aes(label = round(RMSD_ratio, 1)), vjust = 1.2) +
-  geom_linerange(aes(ymin = RMSD_ratio_LB, ymax = RMSD_ratio_UB), colour = "purple") +
-    geom_point() +
-  geom_hline(aes(yintercept = 1)) +
-  geom_segment(aes(x = "00", xend = "00", y =1, yend =1.25), 
-               lwd = 1, arrow = arrow(length = unit(0.03, "npc"))) +
-  geom_label(aes(x = "00", y = 1.01, label = "Worse agreement of EWAC\n with reference standard"),
-             hjust = "inward", vjust= -0.2, colour = "purple") +
-  theme_minimal() 
-
-plotfig_ewac_RMSD_increasedrisk_forest_plot
-```
-```{r include=FALSE}
-pdf("figures/fig_ewac_RMSD_increasedrisk_forest_plot.pdf", 7, 3)
-plotfig_ewac_RMSD_increasedrisk_forest_plot
-dev.off()
-```
-
-`r fig_nums('fig_ewac_RMSD_increasedrisk_forest_plot')`
-
+Extensive subgroup analyses are reported in supplementary material 5. A very modest proportion of variation in bias and precision (<5%) can be attributed to socio-demographic variables under examination. This indicates a relative homogeneity in precision in bias, to one exception. The EWAC appears to overestimate consumption by 1 to 2 UK units in groups with the lowest average consumption: women, and Non-British White, Black, and Other ethnic groups.
 
 ## Receiver Operating Characteristics
 
@@ -611,7 +490,7 @@ roc280_results <- bind_rows(roc280_results) %>%
 roc280_ewac_nominal <- pROC::coords(roc280_ewac, 35, transpose = F)
 ```
 
-We examined the EWAC's ability to predict consumption exceeding 14 or 35 UK units/week. The full areas under the receiver operating characteristic curves (AUC, Figure S7) are presented along sensitivity and specificity at the best thresholds in Tables `r table_nums("tab_study1_roc112", display = "n")`–`r table_nums("tab_study1_roc280", display = "n")`.
+We examined the EWAC's ability to predict consumption exceeding 14 or 35 UK units/week. The full areas under the receiver operating characteristic curves (AUC, supplementary Figure S6) are presented along sensitivity and specificity at the best thresholds in Tables `r table_nums("tab_study1_roc112", display = "n")`–`r table_nums("tab_study1_roc280", display = "n")`.
 
 **14 UK units/week (increasing-risk)**: EWAC increases the AUC by 5 percentage points compared to the AUDIT-C score (`r pvrounding(roc.test(roc_auditc, roc_ewac, method = "delong")$p.value)`); and 7 percentage points compared to the full AUDIT score (`r pvrounding(roc.test(roc_audit, roc_ewac, method = "delong")$p.value)`). The cut-off maximising the sum of specificity and sensitivity on the EWAC is 10 units/week. The sensitivity at this threshold is identical to AUDIT-C, but specificity gains 13 percentage points. Using the nominal cut-off of 14 units/week on the EWAC raises specificity to `r round(roc_ewac_nominal14$specificity, 3)`, at the cost of a reduction in sensitivity to `r round(roc_ewac_nominal14$sensitivity, 3)` (`r table_nums("tab_study1_roc112", display = "cite")`).
 
@@ -652,9 +531,9 @@ ats_dk18_male <- dplyr::filter(ats_dk18, sex == "Men") %>%
   dplyr::select(agg_qfv, weighttns13) %>% 
   na.omit()
 
-ewac_ecdf_female <- spatstat::ewcdf(ats_dk18_female$agg_qfv,
+ewac_ecdf_female <- spatstat.geom::ewcdf(ats_dk18_female$agg_qfv,
                                     ats_dk18_female$weighttns13)
-ewac_ecdf_male <- spatstat::ewcdf(ats_dk18_male$agg_qfv,
+ewac_ecdf_male <- spatstat.geom::ewcdf(ats_dk18_male$agg_qfv,
                                   ats_dk18_male$weighttns13)
 
 write.csv(as.data.frame(quantile(ewac_ecdf_female, 
@@ -668,53 +547,68 @@ write.csv(as.data.frame(quantile(ewac_ecdf_male,
 ```
 
 
-`r table_nums("tab_aggregate_summary_stats", display = "cite")` estimates adult residents' total alcohol consumption in England using four different sources, and compares them with alcohol retail sales. The HSE exhibits the highest estimates and coverage of alcohol sales. EWAC amounts to `r round((sum(ats_dk18$agg_qfv * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T))/(sum(hse_dk18$weektot * hse_dk18$wt_drink, na.rm =T)/sum(hse_dk18$wt_drink, na.rm =T))*100)`% of the total consumption estimated by the HSE's prospective diary, and `r round(sum(ats_dk18$agg_qfv * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)`% of retail sales.
+`r table_nums("tab_aggregate_summary_stats", display = "cite")` estimates adult residents' total alcohol consumption in England using four different sources, and compares them with alcohol retail sales. The Health Survey for England exhibits the highest estimates and coverage of alcohol sales. EWAC amounts to `r round((sum(ats_dk18$agg_qfv * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T))/(sum(hse_dk18$weektot * hse_dk18$wt_drink, na.rm =T)/sum(hse_dk18$wt_drink, na.rm =T))*100)`% of the total consumption estimated by the Health Survey for England's prospective diary, and `r round(sum(ats_dk18$agg_qfv * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)`% of retail sales.
 
 `r table_nums('tab_aggregate_summary_stats')`
 
 | Study     | Mean (units/week)     | Median | Variance | N | % of alcohol sold |
 | ----------| ---------------------:| --------:|--------:| ----: | -----:
-| HSE beverage-specific QF      | `r tbrounding(sum(hse_dk18$totalwu * hse_dk18$wt_int, na.rm =T)/sum(hse_dk18$wt_int, na.rm =T))`  |   `r tbrounding(median(hse_dk18$totalwu, na.rm =T))`  | `r tbrounding(var(hse_dk18$totalwu, na.rm =T))` |  `r formatbm(sum(!is.na(hse_dk18$totalwu)))` | `r tbrounding(sum(hse_dk18$totalwu * hse_dk18$wt_int, na.rm =T)/sum(hse_dk18$wt_int, na.rm =T)*100 / alcohol_pcapita_drinker_2014_units)` |
-| HSE prospective diary | `r tbrounding(sum(hse_dk18$weektot * hse_dk18$wt_drink, na.rm =T)/sum(hse_dk18$wt_drink, na.rm =T))`   | `r tbrounding(median(hse_dk18$weektot, na.rm =T))`     | `r tbrounding(var(hse_dk18$weektot, na.rm =T))` |  `r formatbm(sum(!is.na(hse_dk18$weektot)))` |`r tbrounding(sum(hse_dk18$weektot * hse_dk18$wt_drink, na.rm =T)/sum(hse_dk18$wt_drink, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)` |
-| ATS GF    | `r tbrounding(sum(ats_dk18$gfmeanweekly * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T))`   | `r tbrounding(median(ats_dk18$gfmeanweekly, na.rm =T))`   | `r tbrounding(var(ats_dk18$gfmeanweekly, na.rm =T))` |  `r formatbm(sum(!is.na(ats_dk18$gfmeanweekly)))` |`r tbrounding(sum(ats_dk18$gfmeanweekly * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)` |
-| ATS EWAC    | `r tbrounding(sum(ats_dk18$agg_qfv * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T))`   | `r tbrounding(median(ats_dk18$agg_qfv, na.rm =T))`   | `r tbrounding(var(ats_dk18$agg_qfv, na.rm =T))` |  `r formatbm(sum(!is.na(ats_dk18$agg_qfv)))` |`r tbrounding(sum(ats_dk18$agg_qfv * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)` |
+| Health Survey for England beverage-specific QF      | `r tbrounding(sum(hse_dk18$totalwu * hse_dk18$wt_int, na.rm =T)/sum(hse_dk18$wt_int, na.rm =T))`  |   `r tbrounding(median(hse_dk18$totalwu, na.rm =T))`  | `r tbrounding(var(hse_dk18$totalwu, na.rm =T))` |  `r formatbm(sum(!is.na(hse_dk18$totalwu)))` | `r tbrounding(sum(hse_dk18$totalwu * hse_dk18$wt_int, na.rm =T)/sum(hse_dk18$wt_int, na.rm =T)*100 / alcohol_pcapita_drinker_2014_units)` |
+| Health Survey for England prospective diary | `r tbrounding(sum(hse_dk18$weektot * hse_dk18$wt_drink, na.rm =T)/sum(hse_dk18$wt_drink, na.rm =T))`   | `r tbrounding(median(hse_dk18$weektot, na.rm =T))`     | `r tbrounding(var(hse_dk18$weektot, na.rm =T))` |  `r formatbm(sum(!is.na(hse_dk18$weektot)))` |`r tbrounding(sum(hse_dk18$weektot * hse_dk18$wt_drink, na.rm =T)/sum(hse_dk18$wt_drink, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)` |
+| Alcohol Toolkit Study GF    | `r tbrounding(sum(ats_dk18$gfmeanweekly * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T))`   | `r tbrounding(median(ats_dk18$gfmeanweekly, na.rm =T))`   | `r tbrounding(var(ats_dk18$gfmeanweekly, na.rm =T))` |  `r formatbm(sum(!is.na(ats_dk18$gfmeanweekly)))` |`r tbrounding(sum(ats_dk18$gfmeanweekly * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)` |
+| Alcohol Toolkit Study EWAC    | `r tbrounding(sum(ats_dk18$agg_qfv * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T))`   | `r tbrounding(median(ats_dk18$agg_qfv, na.rm =T))`   | `r tbrounding(var(ats_dk18$agg_qfv, na.rm =T))` |  `r formatbm(sum(!is.na(ats_dk18$agg_qfv)))` |`r tbrounding(sum(ats_dk18$agg_qfv * ats_dk18$weighttns13, na.rm =T)/sum(ats_dk18$weighttns13, na.rm =T)*100/alcohol_pcapita_drinker_2014_units)` |
 | Retail sales | `r tbrounding(alcohol_pcapita_drinker_2014_units)` | -- | -- | -- | -- |
 
-`r fig_nums('fig_ECDF', display = "cite")` suggests that the EWAC, like the ATS GF, estimates a greater prevalence of lower-risk ($\leq$ 14 units/week) and increasing-risk alcohol use than HSE.
+`r fig_nums('fig_ECDF', display = "cite")` suggests that the EWAC, like the Alcohol Toolkit Study GF, estimates a greater prevalence of lower-risk ($\leq$ 14 units/week) and increasing-risk alcohol use than Health Survey for England.
 
 
-```{r ggplot_ECDF, warning=F, message=F, fig.height=5, fig.width=7}
+```{r ggplot_ECDF, warning=F, message=F, fig.height=4, fig.width=5}
 plotfig_ECDF <- ggplot() + 
-  scale_y_continuous(breaks = seq(0, 1, .1)) +
-  scale_x_continuous(limits = c(0, 100),
+  stat_ecdf(aes(gfmeanweekly, 
+                colour = "Alcohol Toolkit Study Graduated Frequency", 
+                linetype = "Alcohol Toolkit Study Graduated Frequency"), 
+            data = ats_dk18, weight = ats_dk18$weighttns13, 
+            geom = "step", na.rm =T, lwd=.5) +
+  stat_ecdf(aes(agg_qfv, 
+                colour = "Alcohol Toolkit Study EWAC", 
+                linetype = "Alcohol Toolkit Study EWAC"),
+            data = ats_dk18,  weight = ats_dk18$weighttns13, 
+            geom = "step", lwd = .5) +
+  stat_ecdf(aes(totalwu, 
+                colour = "Health Survey for England Quantity-Frequency", 
+                linetype = "Health Survey for England Quantity-Frequency"),
+            data = hse_dk18, weight = hse_dk18$wt_int, 
+            geom = "step", lwd = .5) +
+  stat_ecdf(aes(weektot, 
+                colour = "Health Survey for England Diary", 
+                linetype = "Health Survey for England Diary"),
+            data = hse_dk18, weight = hse_dk18$wt_drink, lwd = .5) +
+  scale_y_continuous(name = "Empirical cumulative density",
+                     breaks = seq(0, 1, .1)) +
+  scale_x_continuous(name = "Average units/week",
+                     limits = c(0, 100),
                      breaks = seq(0, 500, 10),
-                     minor_breaks = seq(0, 500, 5)) +
-  stat_ecdf(aes(gfmeanweekly, colour = "ATS GF", linetype = "ATS GF"), 
-            data = ats_dk18, weight = ats_dk18$weighttns13, na.rm =T, lwd=.7) +
-  stat_ecdf(aes(agg_qfv, colour = "ATS EWAC", linetype = "ATS EWAC"),
-            data = ats_dk18,  weight = ats_dk18$weighttns13, geom = "step", lwd = .7) +
-  stat_ecdf(aes(totalwu, colour = "HSE QF", linetype = "HSE QF"),
-            data = hse_dk18, weight = hse_dk18$wt_int, geom = "step", lwd = .7) +
-  stat_ecdf(aes(weektot, colour = "HSE Diary", linetype = "HSE Diary"),
-            data = hse_dk18, weight = hse_dk18$wt_drink, lwd = .3) +
-  ylab("Empirical cumulative density") + xlab("Average units/week")+
-  geom_vline(xintercept = 14) + 
-  annotate(geom = "text", x = 16.5, y = .15, label = "14 units/week", angle = 90) +
+                     minor_breaks = seq(0, 500, 5))+
+  geom_vline(xintercept = 14) +
+  annotate(geom = "text", x = 16.5, y = .16, 
+           label = "14 units/week", angle = 90) +
   theme_bw() +
   scale_colour_manual(
     name = "Estimator",
-    values = c("ATS GF" = "black",
-               "ATS EWAC" = "darkorange",
-               "HSE QF" = "darkorchid3",
-               "HSE Diary" = "darkorchid3")) + 
-  scale_linetype_manual(
-    name = "Estimator",
-    values = c(1, 1, 2, 1))
+    values = c("Alcohol Toolkit Study Graduated Frequency" = "darkorange",
+               "Alcohol Toolkit Study EWAC" = "black",
+               "Health Survey for England Quantity-Frequency" = "darkorchid2",
+               "Health Survey for England Diary" = "darkorchid4")) +
+  scale_linetype_manual(name = "Estimator",
+                        values = c(5, 1, 3, 1)) +
+  theme(legend.position = c(.64, 0.2),
+        legend.text = element_text(size=9))
 
 plotfig_ECDF
 ```
+
 ```{r include=FALSE}
-pdf("figures/fig_ECDF.pdf", 7, 3)
+pdf("figures/fig_ECDF.pdf", 5, 4)
 plotfig_ECDF
 dev.off()
 ```
@@ -739,7 +633,7 @@ Repurposing a well-known tool such as the AUDIT-C has several advantages. It is 
 
 Despite this, the EWAC's design does not escape limitations shared by all methods of screening or categorising alcohol use disorders. The conceptualisation of alcohol use disorders is related to, but does not exclusively depend upon the amount of alcohol consumed. Since Jellinek's description of 'the disease concept of alcoholism' [@Jellinek1960] there have been numerous attempts to categorise the range of phenotypes characterising alcohol use disorders in the absence of any biomarker to 'verify' the presence of a particular pathology. The EWAC, by limiting itself to an estimation of alcohol consumption is transparent across a wide range of alcohol use disorders but does not measure the other factors underpinning this complex and heterogeneous condition [@Leggio2009; @Saunders2019].
 
-We note other study limitations. Our findings may not apply to other countries, or to subpopulations with an atypical alcohol consumption (e.g. patients seeking care for severe alcohol dependence, alcohol-related liver disease). Like the HSE, the ATS does not cover populations excluded from most sampling frames (e.g. communal/carceral institutions, homeless/no fixed abode populations).
+We note other study limitations. Our findings may not apply to other countries, or to subpopulations with an atypical alcohol consumption (e.g. patients seeking care for severe alcohol dependence, alcohol-related liver disease). Like the Health Survey for England, the Alcohol Toolkit Study does not cover populations excluded from most sampling frames (e.g. communal/carceral institutions, homeless/no fixed abode populations).
 
 We also note that the reference standard, as all self-reported measures, is imperfect. This may introduce bias into estimates of precision: by definition, the reference standard's own error will inflate the RMSD. In other words, it is likely that a proportion of the RMSD is attributable to error in the GF measures rather than the EWAC. 
 
@@ -763,7 +657,7 @@ Nutt, Rehm *et al.* [@Nutt2014; @Rehm2016] argued that alcohol-related harm is b
 
 ## Acknowledgements
 
-This research was supported by the Medical Research Council [grant reference MR/P016960/1]. The ATS data collection was funded primarily by the National Institute for Health Research (NIHR) School for Public Health Research [grant reference SPHR‐SWP‐ALC‐WP5] and Public Health Research Programme [grant reference 15/63/01]. The EWAC online calculator development was funded by the Wessex Academic Health Science Network. The views expressed are those of the author(s) and not necessarily those of the NHS, the NIHR or the Department of Health. 
+This research was supported by the Medical Research Council [grant reference MR/P016960/1]. The Alcohol Toolkit Study data collection was funded primarily by the National Institute for Health Research (NIHR) School for Public Health Research [grant reference SPHR‐SWP‐ALC‐WP5] and Public Health Research Programme [grant reference 15/63/01]. The EWAC online calculator development was funded by the Wessex Academic Health Science Network. The views expressed are those of the author(s) and not necessarily those of the NHS, the NIHR or the Department of Health. 
 
 ## Ethics
 
@@ -782,13 +676,164 @@ JB has received unrestricted research funding to study smoking cessation from co
 
 ## Supplementary information S1: Bayesian model report (PDF file)
 
-## Supplementary information S2: ATS Extended AUDIT questionnaire schedule
+## Supplementary information S2: Alcohol Toolkit Study Extended AUDIT questionnaire schedule
 
-## Supplementary information S3: ATS Graduated-Frequency questionnaire schedule
+## Supplementary information S3: Alcohol Toolkit Study Graduated-Frequency questionnaire schedule
 
 ## Supplementary Table S4: EWAC coefficients (CSV file)
 
-## Supplementary Table S5: Coefficients of linear regression of subgroup bias and error of EWAC compared with GF in all respondents (n = `r formatbm(valid_n_study1b)`)
+## Supplementary information S5: Analysis of subgroup variation in bias and error
+
+```{r ewac_subgroup_regressions}
+ats <- mutate(ats, f_ageg = relevel(ageg7, ref = "25-34 years"))
+
+lm_bias_stan <- lm((ewac_qfv-gfmeanweekly) ~ sex*f_ageg + ethgrp +  
+                    religion + highqual  + smokstat, data = ats)
+lm_rmsd_stan <- lm(log((ewac_qfv-gfmeanweekly)^2) ~ sex*f_ageg + ethgrp +  
+                    religion + highqual + smokstat, data = ats)
+lm_bias_increasingrisk <- lm((ewac_qfv-gfmeanweekly) ~ sex*f_ageg + ethgrp + 
+                   religion + highqual + smokstat + favdrink + tryalclyc2, 
+                   data = filter(ats, auditc >= 5 | fullaudit >=8))
+lm_rmsd_increasingrisk <- lm(log((ewac_qfv-gfmeanweekly)^2) ~ sex*f_ageg + ethgrp + 
+                   religion + highqual + smokstat + favdrink + tryalclyc2, 
+                   data = filter(ats, auditc >= 5 | fullaudit >=8))
+```
+
+MDs and RMSDs were regressed against respondent characteristics to identify potential subgroup differences in bias or precision from the reference category (White British males aged 25–34 years without educational qualifications, who never smoked). Model predictors accounted for <5% of the variance, indicating stability in MD and RMSD across subgroups (tables S5.1-S5.2).
+
+Figure S5.1 shows subgroups with a predicted MD exceeding $\pm$ 1 unit/week and a coefficient $p$-value<0.05. Respondents of Black/Other/White Other ethnic groups had an overestimated EWAC: their MDs exceeded the reference MD by 1.7 units [0.4, 2.9]; 2.3 units [0.1, 4.4]; and 1.0 units [0.3, 1.7] respectively. MDs of men aged 55–64 years, or $\geq$ 75 years exceeded the reference MD by 1.1 units [0.2, 2.0] and 1.0 units [0.02, 2.0] respectively. Recent attempts to reduce alcohol intake in increasing-risk drinkers were associated with a modest underestimation in EWAC by 0.9 UK units [0.1, 1.6] (Table S5.2).
+
+```{r ewac_subgroup_bias, fig.width=7, fig.height=3}
+ewac_bias_plot <- as_tibble(summary(lm_bias_stan)$coefficients)
+ewac_bias_plot <- ewac_bias_plot %>% 
+  mutate(Variable = names(lm_bias_stan$coefficients),
+         MD = lm_bias_stan$coefficients[1] + Estimate) %>% 
+  filter(abs(MD)>=1 & `Pr(>|t|)` < 0.05) %>% 
+  arrange(-Estimate) %>% 
+  mutate(x = rank(Estimate))
+  
+labs <- ewac_bias_plot$Variable
+names(labs) <- as.character(length(labs):1)
+
+plotfig_ewac_MD_forest_plot <- ggplot(ewac_bias_plot, aes(x = factor(x), y = MD)) +
+  scale_x_discrete(breaks = names(labs), 
+                   labels = labs, name = NULL)+
+  scale_y_continuous(breaks = -10:16, name = "Predicted MD (UK units/week)")+
+  coord_flip() +
+  geom_linerange(aes(ymin = MD - 1.96*`Std. Error`, ymax = MD + 1.96*`Std. Error`), 
+                 colour = "purple") +
+  geom_point() +
+  geom_text(aes(label = round(MD, 1)), vjust = 1.2) +
+  geom_hline(aes(yintercept = 0)) +
+  geom_segment(aes(x = "0", xend = "0", y =0, yend = 2), 
+               lwd = 1, arrow = arrow(length = unit(0.03, "npc"))) +
+  geom_label(aes(x = "0", y = 0.1, 
+                 label = "EWAC overestimates consumption"),
+             hjust = "left", nudge_x = 0.5 ,colour = "purple") +
+  theme_minimal() 
+
+plotfig_ewac_MD_forest_plot
+```
+
+*Figure S5.1:* Forest plot of modelled MD for selected subgroups
+
+```{r include=FALSE}
+pdf("figures/fig_ewac_MD_forest_plot.pdf", 7, 3)
+plotfig_ewac_MD_forest_plot
+dev.off()
+```
+
+Figure S5.2 shows subgroups with an RMSD at least 25% smaller/greater than the reference. RMSD was 53% [44%, 63%] greater in current smokers and 45% [21%, 75%] greater in respondents who stopped smoking in the past year. It was also 43% [27%, 62%] and 41% [24%, 60%] greater respectively in men and respondents aged 16–24 years. In contrast, error was 20 to 40% smaller in Black/Asian/Other/White Other ethnic groups.
+
+
+```{r ewac_subgroup_error, fig.width=9, fig.height=3}
+ewac_error_plot <- as_tibble(summary(lm_rmsd_stan)$coefficients)
+ewac_error_plot <- ewac_error_plot %>% 
+  mutate(Variable = names(lm_rmsd_stan$coefficients),
+         RMSD_ratio = sqrt(exp(Estimate))) %>% 
+  mutate(RMSD_ratio_LB = sqrt(exp(Estimate - (1.96*`Std. Error`))),
+         RMSD_ratio_UB = sqrt(exp(Estimate + (1.96*`Std. Error`)))) %>% 
+  filter(abs(Estimate)>=log(1.25^2) & `Pr(>|t|)` < 0.05 & Variable != "(Intercept)") %>% 
+  arrange(-RMSD_ratio) %>% 
+  mutate(x = formatC(rank(RMSD_ratio)+1, width = 2, format = "d", flag = "0"))
+  
+labs2 <- ewac_error_plot$Variable
+names(labs2) <- as.character(ewac_error_plot$x)
+
+plotfig_ewac_RMSD_forest_plot <- ggplot(ewac_error_plot, 
+                                        aes(x = factor(x), y = RMSD_ratio)) +
+  scale_x_discrete(breaks = names(labs2), 
+                   labels = labs2, name = NULL)+
+  scale_y_continuous(breaks = seq(0, 4, .1),
+                     "Relative RMSD (1.0 = reference category)")+
+  coord_flip() +
+  geom_text(aes(label = round(RMSD_ratio, 1)), vjust = 1.2) +
+  geom_linerange(aes(ymin = RMSD_ratio_LB, ymax = RMSD_ratio_UB), colour = "purple") +
+    geom_point() +
+  geom_hline(aes(yintercept = 1)) +
+  geom_segment(aes(x = "00", xend = "00", y =1, yend =1.25), 
+               lwd = 1, arrow = arrow(length = unit(0.03, "npc"))) +
+  geom_label(aes(x = "00", y = 1.01, label = "Worse agreement of EWAC\n with reference standard"),
+             hjust = "inward", vjust= -0.2, colour = "purple") +
+  theme_minimal() 
+
+plotfig_ewac_RMSD_forest_plot
+```
+*Figure S5.2:* Forest plot of RMSD ratio (selected subgroups to reference category)
+
+```{r include=FALSE}
+pdf("figures/fig_ewac_RMSD_forest_plot.pdf", 7, 3)
+plotfig_ewac_RMSD_forest_plot
+dev.off()
+```
+
+Figure S5.3 presents the same metrics for increasing-/higher-risk drinkers (AUDIT-C $\geq$ 5 or AUDIT $\geq$ 8). Educational qualifications significantly improved the agreement between EWAC and the reference standard in this group (Table S5.2). School and degree-level qualifications reduced RMSD by 22% [12%, 31%] and 28% [19%, 37%] respectively, suggesting that respondents may have better recall and clarity over alcohol beverage content.
+
+```{r ewac_subgroup_error_increasedrisk, fig.width=9, fig.height=3}
+ewac_error_plot_increasedrisk <- as_tibble(summary(lm_rmsd_increasingrisk)$coefficients)
+ewac_error_plot_increasedrisk <- ewac_error_plot_increasedrisk %>% 
+  mutate(Variable = names(lm_rmsd_increasingrisk$coefficients),
+         RMSD_ratio = sqrt(exp(Estimate))) %>% 
+  mutate(RMSD_ratio_LB = sqrt(exp(Estimate - (1.96*`Std. Error`))),
+         RMSD_ratio_UB = sqrt(exp(Estimate + (1.96*`Std. Error`)))) %>% 
+  filter(abs(Estimate)>=log(1.25^2) & `Pr(>|t|)` < 0.05 & Variable != "(Intercept)") %>% 
+  arrange(-RMSD_ratio) %>% 
+  mutate(x = formatC(rank(RMSD_ratio)+1, width = 2, format = "d", flag = "0"))
+  
+labs2 <- ewac_error_plot_increasedrisk$Variable
+names(labs2) <- as.character(ewac_error_plot_increasedrisk$x)
+
+plotfig_ewac_RMSD_increasedrisk_forest_plot <- ggplot(ewac_error_plot_increasedrisk, aes(x = factor(x), y = RMSD_ratio)) +
+  scale_x_discrete(breaks = names(labs2), 
+                   labels = labs2, name = NULL)+
+  scale_y_continuous(breaks = seq(0, 4, .1),
+                     "Relative RMSD (1.0 = reference category)")+
+  coord_flip() +
+  geom_text(aes(label = round(RMSD_ratio, 1)), vjust = 1.2) +
+  geom_linerange(aes(ymin = RMSD_ratio_LB, ymax = RMSD_ratio_UB), colour = "purple") +
+    geom_point() +
+  geom_hline(aes(yintercept = 1)) +
+  geom_segment(aes(x = "00", xend = "00", y =1, yend =1.25), 
+               lwd = 1, arrow = arrow(length = unit(0.03, "npc"))) +
+  geom_label(aes(x = "00", y = 1.01, label = "Worse agreement of EWAC\n with reference standard"),
+             hjust = "inward", vjust= -0.2, colour = "purple") +
+  theme_minimal() 
+
+plotfig_ewac_RMSD_increasedrisk_forest_plot
+```
+
+*Figure S5.3:* Forest plot of RMSD ratio (selected subgroups to reference category) in respondents with a hazardous/harmful alcohol use (AUDIT-C>=5 or AUDIT>=8) 
+
+```{r include=FALSE}
+pdf("figures/fig_ewac_RMSD_increasedrisk_forest_plot.pdf", 7, 3)
+plotfig_ewac_RMSD_increasedrisk_forest_plot
+dev.off()
+```
+
+`r fig_nums('fig_ewac_RMSD_increasedrisk_forest_plot')`
+
+
+Table S5.1: Coefficients of linear regression of subgroup bias and error of EWAC compared with GF in all respondents (n = `r formatbm(valid_n_study1b)`)
 
 
 ```{r, results='asis'}
@@ -855,7 +900,7 @@ for (i in list("results_lm_all_MD", "results_lm_all_MSD",
 ```
 
 
-## Supplementary Table S6: Coefficients of linear regression of the subgroup bias and error of EWAC compared with GF in respondents with a hazardous/harmful alcohol use (AUDIT-C>=5 or AUDIT>=8; (n = `r formatbm(valid_n_study1c)`)
+Table S5.2: Coefficients of linear regression of the subgroup bias and error of EWAC compared with GF in respondents with a hazardous/harmful alcohol use (AUDIT-C>=5 or AUDIT>=8; (n = `r formatbm(valid_n_study1c)`)
 
 ```{r, results='asis'}
 stargazer::stargazer(#lm_bias_mp, lm_rmsd_mp, 
@@ -868,7 +913,10 @@ stargazer::stargazer(#lm_bias_mp, lm_rmsd_mp,
 
 ```
 
-## Supplementary information S7: Receiver operating characteristics curves
+
+
+
+## Supplementary information S6: Receiver operating characteristics curves
 
 ```{r roc_curves_112, fig.height=5, fig.width=7}
 # roc_auditc$linetype <- "solid"
@@ -976,7 +1024,7 @@ plotfig_ROC_280g
 dev.off()
 ```
 
-## Supplementary information S8: Demographic characteristics and alcohol consumption descriptives
+## Supplementary information S7: Demographic characteristics and alcohol consumption descriptives
 
 ```{r, message = FALSE, results="asis"}
 arsenal::tableby(
@@ -987,7 +1035,7 @@ arsenal::tableby(
     numeric.stats = c("Nmiss", "meansd"),
     digits = 1L),
   data = dplyr::mutate(
-    dplyr::filter(ats, sexz %in% c(1,2)),
+    dplyr::filter(ats_complete_data, sexz %in% c(1,2)),
     `Alcohol consumption (units/week, GF estimate)` = dplyr::case_when(
       audit1 == 1 ~ "Never drinks (AUDIT-1 = 0)",
       gfmeanweekly < 14 ~ "<14",
@@ -1006,7 +1054,7 @@ arsenal::tableby(
   ) %>% summary()
 ```
 
-## Supplementary information S9: STARD Checklist
+## Supplementary information S8: STARD Checklist
 
 
 # References
