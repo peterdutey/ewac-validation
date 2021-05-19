@@ -141,7 +141,7 @@ proc_EWAC <- function(X, audit_coef, method = "qfv"){
     
     ( X$audit3_value * binge.val )
     
-  } else if (method == "ewac") {
+  } else if (method == "lemmens") {
     
     ifelse(X$audit2_value >= binge.val,
            ifelse(X$audit1_value >= X$audit3_value,
