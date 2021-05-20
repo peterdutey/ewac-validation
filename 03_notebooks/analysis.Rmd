@@ -4,11 +4,11 @@ title: Concurrent validity of an Estimator of Weekly Alcohol Consumption (EWAC) 
 bibliography: bibliography.bib
 csl: elsevier-vancouver.csl
 output:
+  word_document:
+    reference_docx: template.docx
   html_document:
     df_print: paged
     toc: yes
-  word_document:
-    reference_docx: template.docx
 link-citations: yes
 always_allow_html: yes
 ---
@@ -137,7 +137,7 @@ fig_ECDF<- fig_nums(
 
 # Abstract
 
-**Background and Aims:** The 3-question Alcohol Use Disorders Identification Test (AUDIT-C) is frequently used in healthcare for screening and brief advice about levels of alcohol consumption. AUDIT-C scores (0–12) provide feedback as categories of risk rather than estimates of actual alcohol intake, an important variable for behaviour change. The study aimed to (a) develop a continuous metric from the Extended AUDIT-C, offering equivalent accuracy, and providing a direct estimator of weekly alcohol consumption (EWAC); (b) evaluate the EWAC’s bias and error using the Graduated-Frequency (GF) questionnaire as a reference standard of alcohol consumption.
+**Background and Aims:** The 3-question Alcohol Use Disorders Identification Test (AUDIT-C) is frequently used in healthcare for screening and brief advice about levels of alcohol consumption. AUDIT-C scores (0–12) provide feedback as categories of risk rather than estimates of actual alcohol intake, an important variable for behaviour change. The study aimed to (a) develop a continuous metric from the Extended AUDIT-C expressed in UK units (8g pure ethanol), offering equivalent accuracy, and providing a direct estimator of weekly alcohol consumption (EWAC); (b) evaluate the EWAC’s bias and error using the Graduated-Frequency (GF) questionnaire as a reference standard of alcohol consumption.
 
 **Design:** Cross-sectional diagnostic study based on a nationally-representative survey.
 
@@ -177,7 +177,7 @@ The present study proposes to address the second of these characteristics. It ai
 
 ## Participants
 
-Data originate from baseline measures in waves 110--133 (November 2015–October 2017) of the Alcohol Toolkit Study, a computer-assisted personal interview of residents of private English households aged $\geq$ 16 years [@Beard2015a].
+Data originate from baseline measures in waves 110--133 (November 2015–October 2017) of the Alcohol Toolkit Study, a repeated cross-sectional survey of residents of private English households aged $\geq$ 16 years. Each month, census output areas averaging 300 households were selected by stratified random sampling. Interviewers travelled to their designated area and  approach households  quota sampling [@Beard2015a]. Respondents participated in a computer-assisted personal interview.
 
 ## Measurements
 
@@ -204,7 +204,7 @@ Coefficients $F, Q, V$ and $b$ are unknown. In this study, two sets of candidate
 
 The protocol was pre-registered [@Dutey2018]. Results are reported in UK alcohol units (8g or 10mL of pure alcohol). Analyses were conducted in `R` [@RCoreTeam2017; @package-tidyverse; @package-rstan] and all computer scripts are available online [@Dutey2020].
 
-Participants were included in the analysis if they completed both the Extended AUDIT and the GF questionnaires. Out of `r formatbm(n_ats)` participants, `r formatbm(n_ats_audit1never)` (`r round(n_ats_audit1never/n_ats*100)`%) reported 'never' consuming alcohol in AUDIT question 1 and were not asked any further AUDIT or GF questions. A further `r formatbm(n_ats_auditmissing)` (`r round(n_ats_auditmissing/n_ats*100, 1)`%) did not have valid AUDIT-C answers. Finally, `r formatbm(n_ats_validaudit - valid_n_study1a)` participants (`r round((n_ats_validaudit - valid_n_study1a)/n_ats*100)`%) who did not have a valid GF alcohol consumption record were excluded. These GF data were assumed to be missing at random conditionally on the Extended AUDIT-C responses. 
+Participants were included in the analysis if they completed both the Extended AUDIT and the GF questionnaires. Out of `r formatbm(n_ats)` participants, `r formatbm(n_ats_audit1never)` (`r round(n_ats_audit1never/n_ats*100)`%) reported 'never' consuming alcohol in AUDIT question 1 and were not asked any further AUDIT or GF questions. A further `r formatbm(n_ats_auditmissing)` (`r round(n_ats_auditmissing/n_ats*100, 1)`%) did not have valid AUDIT-C answers. Finally, `r formatbm(n_ats_validaudit - valid_n_study1a)` participants (`r round((n_ats_validaudit - valid_n_study1a)/n_ats*100)`%) who did not have a valid GF alcohol consumption record were excluded. These GF data were assumed to be missing at random conditionally on the Extended AUDIT-C responses after a sensitivity analysis (supplementary information S1).
 
 Valid observations (*N*=`r formatbm(valid_n_study1a)`) were separated into two datasets:
 
@@ -506,7 +506,7 @@ We examined the EWAC's ability to predict consumption exceeding 14 or 35 UK unit
 `r table_nums('tab_study1_roc112')`
 
 ```{r tab_roc112}
-roc_results %>% kable
+roc_results
 ```
 
 *Note*: The best threshold refers the cut-off value that maximises the sum of sensitivity and specificity.
@@ -517,7 +517,7 @@ roc_results %>% kable
 `r table_nums('tab_study1_roc280')`
 
 ```{r tab_roc280}
-roc280_results %>% kable
+roc280_results
 ```
 
 *Note*: The best threshold refers the cut-off value that maximises the sum of sensitivity and specificity.
@@ -704,6 +704,89 @@ JB has received unrestricted research funding to study smoking cessation from co
 # Supplementary information
 
 ## Supplementary information S1: Bayesian model report (PDF file)
+
+A model was fitted on the dataset with respondents completing the full Extended AUDIT-C (*n*= `r formatbm( n_ats_validaudit)`; excluding those answering AUDIT-1 with 'Never'), entering AUDIT-C answers, the EWAC, and socio-demographic variables commonly associated with either nonresponse or alcohol consumption. Table XX below reports the most parsimonious model, after testing for some interactions and removing variables inflating the Akaike Information Criterion. We find evidence that the Graduated Frequency data is missing not at random.
+ 
+```{r missingness_tests, results='asis'}
+ats_complete_data <- ats_complete_data %>% 
+  mutate(GF_missing = case_when(
+    audit1 == 1 | is.na(audit1_label) | is.na(audit2_label) | is.na(audit3_label) ~ NA_integer_,
+    is.na(gfmeanweekly) ~ 1L,
+    TRUE ~ 0L
+  ),
+  audit1_label = factor(
+    audit1_label,
+    levels = c("Never", "Monthly or less",
+               "2 to 4 times a month", "2 to 3 times a week", 
+               "4 to 5 times a week", "6 or more times a week")),
+  audit2_label = factor(
+    audit2_label,
+    levels = c("1 to 2", "3 to 4", "5 to 6", "7 to 9", 
+               "10 to 12", "13 to 15", "16 or more")
+  ),
+  audit3_label = factor(
+    audit3_label,
+    levels = c("Never", "Less than monthly", "Monthly", "Weekly", "Daily or almost daily")
+  ))
+ats_complete_data$ewac_qfv <- proc_EWAC(ats_complete_data[, auditx_labels],
+                                        audit_coef = audit_weights_STAN, method = "qfv")
+glm_gf_missing <- glm(
+  GF_missing ~ audit1_label+ audit2_label+ audit3_label+ ewac_qfv +
+    factor(marital) + factor(tennet) + smokstat + 
+    sex + ageg + ethgrp + highqual + religion +weighttns13, 
+    family = binomial(link = "logit"),
+    data = ats_complete_data
+)
+glm_gf_missing
+# sjPlot::tab_model(glm_gf_missing, digits = 3,
+#                   df.method = "wald",
+#                   show.se = T, show.ci = F,
+#                   show.reflvl = TRUE )
+# stargazer::stargazer(glm_gf_missing,
+#           type = ifelse(knit_output_pdf, "latex", "html"),
+#           digits = 3, digits.extra	= 0, initial.zero = T,
+#           single.row = T, intercept.bottom = F, align=TRUE, no.space= T,
+#           report = "vcsp*")
+```
+
+
+```{r missingness_pattern,  fig.height=5, fig.width=25}
+# dplyr::filter(ats_complete_data, !is.na(GF_missing)) %>%
+#   dplyr::select(
+#     gfmeanweekly, audit1_label, audit2_label, audit3_label,
+#     ewac_qfv, sex, ageg, ethgrp, highqual,
+#     marital, tennet, religion, smokstat
+#   ) %>%
+#   mice::md.pattern(rotate.names = T)
+
+ats_imputed <- ats %>%
+  filter( !(audit1 == 1 | is.na(audit1_label) | is.na(audit2_label) | is.na(audit3_label)) ) %>%
+  dplyr::transmute(
+    gfmeanweekly, audit1_label, audit2_label, audit3_label,
+    ewac_qfv, sex, ageg, ethgrp, highqual,
+    marital = as.factor(marital), 
+    tennet = as.factor(tennet), 
+    religion, smokstat
+  ) %>%
+  mice::mice(m = 20, seed = 1957, print = FALSE)
+
+imputed_deviations <- mice::complete(ats_imputed, "long") %>%
+  transmute(.imp,
+            deviation  = ewac_qfv - gfmeanweekly,
+            sqdeviation = (ewac_qfv - gfmeanweekly)^2)
+MD_imp_sens <- MKmisc::mi.t.test(
+  split(imputed_deviations, f = imputed_deviations$.imp),
+  x = "deviation", alternative = "greater", mu = 1
+)
+```
+
+To examine the influence of GF data missingness on our validation data, we performed a sensitivity analysis using multiple imputation with chained equations (MICE) on the primary outcomes of the study: mean deviation and root mean square deviation in the validation sample. Using 20 imputations and default imputation methods (predictive mean matching for GF, polytomous regression imputation for the remaining categorical variables), we found:
+
+* MD = `r round(mean(imputed_deviations$deviation), 2)` UK units/week with imputation, compared to `r round(mean(ats$ewac_qfv - ats$gfmeanweekly, na.rm = T), 2)` without imputation.
+* RMSD = `r round(sqrt(mean(imputed_deviations$sqdeviation)), 2)` UK units/week with imputation, compared to `r round(sqrt(mean((ats$ewac_qfv - ats$gfmeanweekly)^2, na.rm = T)), 2)` without imputation.
+
+There results being very similar, multiple imputation was not employed in the study.
+
 
 ## Supplementary information S2: Alcohol Toolkit Study Extended AUDIT questionnaire schedule
 
