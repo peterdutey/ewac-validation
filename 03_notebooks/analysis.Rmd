@@ -4,11 +4,11 @@ title: Concurrent validity of an Estimator of Weekly Alcohol Consumption (EWAC) 
 bibliography: bibliography.bib
 csl: elsevier-vancouver.csl
 output:
-  html_document:
-    df_print: paged
-    toc: yes
   word_document:
     reference_docx: template.docx
+  html_document: 
+    keep_md: yes
+    toc: yes
 link-citations: yes
 always_allow_html: yes
 ---
