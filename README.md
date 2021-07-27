@@ -3,7 +3,7 @@
 
 
 [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-sa/4.0/) 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4315024.svg)](https://doi.org/10.5281/zenodo.4315024)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4315023.svg)](https://doi.org/10.5281/zenodo.4315023)
 
 
 Software repository for: 
